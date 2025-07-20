@@ -1,5 +1,8 @@
 # GNU Makefile for OpenXLSX modules & demos
-# Version: 2024-09-29 13:45 CEST
+# Version: 2025-07-20 11:15 CEST
+
+# change to USE_LIBPUGIXML=yes if system libpugixml shall be used
+USE_LIBPUGIXML=no
 
 # NOTE: lib and library are available as aliases for OpenXLSX, to build the static library file
 TARGETS=OpenXLSX Demo1 Demo2 Demo3 Demo4 Demo5 Demo6 Demo7 Demo8 Demo9 Demo10
@@ -86,7 +89,7 @@ ZIPPY_SUBDIR=$(EXTERNAL_SUBDIR)/zippy
 # library / utility objects
 # OBJS_LICENSE=license.o
 # OBJS_SHARED=$(OBJS_LICENSE)
-OBJS_PUGIXML= # used as header-only module
+OBJS_PUGIXML= # used as header-only module OR as system library (if USE_LIBPUGIXML=yes)
 OBJS_ZIPPY=   # header-only module
 OBJS_OPENXLSX=XLCell.o XLCellIterator.o XLCellRange.o XLCellReference.o XLCellValue.o XLColor.o XLColumn.o XLComments.o XLContentTypes.o XLDateTime.o XLDocument.o XLDrawing.o XLFormula.o XLMergeCells.o XLProperties.o XLRelationships.o XLRow.o XLRowData.o XLSharedStrings.o XLSheet.o XLStyles.o XLTables.o XLWorkbook.o XLXmlData.o XLXmlFile.o XLXmlParser.o XLZipArchive.o
 
@@ -96,6 +99,12 @@ OBJS_OPENXLSX_PREFIXED=$(addprefix $(OBJ_DIR)/$(OPENXLSX_DIR)/,$(OBJS_OPENXLSX))
 # OBJS_DEMOS=$(OBJS_OPENXLSX_PREFIXED) # no longer needed - using static library instead
 OBJS_DEMOS=$(BIN_DIR)/$(STATIC_LIBRARY) # use static library for linking demos
 
+ifeq ("$(USE_LIBPUGIXML)", "yes")
+	LDLIBS_PUGIXML=-lpugixml
+	INCLUDE_DIR_PUGIXML= # do not identify OpenXLSX-shipped pugixml path
+else
+	INCLUDE_DIR_PUGIXML= -I$(OPENXLSX_DIR)/$(PUGIXML_SUBDIR)
+endif
 ifeq ("$(USE_LIBZIP)", "yes")
 	ENABLE_LIBZIP=-DUSE_LIBZIP
 	LDLIBS_LIBZIP=-lzip
@@ -186,7 +195,7 @@ LDFLAGS=$(SANITIZE_FLAGS)
 
 
 # precompiled libs go here
-LDLIBS=$(SANITIZE_LIBS) $(LDLIBS_LIBZIP)
+LDLIBS=$(SANITIZE_LIBS) $(LDLIBS_LIBZIP) $(LDLIBS_PUGIXML)
 # LDLIBS=-lrt -pthread -lboost_program_options $(SANITIZE_LIBS) # example to add libraries if needed
 
 
@@ -255,13 +264,13 @@ $(OBJ_DIR)/%.o: $(addprefix $(DEMOS_SRC_DIR)/,%.cpp) | $(OBJ_DIR) $(OPENXLSX_DIR
 
 # rule for OpenXLSX .cpp files
 $(OBJ_DIR)/$(OPENXLSX_DIR)/%.o: $(OPENXLSX_DIR)/$(SRC_DIR)/%.cpp | $(OBJ_DIR) $(OBJ_DIR)/$(OPENXLSX_DIR)/ $(OPENXLSX_DIR)/OpenXLSX-Exports.hpp
-	$(CXX) $(CPPFLAGS) -I$(OPENXLSX_DIR)/$(INCLUDE_DIR) -I$(OPENXLSX_DIR)/$(NOWIDE_SUBDIR) -I$(OPENXLSX_DIR)/$(PUGIXML_SUBDIR) -I$(OPENXLSX_DIR)/$(ZIPPY_SUBDIR) -c $< -o $@
+	$(CXX) $(CPPFLAGS) -I$(OPENXLSX_DIR)/$(INCLUDE_DIR) -I$(OPENXLSX_DIR)/$(NOWIDE_SUBDIR) $(INCLUDE_DIR_PUGIXML) -I$(OPENXLSX_DIR)/$(ZIPPY_SUBDIR) -c $< -o $@
 
 # rule for nowide .cpp files: N/A, as nowide is header-only
 
 # rule for pugixml .cpp files: N/A, as pugixml is used as header only
 $(OBJ_DIR)/$(PUGIXML_SUBDIR)/%.o: $(OPENXLSX_DIR)/$(PUGIXML_SUBDIR)/%.cpp | $(OBJ_DIR) $(OBJ_DIR)/$(PUGIXML_SUBDIR)/
-	$(CXX) $(CPPFLAGS) -I$(OPENXLSX_DIR)/$(PUGIXML_SUBDIR) -c $< -o $@
+	$(CXX) $(CPPFLAGS) $(INCLUDE_DIR_PUGIXML) -c $< -o $@
 
 # rule for zippy .cpp files: N/A, as zippy is header only
 
@@ -355,6 +364,7 @@ echo:
 	@echo "OBJ_DIR: $(OBJ_DIR)"
 	@echo "STATIC_LIBRARY: $(STATIC_LIBRARY)"
 	@echo
+	@echo "USE_LIBPUGIXML: $(USE_LIBPUGIXML)"
 	@echo "USE_LIBZIP: $(USE_LIBZIP)"
 	@echo "ENABLE_LIBZIP: $(ENABLE_LIBZIP)"
 	@echo "USE_NOWIDE: $(USE_NOWIDE)"
@@ -416,6 +426,9 @@ echo:
 	@echo "GENERIC_FLAGS: $(GENERIC_FLAGS)"
 	@echo "CPPFLAGS: $(CPPFLAGS)"
 	@echo
+	@echo "INCLUDE_DIR_PUGIXML: $(INCLUDE_DIR_PUGIXML)"
+	@echo
 	@echo "LDFLAGS: $(LDFLAGS)"
 	@echo "LDLIBS: $(LDLIBS)"
+	@echo "LDLIBS_PUGIXML: $(LDLIBS_PUGIXML)"
 	@echo "LDLIBS_LIBZIP: $(LDLIBS_LIBZIP)"
