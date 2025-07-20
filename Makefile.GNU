@@ -1,5 +1,5 @@
 # GNU Makefile for OpenXLSX modules & demos
-# Version: 2025-07-20 11:15 CEST
+# Version: 2025-07-20 13:15 CEST
 
 # change to USE_LIBPUGIXML=yes if system libpugixml shall be used
 USE_LIBPUGIXML=no
@@ -101,6 +101,7 @@ OBJS_DEMOS=$(BIN_DIR)/$(STATIC_LIBRARY) # use static library for linking demos
 
 ifeq ("$(USE_LIBPUGIXML)", "yes")
 	LDLIBS_PUGIXML=-lpugixml
+	ENABLE_LIBPUGIXML=-DUSE_LIBPUGIXML
 	INCLUDE_DIR_PUGIXML= # do not identify OpenXLSX-shipped pugixml path
 else
 	INCLUDE_DIR_PUGIXML= -I$(OPENXLSX_DIR)/$(PUGIXML_SUBDIR)
@@ -112,7 +113,7 @@ endif
 ifeq ("$(USE_NOWIDE)", "yes")
 	ENABLE_NOWIDE=-DENABLE_NOWIDE
 endif
-PROJECT_FLAGS=$(ENABLE_LIBZIP) $(ENABLE_NOWIDE)
+PROJECT_FLAGS=$(ENABLE_LIBPUGIXML) $(ENABLE_LIBZIP) $(ENABLE_NOWIDE)
 
 # additional include directories for 1) OPENXLSX project headers and 2) external nowide (parent) folder
 ADDITIONAL_INCLUDE_FLAGS=-I$(OPENXLSX_DIR) -I$(OPENXLSX_DIR)/$(EXTERNAL_SUBDIR)
@@ -195,7 +196,7 @@ LDFLAGS=$(SANITIZE_FLAGS)
 
 
 # precompiled libs go here
-LDLIBS=$(SANITIZE_LIBS) $(LDLIBS_LIBZIP) $(LDLIBS_PUGIXML)
+LDLIBS=$(SANITIZE_LIBS) $(LDLIBS_PUGIXML) $(LDLIBS_LIBZIP)
 # LDLIBS=-lrt -pthread -lboost_program_options $(SANITIZE_LIBS) # example to add libraries if needed
 
 
@@ -366,6 +367,7 @@ echo:
 	@echo
 	@echo "USE_LIBPUGIXML: $(USE_LIBPUGIXML)"
 	@echo "USE_LIBZIP: $(USE_LIBZIP)"
+	@echo "ENABLE_LIBPUGIXML: $(ENABLE_LIBPUGIXML)"
 	@echo "ENABLE_LIBZIP: $(ENABLE_LIBZIP)"
 	@echo "USE_NOWIDE: $(USE_NOWIDE)"
 	@echo "ENABLE_NOWIDE: $(ENABLE_NOWIDE)"

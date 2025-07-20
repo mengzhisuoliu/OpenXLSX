@@ -49,7 +49,11 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #include <memory> // shared_ptr
 
 // ===== pugixml header needed for pugi::impl::xml_memory_page_type_mask, pugi::xml_node_type, pugi::char_t, pugi::node_element, pugi::xml_node, pugi::xml_attribute, pugi::xml_document
-#include <pugixml.hpp>  // the underlying XML library, 2025-07-14: external/pugixml/ path prefix is no longer needed, as header file is no longer exposed by the library public API
+#ifdef USE_LIBPUGIXML
+    #include <pugixml.hpp>                   // include public pugixml header, wherever it may be in the include paths
+#else
+    #include <external/pugixml/pugixml.hpp>  // force inclusion of pugixml header-only version shipped with OpenXLSX
+#endif
 #include "XLException.hpp"
 #include "XLXmlParserForwardDeclarations.hpp"
 

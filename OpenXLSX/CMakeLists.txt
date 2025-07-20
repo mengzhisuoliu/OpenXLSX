@@ -3,9 +3,9 @@
 #=======================================================================================================================
 cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 set(OPENXLSX_MAJOR_VERSION 0)
-set(OPENXLSX_MINOR_VERSION 3)
+set(OPENXLSX_MINOR_VERSION 4)
 set(OPENXLSX_MICRO_VERSION 2)
-project(OpenXLSX.Library VERSION 0.3.2 LANGUAGES CXX)
+project(OpenXLSX.Library VERSION 0.4.2 LANGUAGES CXX)
 set(CMAKE_DEBUG_POSTFIX d)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN YES)
@@ -53,11 +53,18 @@ if (NOT OPENXLSX_ENABLE_LIBZIP)
     )
 endif ()
 
-add_library(PugiXML INTERFACE IMPORTED)
-target_include_directories(PugiXML SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/external/pugixml/>)
+if (OPENXLSX_ENABLE_LIBPUGIXML)
+    # nothing to do: pugixml headers should already be in include path, and libpugixml is added in the library link statements below
+else()
+    add_library(PugiXML INTERFACE IMPORTED)
+    target_include_directories(PugiXML SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/external/pugixml/>)
+endif()
 
 if (${OPENXLSX_COMPACT_MODE})
-    target_compile_definitions(PugiXML INTERFACE PUGIXML_COMPACT)
+    # NOTE: compact mode currently makes no sense if system library pugixml is used
+    if (NOT OPENXLSX_ENABLE_LIBPUGIXML)
+        target_compile_definitions(PugiXML INTERFACE PUGIXML_COMPACT)
+    endif()
 endif ()
 
 #=======================================================================================================================
@@ -142,6 +149,16 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
             $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
             $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/headers>
             $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)     # For export header
+    if (OPENXLSX_ENABLE_LIBPUGIXML)
+        target_link_libraries(OpenXLSX
+                PRIVATE
+                -lpugixml)
+    else()
+        # pugixml is used in header only mode - so whatever this does...
+        target_link_libraries(OpenXLSX
+                PRIVATE
+                $<BUILD_INTERFACE:PugiXML>)
+    endif()
     if (OPENXLSX_ENABLE_LIBZIP)
         target_link_libraries(OpenXLSX
                 PRIVATE
@@ -152,10 +169,6 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
 #                $<BUILD_INTERFACE:Zippy>
                 miniz)
     endif ()
-
-    target_link_libraries(OpenXLSX
-            PRIVATE
-            $<BUILD_INTERFACE:PugiXML>)
 
     if (OPENXLSX_ENABLE_NOWIDE)
         target_link_libraries(OpenXLSX
@@ -180,6 +193,16 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "SHARED")
             $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
             $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/headers>
             $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)     # For export header
+    if (OPENXLSX_ENABLE_LIBPUGIXML)
+        target_link_libraries(OpenXLSX
+                PRIVATE
+                -lpugixml)
+    else()
+        # pugixml is used in header only mode - so whatever this does...
+        target_link_libraries(OpenXLSX
+                PRIVATE
+                $<BUILD_INTERFACE:PugiXML>)
+    endif()
     if (OPENXLSX_ENABLE_LIBZIP)
         target_link_libraries(OpenXLSX
                 PRIVATE
@@ -190,10 +213,6 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "SHARED")
 #                $<BUILD_INTERFACE:Zippy>
                 miniz)
     endif ()
-
-    target_link_libraries(OpenXLSX
-            PRIVATE
-            $<BUILD_INTERFACE:PugiXML>)
 
     if (OPENXLSX_ENABLE_NOWIDE)
         target_link_libraries(OpenXLSX
@@ -215,6 +234,9 @@ endif()
 
 if (OPENXLSX_ENABLE_NOWIDE)
     target_compile_definitions(OpenXLSX PRIVATE ENABLE_NOWIDE)
+endif ()
+if (OPENXLSX_ENABLE_LIBPUGIXML)
+    target_compile_definitions(OpenXLSX PRIVATE USE_LIBPUGIXML)
 endif ()
 if (OPENXLSX_ENABLE_LIBZIP)
     target_compile_definitions(OpenXLSX PRIVATE USE_LIBZIP)

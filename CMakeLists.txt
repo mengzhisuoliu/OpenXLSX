@@ -2,7 +2,7 @@
 # Preamble
 #=======================================================================================================================
 cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
-project(OpenXLSX VERSION 0.4.1 LANGUAGES CXX)
+project(OpenXLSX VERSION 0.4.2 LANGUAGES CXX)
 
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN YES)
@@ -34,6 +34,7 @@ option(OPENXLSX_CREATE_DOCS "Build library documentation (requires Doxygen and G
 option(OPENXLSX_BUILD_SAMPLES "Build sample programs" ON)
 option(OPENXLSX_BUILD_TESTS "Build and run library tests" ON)
 option(OPENXLSX_BUILD_BENCHMARKS "Build and run library benchmarks" OFF)
+option(OPENXLSX_ENABLE_LIBPUGIXML "Enable using libpugixml" OFF)
 option(OPENXLSX_ENABLE_LIBZIP "Enable using libzip" OFF)
 option(OPENXLSX_ENABLE_LIBZIP_EXAMPLE "Build Demo1A example using libzip" OFF)
 

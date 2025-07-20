@@ -7,6 +7,11 @@ Microsoft Excel® files, with the .xlsx format.
 
 As the heading says - the latest "Release" that is shown on https://github.com/troldal/OpenXLSX/releases is from 2021-11-06, and severely outdated - please pull / download the latest SW version directly from the repository in its current state. Link for those that do not want to use ```git```: https://github.com/troldal/OpenXLSX/archive/refs/heads/master.zip
 
+## (aral-matrix) 20 July 2025 - enabled compilation against ```libpugixml``` installed on the operating system
+* hid ```XLXmlParser``` from public OpenXLSX API - this should address conflicts with ```pugixml.hpp``` headers available elsewhere
+* enabled compilation against ```libpugixml``` - for cmake, variable is ```OPENXLSX_ENABLE_LIBPUGIXML```, in Makefile.GNU, variable is ```USE_LIBPUGIXML``` - set to yes if system installed library shall be used
+* upped the OpenXLSX version tag to 0.4.2
+
 ## (aral-matrix) 04 May 2025 - moved file system access functions (shared by zip implementations and XLDocument) to detail/OpenXLSXFileSystemTools.hpp
 * in preparation for localizing (if not removing) the boost::nowide dependency, the new header file ```detail/OpenXLSXFileSystemTools.hpp``` now comprises all functions where unicode (filename) support might be relevant, to be implemented centrally - currently on the To-Do list
 * ```XLDocument::create```: creating a new document no longer creates a file under that name until an explicit call of ```XLDocument::save``` or ```::saveAs```. This is to remove a dependency of XLDocument on boost::nowide on Windows.
