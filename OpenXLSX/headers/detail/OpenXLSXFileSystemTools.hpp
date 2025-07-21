@@ -1,6 +1,14 @@
 #ifndef OPENXLSX_TOOLS_H
 #define OPENXLSX_TOOLS_H
 
+#include <iostream>
+#ifdef ENABLE_NOWIDE
+    // #include <nowide/stat.hpp>
+    #include <nowide/cstdio.hpp>    // nowide::fopen, nowide::remove, nowide::rename
+#else
+    #include <cstdio>       // std::fopen
+#endif
+#include <filesystem>   // std::filesystem::remove, std::filesystem::rename
 #include <random>       // std::random_device, std::mt19937, std::uniform_int_distribution
 #include <string>       // std::string
 #include <sys/stat.h>   // for stat, to test if a file exists and whether a file is a directory
@@ -31,6 +39,7 @@ namespace OpenXLSX
             return true;
         return false;
     }
+
 #ifdef __GNUC__    // conditionally enable GCC specific pragmas to suppress unused function warning
 #   pragma GCC diagnostic push
 #   pragma GCC diagnostic ignored "-Wunused-function"
@@ -43,22 +52,46 @@ namespace OpenXLSX
     inline bool fileExists(const std::string& fileName)
     {
         STATSTRUCT info;
-        if (STAT(fileName.c_str(), &info ) == 0)    // test if path exists
-            if ((info.st_mode & S_IFDIR) == 0)          // test if it is NOT a directory
+        if (STAT(fileName.c_str(), &info ) == 0)   // test if path exists
+            if ((info.st_mode & S_IFDIR) == 0)        // test if it is NOT a directory
                 return true;
         return false;
     }
-    inline bool isDirectory(const std::string& fileName)
+
+    /**
+     * @brief Test if fileName exists and is a directory
+     * @param dirName The path to check for existence (as a directory)
+     * @return true if fileName exists and is a directory, otherwise false
+     */
+    inline bool isDirectory(const std::string& dirName)
     {
         STATSTRUCT info;
-        if (STAT(fileName.c_str(), &info ) == 0)    // test if path exists
-            if ((info.st_mode & S_IFDIR) != 0)          // test if it is a directory
+        if (STAT(dirName.c_str(), &info ) == 0)    // test if path exists
+            if ((info.st_mode & S_IFDIR) != 0)        // test if it is a directory
                 return true;
         return false;
     }
 #ifdef __GNUC__    // conditionally enable GCC specific pragmas to suppress unused function warning
 #   pragma GCC diagnostic pop
 #endif // __GNUC__
+
+    /**
+     * @brief opens a file with support for unicode filenames on Windows
+     * @param filename (unicode) name of file to open
+     * @param mode how to open the file - passed through to fopen
+     * @return FILE * to the open file on success
+     * @return nullptr on failure
+     */
+    inline FILE* fopen( std::string filename, std::string mode )
+    {
+#       ifdef ENABLE_NOWIDE
+std::cout << __func__ << ": using boost::nowide!" << std::endl;
+            return nowide::fopen(filename.c_str(), mode.c_str());
+#       else
+std::cout << __func__ << ": using std::filesystem!" << std::endl;
+            return std::fopen(filename.c_str(), mode.c_str());
+#       endif
+    }
 
     /**
      * @brief Generates a random filename, which is used to generate a temporary archive when modifying and saving
@@ -94,7 +127,7 @@ namespace OpenXLSX
         if (filename.empty()) filename = "./"; // local folder
 
 #       ifdef _WIN32
-           std::replace( filename.begin(), filename.end(), '\\', '/' ); // pull request #210, alternate fix: fopen etc work fine with forward slashes
+            std::replace( filename.begin(), filename.end(), '\\', '/' ); // pull request #210, alternate fix: fopen etc work fine with forward slashes
 #       endif
 
         // ===== Determine path of the current file
@@ -113,6 +146,41 @@ namespace OpenXLSX
 
         // ===== Generate a random file name with the same path as the current file
         return tempPath + GenerateRandomName(length);
+    }
+
+    /**
+     * @warning DRAFT VERSION, TO BE TESTED!
+     * @brief Portable remove function to delete a file with unicode characters in the filename even on Windows
+     * @param p (unicode) std::string name of file to delete
+     * @return true upon success, false upon failure
+     */
+    inline bool remove(std::string const &p )
+    {
+#       ifdef ENABLE_NOWIDE
+std::cout << __func__ << ": using boost::nowide!" << std::endl;
+            return nowide::remove(p.c_str());
+#       else
+std::cout << __func__ << ": using std::filesystem!" << std::endl;
+            return std::filesystem::remove(p.c_str());
+#       endif
+    }
+
+    /**
+     * @warning DRAFT VERSION, TO BE TESTED!
+     * @brief Portable rename function to save a filename with unicode characters even on Windows
+     * @param old_p (unicode) std::string source filename
+     * @param new_p (unicode) std::string destination filename
+     * @return N/A
+     */
+    inline void rename(std::string const &old_p, std::string const &new_p )
+    {
+#       ifdef ENABLE_NOWIDE
+std::cout << __func__ << ": using boost::nowide!" << std::endl;
+            nowide::rename(old_p.c_str(), new_p.c_str());
+#       else
+std::cout << __func__ << ": using std::filesystem!" << std::endl;
+            std::filesystem::rename(old_p.c_str(), new_p.c_str());
+#       endif
     }
 }    // namespace OpenXLSX
 

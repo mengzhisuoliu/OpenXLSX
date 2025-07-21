@@ -15,7 +15,7 @@
 #include <direct.h>
 #endif
 
-#include "detail/OpenXLSXFileSystemTools.hpp"   // OpenXLSX::GenerateRandomNameInSamePath
+#include "detail/OpenXLSXFileSystemTools.hpp"   // OpenXLSX::GenerateRandomNameInSamePath, OpenXLSX::remove, OpenXLSX::rename
 
 // 2024-09-15: moved Zippy exceptions to top of module to be able to use them earlier - forward declaration didn't seem
 // to work
@@ -788,6 +788,7 @@ namespace Zippy
         }
 
         /**
+         * @warning unicode filename support on Windows to be tested!
          * @brief Open an existing archive file with the given filename.
          * @details
          * ##### Implementation details
@@ -803,7 +804,7 @@ namespace Zippy
                 mz_zip_reader_end(&m_Archive);
             }
             m_ArchivePath = fileName;
-            if (!mz_zip_reader_init_file(&m_Archive, m_ArchivePath.c_str(), 0)) {
+            if (!mz_zip_reader_init_file(&m_Archive, m_ArchivePath.c_str(), 0)) { // TBD: does miniz support unicode filenames on Windows?
                 // throw ZipRuntimeError(mz_zip_get_error_string(m_Archive.m_last_error));
                 throw ZipRuntimeError(std::string(mz_zip_get_error_string(m_Archive.m_last_error)) + " (m_ArchivePath: " + m_ArchivePath + ")");
             }
@@ -1051,6 +1052,7 @@ namespace Zippy
                 filename = m_ArchivePath;
             }
 
+            // ===== Generate a random file name with the same path as the current file
             std::string tempPath = OpenXLSX::GenerateRandomNameInSamePath(filename, 20);
 
             // ===== Prepare an temporary archive file with the random filename;
@@ -1090,8 +1092,8 @@ namespace Zippy
 
             // ===== Close the current archive, delete the file with input filename (if it exists), rename the temporary and call Open.
             Close();
-            std::filesystem::remove(filename.c_str());
-            std::filesystem::rename(tempPath.c_str(), filename.c_str());
+            OpenXLSX::remove(filename.c_str());
+            OpenXLSX::rename(tempPath.c_str(), filename.c_str()); // forward to function supporting unicode on Windows
             Open(filename);
         }
 

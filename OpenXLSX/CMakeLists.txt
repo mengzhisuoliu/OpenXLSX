@@ -32,7 +32,11 @@ set(IGNORE_ME ${CMAKE_C_COMPILER}) # Suppress CMake warning message
 #=======================================================================================================================
 option(OPENXLSX_COMPACT_MODE "Build library in compact mode (slower, but uses less memory)" OFF)
 option(OPENXLSX_ENABLE_LTO "Enables Link-Time Optimization (LTO)" ON)
-set(OPENXLSX_LIBRARY_TYPE "STATIC" CACHE STRING "Set the library type to SHARED or STATIC")
+if (OPENXLSX_SHARED_LIBRARY)
+    set(OPENXLSX_LIBRARY_TYPE "SHARED" CACHE STRING "Set the library type to SHARED")
+else()
+    set(OPENXLSX_LIBRARY_TYPE "STATIC" CACHE STRING "Set the library type to STATIC")
+endif()
 
 #=======================================================================================================================
 # EXTERNAL LIBRARIES

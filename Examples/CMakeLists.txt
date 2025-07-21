@@ -8,7 +8,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 #=======================================================================================================================
 # Include boost::nowide library (required for Demo4)
 #=======================================================================================================================
-if (WIN32)
+if (${OPENXLSX_ENABLE_NOWIDE})
     add_subdirectory(external/nowide EXCLUDE_FROM_ALL)
 endif()
 
@@ -44,13 +44,12 @@ target_link_libraries(Demo3 PRIVATE OpenXLSX::OpenXLSX)
 #=======================================================================================================================
 add_executable(Demo4 Demo4.cpp)
 target_link_libraries(Demo4 PRIVATE OpenXLSX::OpenXLSX)
-if (WIN32)
-    target_link_libraries(Demo4 PRIVATE nowide::nowide)
-endif()
-
-if (OPENXLSX_ENABLE_NOWIDE)
+if (${OPENXLSX_ENABLE_NOWIDE})
     target_compile_definitions(Demo4 PRIVATE ENABLE_NOWIDE)
-endif ()
+    add_library(NoWide INTERFACE IMPORTED)
+    target_include_directories(NoWide SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/OpenXLSX/external/nowide/>)
+    target_link_libraries(Demo4 PRIVATE $<BUILD_INTERFACE:NoWide>)
+endif()
 
 #=======================================================================================================================
 # Define Demo9 target

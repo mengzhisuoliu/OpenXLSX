@@ -7,6 +7,17 @@ Microsoft Excel® files, with the .xlsx format.
 
 As the heading says - the latest "Release" that is shown on https://github.com/troldal/OpenXLSX/releases is from 2021-11-06, and severely outdated - please pull / download the latest SW version directly from the repository in its current state. Link for those that do not want to use ```git```: https://github.com/troldal/OpenXLSX/archive/refs/heads/master.zip
 
+## TBD / TODO:
+* with cmake pulling in zippy, is ```boost::nowide``` still needed at all on Windows?
+* if nowide is needed: ```headers/detail/Zippy.hpp``` for call to ```mz_zip_reader_init_file``` TBD: does miniz support unicode filenames on Windows?
+
+## (aral-matrix) 21 July 2025 - included nowide support in ```OpenXLSXFileSystemTools```, cleaned up cmake and GNU make options
+* BUGFIX ```Examples/CMakeLists.txt``` for Demo4 (to be tested): correctly add ```external/nowide``` to the include path
+* added to cmake and GNU make: option ```OPENXLSX_ENABLE_LIBPUGIXML``` - set to ```ON``` to use an installed ```libpugixml```
+* added to GNU make: (already existed in cmake) option ```OPENXLSX_ENABLE_LIBZIP``` - set to ```ON``` to use an installed ```libzip```
+* added to cmake: option ```OPENXLSX_SHARED_LIBRARY``` - set to ```ON``` for shared library build, ```OFF``` builds the static library
+* added to GNU make: option stub (unsupported for now) ```OPENXLSX_SHARED_LIBRARY```
+
 ## (aral-matrix) 20 July 2025 - enabled compilation against ```libpugixml``` installed on the operating system
 * hid ```XLXmlParser``` from public OpenXLSX API - this should address conflicts with ```pugixml.hpp``` headers available elsewhere
 * enabled compilation against ```libpugixml``` - for cmake, variable is ```OPENXLSX_ENABLE_LIBPUGIXML```, in Makefile.GNU, variable is ```USE_LIBPUGIXML``` - set to yes if system installed library shall be used

@@ -10,6 +10,8 @@
 
 #include <zip.h>        // libzip
 
+#include "detail/OpenXLSXFileSystemTools.hpp"   // OpenXLSX::GenerateRandomNameInSamePath, OpenXLSX::fopen, OpenXLSX::remove, OpenXLSX::rename
+
 namespace LibZip {
     /**
      * @brief The LibZipException class is a custom exception class derived from the std::runtime_error class.
@@ -41,35 +43,13 @@ namespace LibZip {
     };
 
 
-    /**
-     * @brief Generates a random filename, which is used to generate a temporary archive when modifying and saving
-     * archive files.
-     * @param length The length of the filename to create.
-     * @return Returns the generated filenamen, appended with '.tmp'.
-     */
-    inline std::string GenerateRandomName(int length)
-    {
-        std::string letters = "abcdefghijklmnopqrstuvwxyz0123456789";
-
-        std::random_device                 rand_dev;
-        std::mt19937                       generator(rand_dev());
-        std::uniform_int_distribution<int> distr(0, letters.size() - 1);
-
-        std::string result;
-        for (int i = 0; i < length; ++i) {
-            result += letters[distr(generator)];
-        }
-
-        return result + ".tmp";
-    }
-
     class ZipArchive {
     private:
         void           *m_zipData;    // the raw data of the unmodified source archive, (re-)set on ZipArchive::Open
         size_t          m_zipSize;    // the size in bytes of the unmodified source archive stored at m_zipData
         zip_error_t     m_zipError;   // TBD how useful: save zip_error_t states across different methods
         zip_source_t   *m_zipSrc;     // the zip source, as opposed to the archive - TBD what the logic of this is
-        zip_t          *m_za;         // the zip archive - changed must be commited before they can be read via GetEntryDataAsString
+        zip_t          *m_za;         // the zip archive - changes must be committed before they can be read via GetEntryDataAsString
         std::string     m_name;       // name of the archive file for which ZipArchive::Open was called
 
         /**
@@ -126,7 +106,7 @@ namespace LibZip {
                 return -1;
             }
 
-            FILE *fp = fopen(filename.c_str(), "r");
+            FILE *fp = OpenXLSX::fopen(filename.c_str(), "r");
             if (fp == nullptr) {
                 free(m_zipData);
                 m_zipData = nullptr;
@@ -157,28 +137,10 @@ namespace LibZip {
          */
         int saveArchiveFile(void *data, size_t size, std::string filename)
         {
-        #ifdef _WIN32
-            std::replace( filename.begin(), filename.end(), '\\', '/' ); // pull request #210, alternate fix: fopen etc work fine with forward slashes
-        #endif
-
-            // ===== Determine path of the current file
-            size_t pathPos = filename.rfind('/');
-
-            // pull request #191, support AmigaOS style paths
-        #ifdef __amigaos__
-            constexpr const char * localFolder = "";    // local folder on AmigaOS can not be explicitly expressed in a path
-            if (pathPos == std::string::npos) pathPos = filename.rfind(':'); // if no '/' found, attempt to find amiga drive root path
-        #else
-            constexpr const char * localFolder = "./"; // local folder on _WIN32 && __linux__ is .
-        #endif
-            std::string tempPath{};
-            if (pathPos != std::string::npos) tempPath = filename.substr(0, pathPos + 1);
-            else tempPath = localFolder; // prepend explicit identification of local folder in case path did not contain a folder
-
             // ===== Generate a random file name with the same path as the current file
-            tempPath = tempPath + GenerateRandomName(20);
+            std::string tempPath = OpenXLSX::GenerateRandomNameInSamePath(filename, 20);
 
-            FILE *fp = fopen(tempPath.c_str(), "wb");
+            FILE *fp = OpenXLSX::fopen(tempPath.c_str(), "wb");
             if (fp  == nullptr) {
                 fprintf(stderr, "ZipArchive::saveArchiveFile: can't open %s: %s\n", tempPath.c_str(), strerror(errno));
                 return -1;
@@ -192,8 +154,8 @@ namespace LibZip {
                 fprintf(stderr, "ZipArchive::saveArchiveFile: can't close %s: %s\n", tempPath.c_str(), strerror(errno));
                 return -1;
             }
-            std::filesystem::remove(filename.c_str());
-            std::filesystem::rename(tempPath.c_str(), filename.c_str());
+            OpenXLSX::remove(filename.c_str());
+            OpenXLSX::rename(tempPath.c_str(), filename.c_str()); // forward to function supporting unicode on Windows
 
             return 0;
         }
@@ -226,8 +188,7 @@ namespace LibZip {
          * @throw LibZipInputError if archive is not open
          */
         void Close() {
-            if (!IsOpen())
-                throw LibZipInputError("ZipArchive::Close: archive is not open!");
+            if (!IsOpen()) throw LibZipInputError("ZipArchive::Close: archive is not open!");
 
 // struct zip_file_attributes {
 //     zip_uint64_t valid;                     /* which fields have valid values */
@@ -301,7 +262,9 @@ namespace LibZip {
          */
         void Save(std::string savePath)
         {
-            if (savePath == "") // saving in original file location!
+            if (!IsOpen()) throw LibZipInputError("ZipArchive::Save: archive is not open!");
+
+            if (savePath.empty()) // saving in original file location!
                 savePath = m_name;
 
             zip_source_keep(m_zipSrc); // ensure that m_zipSrc survives zip_close

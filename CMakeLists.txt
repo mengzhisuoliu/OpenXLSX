@@ -36,7 +36,8 @@ option(OPENXLSX_BUILD_TESTS "Build and run library tests" ON)
 option(OPENXLSX_BUILD_BENCHMARKS "Build and run library benchmarks" OFF)
 option(OPENXLSX_ENABLE_LIBPUGIXML "Enable using libpugixml" OFF)
 option(OPENXLSX_ENABLE_LIBZIP "Enable using libzip" OFF)
-option(OPENXLSX_ENABLE_LIBZIP_EXAMPLE "Build Demo1A example using libzip" OFF)
+option(OPENXLSX_ENABLE_LIBZIP_EXAMPLE "Build Demo1A example using libzip - requires libbz2-dev" OFF)
+option(OPENXLSX_SHARED_LIBRARY "Builds the shared library" OFF)
 
 #=======================================================================================================================
 # Add project configurations (#ifdef / #ifndef testable)
