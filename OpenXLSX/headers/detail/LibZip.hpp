@@ -2,7 +2,6 @@
 #define LIBZIP_WRAPPER_H
 
 #include <cstdio>       // fprintf
-#include <filesystem>   // std::filesystem::remove, std::filesystem::rename
 #include <random>       // std::random_device, std::mt19937, std::uniform_int_distribution
 #include <string>       // std::string
 #include <string.h>     // strerror
