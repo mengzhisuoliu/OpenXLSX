@@ -1,14 +1,13 @@
 #ifndef OPENXLSX_TOOLS_H
 #define OPENXLSX_TOOLS_H
 
-#include <iostream>
 #ifdef ENABLE_NOWIDE
     // #include <nowide/stat.hpp>
     #include <nowide/cstdio.hpp>    // nowide::fopen, nowide::remove, nowide::rename
 #else
     #include <cstdio>       // std::fopen
+    #include <filesystem>   // std::filesystem::remove, std::filesystem::rename
 #endif
-#include <filesystem>   // std::filesystem::remove, std::filesystem::rename
 #include <random>       // std::random_device, std::mt19937, std::uniform_int_distribution
 #include <string>       // std::string
 #include <sys/stat.h>   // for stat, to test if a file exists and whether a file is a directory
@@ -85,10 +84,8 @@ namespace OpenXLSX
     inline FILE* fopen( std::string filename, std::string mode )
     {
 #       ifdef ENABLE_NOWIDE
-std::cout << __func__ << ": using boost::nowide!" << std::endl;
             return nowide::fopen(filename.c_str(), mode.c_str());
 #       else
-std::cout << __func__ << ": using std::filesystem!" << std::endl;
             return std::fopen(filename.c_str(), mode.c_str());
 #       endif
     }
@@ -157,10 +154,8 @@ std::cout << __func__ << ": using std::filesystem!" << std::endl;
     inline bool remove(std::string const &p )
     {
 #       ifdef ENABLE_NOWIDE
-std::cout << __func__ << ": using boost::nowide!" << std::endl;
             return nowide::remove(p.c_str());
 #       else
-std::cout << __func__ << ": using std::filesystem!" << std::endl;
             return std::filesystem::remove(p.c_str());
 #       endif
     }
@@ -175,10 +170,8 @@ std::cout << __func__ << ": using std::filesystem!" << std::endl;
     inline void rename(std::string const &old_p, std::string const &new_p )
     {
 #       ifdef ENABLE_NOWIDE
-std::cout << __func__ << ": using boost::nowide!" << std::endl;
             nowide::rename(old_p.c_str(), new_p.c_str());
 #       else
-std::cout << __func__ << ": using std::filesystem!" << std::endl;
             std::filesystem::rename(old_p.c_str(), new_p.c_str());
 #       endif
     }

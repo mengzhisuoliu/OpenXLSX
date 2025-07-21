@@ -6,10 +6,12 @@ project(OpenXLSX.Examples)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 #=======================================================================================================================
-# Include boost::nowide library (required for Demo4)
+# Include boost::nowide library (required for Demo1A and Demo4)
 #=======================================================================================================================
 if (${OPENXLSX_ENABLE_NOWIDE})
-    add_subdirectory(external/nowide EXCLUDE_FROM_ALL)
+    add_subdirectory(external/nowide EXCLUDE_FROM_ALL) # TBD if this line is needed at all
+    add_library(NoWide INTERFACE IMPORTED)
+    target_include_directories(NoWide SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/OpenXLSX/external/nowide/>)
 endif()
 
 #=======================================================================================================================
@@ -25,6 +27,10 @@ if(${OPENXLSX_ENABLE_LIBZIP_EXAMPLE})
     find_package(LIBZIP MODULE REQUIRED)
     add_executable(Demo1A Demo1A.cpp)
     target_link_libraries(Demo1A PRIVATE OpenXLSX::OpenXLSX libzip::zip)
+    if (${OPENXLSX_ENABLE_NOWIDE})
+        target_compile_definitions(Demo1A PRIVATE ENABLE_NOWIDE)
+        target_link_libraries(Demo1A PRIVATE $<BUILD_INTERFACE:NoWide>)
+    endif()
 endif()
 
 #=======================================================================================================================
@@ -46,8 +52,6 @@ add_executable(Demo4 Demo4.cpp)
 target_link_libraries(Demo4 PRIVATE OpenXLSX::OpenXLSX)
 if (${OPENXLSX_ENABLE_NOWIDE})
     target_compile_definitions(Demo4 PRIVATE ENABLE_NOWIDE)
-    add_library(NoWide INTERFACE IMPORTED)
-    target_include_directories(NoWide SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/OpenXLSX/external/nowide/>)
     target_link_libraries(Demo4 PRIVATE $<BUILD_INTERFACE:NoWide>)
 endif()
 

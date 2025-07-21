@@ -10,9 +10,12 @@ As the heading says - the latest "Release" that is shown on https://github.com/t
 ## TBD / TODO:
 * with cmake pulling in zippy, is ```boost::nowide``` still needed at all on Windows?
 * if nowide is needed: ```headers/detail/Zippy.hpp``` for call to ```mz_zip_reader_init_file``` TBD: does miniz support unicode filenames on Windows?
+* is ```add_subdirectory(external/nowide EXCLUDE_FROM_ALL)``` needed in ```Examples/CMakeLists.txt```?
 
 ## (aral-matrix) 21 July 2025 - included nowide support in ```OpenXLSXFileSystemTools```, cleaned up cmake and GNU make options
 * BUGFIX ```Examples/CMakeLists.txt``` for Demo4 (to be tested): correctly add ```external/nowide``` to the include path
+* BUGFIX ```Examples/CMakeLists.txt``` for Demo1A (to be tested): correctly add ```external/nowide``` to the include path
+* updated ```Demo1A``` CustomZip implementation to fit the modified ```IZipArchive``` concept
 * added to cmake and GNU make: option ```OPENXLSX_ENABLE_LIBPUGIXML``` - set to ```ON``` to use an installed ```libpugixml```
 * added to GNU make: (already existed in cmake) option ```OPENXLSX_ENABLE_LIBZIP``` - set to ```ON``` to use an installed ```libzip```
 * added to cmake: option ```OPENXLSX_SHARED_LIBRARY``` - set to ```ON``` for shared library build, ```OFF``` builds the static library
