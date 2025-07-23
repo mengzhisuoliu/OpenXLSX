@@ -202,7 +202,7 @@ XLCellIterator& XLCellIterator::operator=(const XLCellIterator& other)
         m_sharedStrings =  other.m_sharedStrings;
         m_endReached    =  other.m_endReached;
         *m_hintNode     =  *other.m_hintNode;
-        m_hintRow       =  other.m_currentRow;
+        m_hintRow       =  other.m_hintRow;
         m_currentCell   =  other.m_currentCell;
         m_currentCellStatus = other.m_currentCellStatus;
         m_currentRow    =  other.m_currentRow;
@@ -217,24 +217,6 @@ XLCellIterator& XLCellIterator::operator=(const XLCellIterator& other)
  * @details
  */
 XLCellIterator& XLCellIterator::operator=(XLCellIterator&& other) noexcept = default;
-// {
-//     if (&other != this) {
-//         m_dataNode      = std::move(other.m_dataNode);
-//         m_topLeft       = std::move(other.m_topLeft);
-//         m_bottomRight   = std::move(other.m_bottomRight);
-//         m_sharedStrings = std::move(other.m_sharedStrings);
-//         m_endReached    = other.m_endReached;
-//         m_hintNode      = std::move(other.m_hintNode);
-//         m_hintRow       = other.m_currentRow;
-//         m_currentCell   = std::move(other.m_currentCell);
-//         m_currentCellStatus = other.m_currentCellStatus;
-//         m_currentRow    =  other.m_currentRow;
-//         m_currentColumn =  other.m_currentColumn;
-//         m_colStyles     =  other.m_colStyles;
-//     }
-//
-//     return *this;
-// }
 
 /**
  * @brief update m_currentCell by fetching (or inserting) a cell at m_currentRow, m_currentColumn
