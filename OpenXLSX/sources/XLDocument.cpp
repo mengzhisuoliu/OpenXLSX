@@ -437,12 +437,22 @@ XLDocument::XLDocument(const std::string& docPath, const IZipArchive& zipArchive
 }
 
 /**
+ * @details explicit default move constructor
+ */
+XLDocument::XLDocument(XLDocument&& other) noexcept = default;
+
+/**
  * @details The destructor calls the closeDocument method before the object is destroyed.
  */
 XLDocument::~XLDocument()
 {
     if (isOpen()) close();// 2024-05-31 prevent double-close if document has been manually closed before
 }
+
+/**
+ * @details explicit default move assignment operator
+ */
+XLDocument& XLDocument::operator=(XLDocument&& other) noexcept = default;
 
 /**
 * @details disable m_suppressWarnings

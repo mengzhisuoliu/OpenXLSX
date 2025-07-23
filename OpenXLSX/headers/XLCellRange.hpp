@@ -97,14 +97,12 @@ namespace OpenXLSX
         /**
          * @brief Copy constructor
          * @param other The range object to be copied.
-         * @note This implements the default copy constructor, i.e. memberwise copying.
          */
         XLCellRange(const XLCellRange& other);
 
         /**
          * @brief Move constructor
          * @param other The range object to be moved.
-         * @note This implements the default move constructor, i.e. memberwise move.
          */
         XLCellRange(XLCellRange&& other) noexcept;
 
@@ -117,9 +115,8 @@ namespace OpenXLSX
         /**
          * @brief The copy assignment operator [default]
          * @param other The range object to be copied and assigned.
-         * @return A reference to the new object.
-         * @throws A std::range_error if the source range and destination range are of different size and shape.
-         * @note This implements the default copy assignment operator.
+         * @return reference to the new object.
+         * @throws std::range_error if the source range and destination range are of different size and shape.
          */
         XLCellRange& operator=(const XLCellRange& other);
 

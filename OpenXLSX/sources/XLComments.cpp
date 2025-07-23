@@ -98,16 +98,47 @@ namespace {
 //  {}
 
 /**
-* @details
-*/
+ * @details
+ */
 XLComment::XLComment(const XMLNode& node)
  : m_commentNode(std::make_unique<XMLNode>(node))
  {}
 
 /**
+ * @details
+ */
+XLComment::XLComment(const XLComment& other) // = default;
+ : m_commentNode(std::make_unique<XMLNode>(*other.m_commentNode))
+ {}
+
+
+/**
+ * @details
+ */
+XLComment::XLComment(XLComment&& other) noexcept = default;
+
+/**
 * @details
 */
 XLComment::~XLComment() = default;
+
+/**
+ * @details explicit copy assignment
+ */
+XLComment& XLComment::operator=(const XLComment& other) // = default;
+{
+    if (&other != this) {
+        XLComment temp = other;  // copy-construct
+        *this = std::move(temp); // move-assign & invalidate temp
+    }
+    return *this;
+}
+
+
+/**
+ * @details
+ */
+XLComment& XLComment::operator=(XLComment&& other) noexcept = default;
 
 /**
  * @details

@@ -85,13 +85,13 @@ namespace OpenXLSX
          * @brief Copy Constructor.
          * @param other Object to be copied.
          */
-        XLComment(const XLComment& other) = default;
+        XLComment(const XLComment& other);
 
         /**
          * @brief Move Constructor.
          * @param other Object to be moved.
          */
-        XLComment(XLComment&& other) noexcept = default;
+        XLComment(XLComment&& other) noexcept;
 
         /**
          * @brief
@@ -103,14 +103,14 @@ namespace OpenXLSX
          * @param other Right hand side of assignment operation.
          * @return A reference to the lhs object.
          */
-        XLComment& operator=(const XLComment& other) = default;
+        XLComment& operator=(const XLComment& other);
 
         /**
          * @brief Move assignment operator.
          * @param other Right hand side of assignment operation.
          * @return A reference to lhs object.
          */
-        XLComment& operator=(XLComment&& other) noexcept = default;
+        XLComment& operator=(XLComment&& other) noexcept;
 
         /**
          * @brief Test if XLComment is linked to valid XML

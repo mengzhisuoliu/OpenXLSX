@@ -137,16 +137,16 @@ namespace OpenXLSX
 
         /**
          * @brief Copy constructor
-         * @param other The object to copy
+         * @param other XLDocument to copy
          * @note Copy constructor explicitly deleted.
          */
         XLDocument(const XLDocument& other) = delete;
 
         /**
-         * @brief
-         * @param other
+         * @brief Move constructor
+         * @param other XLDocument to construct from
          */
-        XLDocument(XLDocument&& other) noexcept = default;
+        XLDocument(XLDocument&& other) noexcept;
 
         /**
          * @brief Destructor
@@ -161,11 +161,11 @@ namespace OpenXLSX
         XLDocument& operator=(const XLDocument& other) = delete;
 
         /**
-         * @brief
+         * @brief move assignment operator
          * @param other
          * @return
          */
-        XLDocument& operator=(XLDocument&& other) noexcept = default;
+        XLDocument& operator=(XLDocument&& other) noexcept;
 
         /**
          * @brief ensure that warnings are shown (default setting)
