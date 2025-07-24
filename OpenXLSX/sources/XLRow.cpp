@@ -118,7 +118,7 @@ namespace OpenXLSX
     XLRow& XLRow::operator=(const XLRow& other)
     {
         if (&other != this) {
-            auto temp = XLRow(other);
+            XLRow temp = XLRow(other);
             std::swap(*this, temp);
         }
         return *this;
@@ -403,16 +403,12 @@ namespace OpenXLSX
     }
 
     /**
-     * @details
-     * @pre
-     * @post
+     * @details explicit default destructor
      */
     XLRowIterator::~XLRowIterator() = default;
 
     /**
-     * @details
-     * @pre
-     * @post
+     * @details copy constructor
      */
     XLRowIterator::XLRowIterator(const XLRowIterator& other)
         : m_dataNode(std::make_unique<XMLNode>(*other.m_dataNode)),
@@ -428,31 +424,24 @@ namespace OpenXLSX
     {}
 
     /**
-     * @details
-     * @pre
-     * @post
+     * @details explicit default move constructor
      */
     XLRowIterator::XLRowIterator(XLRowIterator&& other) noexcept = default;
 
     /**
-     * @details
-     * @pre
-     * @post
+     * @details copy assignment operator
      */
     XLRowIterator& XLRowIterator::operator=(const XLRowIterator& other)
     {
         if (&other != this) {
-            auto temp = XLRowIterator(other);
+            XLRowIterator temp = XLRowIterator(other);
             std::swap(*this, temp);
         }
-
         return *this;
     }
 
     /**
-     * @details
-     * @pre
-     * @post
+     * @details explicit default move assignment operator
      */
     XLRowIterator& XLRowIterator::operator=(XLRowIterator&& other) noexcept = default;
 
@@ -635,9 +624,7 @@ namespace OpenXLSX
     {}
 
     /**
-     * @details
-     * @pre
-     * @post
+     * @details copy constructor
      */
     XLRowRange::XLRowRange(const XLRowRange& other)
         : m_dataNode(std::make_unique<XMLNode>(*other.m_dataNode)),
@@ -647,28 +634,22 @@ namespace OpenXLSX
     {}
 
     /**
-     * @details
-     * @pre
-     * @post
+     * @details explicit default move constructor
      */
     XLRowRange::XLRowRange(XLRowRange&& other) noexcept = default;
 
     /**
-     * @details
-     * @pre
-     * @post
+     * @details explicit default destructor
      */
     XLRowRange::~XLRowRange() = default;
 
     /**
-     * @details
-     * @pre
-     * @post
+     * @details copy assignment operator
      */
     XLRowRange& XLRowRange::operator=(const XLRowRange& other)
     {
         if (&other != this) {
-            auto temp = XLRowRange(other);
+            XLRowRange temp = XLRowRange(other);
             std::swap(*this, temp);
         }
 
@@ -676,30 +657,22 @@ namespace OpenXLSX
     }
 
     /**
-     * @details
-     * @pre
-     * @post
+     * @details explicit default move assignment operator
      */
     XLRowRange& XLRowRange::operator=(XLRowRange&& other) noexcept = default;
 
     /**
      * @details
-     * @pre
-     * @post
      */
     uint32_t XLRowRange::rowCount() const { return m_lastRow - m_firstRow + 1; }
 
     /**
      * @details
-     * @pre
-     * @post
      */
     XLRowIterator XLRowRange::begin() { return XLRowIterator(*this, XLIteratorLocation::Begin); }
 
     /**
      * @details
-     * @pre
-     * @post
      */
     XLRowIterator XLRowRange::end() { return XLRowIterator(*this, XLIteratorLocation::End); }
 

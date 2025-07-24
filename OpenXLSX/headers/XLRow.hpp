@@ -110,13 +110,11 @@ namespace OpenXLSX
 
         /**
          * @brief Copy assignment operator.
-         * @note The copy assignment operator is explicitly deleted.
          */
         XLRow& operator=(const XLRow& other);
 
         /**
          * @brief Move assignment operator.
-         * @note The move assignment operator has been explicitly deleted.
          */
         XLRow& operator=(XLRow&& other) noexcept;
 
@@ -283,7 +281,7 @@ namespace OpenXLSX
         using reference         = XLRow&;
 
         /**
-         * @brief
+         * @brief constructor
          * @param rowRange
          * @param loc
          */
@@ -295,26 +293,26 @@ namespace OpenXLSX
         ~XLRowIterator();
 
         /**
-         * @brief
+         * @brief copy constructor
          * @param other
          */
         XLRowIterator(const XLRowIterator& other);
 
         /**
-         * @brief
+         * @brief move constructor
          * @param other
          */
         XLRowIterator(XLRowIterator&& other) noexcept;
 
         /**
-         * @brief
+         * @brief copy assignment operator
          * @param other
          * @return
          */
         XLRowIterator& operator=(const XLRowIterator& other);
 
         /**
-         * @brief
+         * @brief move assignment operator
          * @param other
          * @return
          */
@@ -424,7 +422,7 @@ namespace OpenXLSX
 
     public:
         /**
-         * @brief
+         * @brief constructor
          * @param dataNode
          * @param first
          * @param last
@@ -433,31 +431,31 @@ namespace OpenXLSX
         explicit XLRowRange(const XMLNode& dataNode, uint32_t first, uint32_t last, const XLSharedStrings& sharedStrings);
 
         /**
-         * @brief
+         * @brief copy constructor
          * @param other
          */
         XLRowRange(const XLRowRange& other);
 
         /**
-         * @brief
+         * @brief move constructor
          * @param other
          */
         XLRowRange(XLRowRange&& other) noexcept;
 
         /**
-         * @brief
+         * @brief destructor
          */
         ~XLRowRange();
 
         /**
-         * @brief
+         * @brief copy assignment operator
          * @param other
          * @return
          */
         XLRowRange& operator=(const XLRowRange& other);
 
         /**
-         * @brief
+         * @brief move assignment operator
          * @param other
          * @return
          */
