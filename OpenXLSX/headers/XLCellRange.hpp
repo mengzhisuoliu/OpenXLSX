@@ -101,22 +101,20 @@ namespace OpenXLSX
         XLCellRange(const XLCellRange& other);
 
         /**
-         * @brief Move constructor
+         * @brief Move constructor [default]
          * @param other The range object to be moved.
          */
         XLCellRange(XLCellRange&& other) noexcept;
 
         /**
          * @brief Destructor [default]
-         * @note This implements the default destructor.
          */
         ~XLCellRange();
 
         /**
-         * @brief The copy assignment operator [default]
+         * @brief The copy assignment operator
          * @param other The range object to be copied and assigned.
          * @return reference to the new object.
-         * @throws std::range_error if the source range and destination range are of different size and shape.
          */
         XLCellRange& operator=(const XLCellRange& other);
 
@@ -124,7 +122,6 @@ namespace OpenXLSX
          * @brief The move assignment operator [default].
          * @param other The range object to be moved and assigned.
          * @return A reference to the new object.
-         * @note This implements the default move assignment operator.
          */
         XLCellRange& operator=(XLCellRange&& other) noexcept;
 

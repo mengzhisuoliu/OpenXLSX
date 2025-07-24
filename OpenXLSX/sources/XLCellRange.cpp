@@ -126,17 +126,6 @@ XLCellRange& XLCellRange::operator=(const XLCellRange& other)
  * @details use the default move assignment, i.e. memberwise move.
  */
 XLCellRange& XLCellRange::operator=(XLCellRange&& other) noexcept = default;
-// {
-//     if (&other != this) {
-//         m_dataNode      = std::move(other.m_dataNode);
-//         m_topLeft       = std::move(other.m_topLeft);
-//         m_bottomRight   = std::move(other.m_bottomRight);
-//         m_sharedStrings = std::move(other.m_sharedStrings);
-//         m_columnStyles  = std::move(other.m_columnStyles);
-//     }
-//
-//     return *this;
-// }
 
 /**
  * @details Predetermine all defined column styles & gather them in a vector for performant access when XLCellIterator creates new cells
