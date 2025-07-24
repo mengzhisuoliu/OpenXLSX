@@ -105,9 +105,9 @@ XLComment::XLComment(const XMLNode& node)
  {}
 
 /**
- * @details
+ * @details copy constructor
  */
-XLComment::XLComment(const XLComment& other) // = default;
+XLComment::XLComment(const XLComment& other)
  : m_commentNode(std::make_unique<XMLNode>(*other.m_commentNode))
  {}
 
@@ -123,9 +123,9 @@ XLComment::XLComment(XLComment&& other) noexcept = default;
 XLComment::~XLComment() = default;
 
 /**
- * @details explicit copy assignment
+ * @details copy assignment operator
  */
-XLComment& XLComment::operator=(const XLComment& other) // = default;
+XLComment& XLComment::operator=(const XLComment& other)
 {
     if (&other != this) {
         XLComment temp = other;  // copy-construct
@@ -133,7 +133,6 @@ XLComment& XLComment::operator=(const XLComment& other) // = default;
     }
     return *this;
 }
-
 
 /**
  * @details
@@ -250,7 +249,7 @@ XLComments::~XLComments() = default;
 XLComments& XLComments::operator=(XLComments&& other) noexcept
 {
     if (&other != this) {
-        XLXmlFile::operator=(std::move(other));
+        XLXmlFile::operator=(std::move(other)); // TBD: std::move of xvalue other is possibly redundant here
         m_authors          = std::move(other.m_authors);
         m_commentList      = std::move(other.m_commentList);
         m_vmlDrawing       = std::move(other.m_vmlDrawing);

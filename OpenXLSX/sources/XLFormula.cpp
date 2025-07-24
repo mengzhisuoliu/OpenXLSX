@@ -62,12 +62,27 @@ XLFormula& XLFormula::clear()
 XLFormula::operator std::string() const { return get(); }
 
 /**
- * @details Constructor. Set the m_cell and m_cellNode objects.
+ * @details [private] Constructor. Set the m_cell and m_cellNode objects.
  */
-XLFormulaProxy::XLFormulaProxy(XLCell* cell, XMLNode* cellNode) : m_cell(cell), m_cellNode(cellNode)
+XLFormulaProxy::XLFormulaProxy(XLCell* cell, XMLNode* cellNode)
+ : m_cell(cell),
+   m_cellNode(cellNode)
 {
     assert(cell);    // NOLINT
 }
+
+/**
+ * @details [private] Copy constructor
+ */
+XLFormulaProxy::XLFormulaProxy(const XLFormulaProxy& other)
+ : m_cell(other.m_cell),
+   m_cellNode(other.m_cellNode)
+{}
+
+/**
+ * @details [private] Move constructor. Default implementation.
+ */
+XLFormulaProxy::XLFormulaProxy(XLFormulaProxy&& other) noexcept = default;
 
 /**
  * @details Destructor. Default implementation.
@@ -75,17 +90,7 @@ XLFormulaProxy::XLFormulaProxy(XLCell* cell, XMLNode* cellNode) : m_cell(cell), 
 XLFormulaProxy::~XLFormulaProxy() = default;
 
 /**
- * @details Copy constructor. default implementation.
- */
-XLFormulaProxy::XLFormulaProxy(const XLFormulaProxy& other) = default;
-
-/**
- * @details Move constructor. Default implementation.
- */
-XLFormulaProxy::XLFormulaProxy(XLFormulaProxy&& other) noexcept = default;
-
-/**
- * @details Calls the templated string assignment operator.
+ * @details Copy assignment operator. Calls the templated string assignment operator.
  */
 XLFormulaProxy& XLFormulaProxy::operator=(const XLFormulaProxy& other)
 {
@@ -97,7 +102,7 @@ XLFormulaProxy& XLFormulaProxy::operator=(const XLFormulaProxy& other)
 }
 
 /**
- * @details Move assignment operator. Default implementation.
+ * @details [private] Move assignment operator. Default implementation.
  */
 XLFormulaProxy& XLFormulaProxy::operator=(XLFormulaProxy&& other) noexcept = default;
 

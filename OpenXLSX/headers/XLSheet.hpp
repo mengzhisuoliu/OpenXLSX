@@ -891,6 +891,8 @@ namespace OpenXLSX
 
         /**
          * @brief Copy Constructor.
+         * @warning Use comments() and vmlDrawing() with extreme caution: the underlying XLVmlDrawing class manages the last assigned shape id, and *will* create invalid XML
+         *   if two separate variables are used to create VML drawings or comments within the same worksheet
          */
         XLWorksheet(const XLWorksheet& other);
 
@@ -901,6 +903,8 @@ namespace OpenXLSX
 
         /**
          * @brief Copy assignment operator.
+         * @warning Use comments() and vmlDrawing() with extreme caution: the underlying XLVmlDrawing class manages the last assigned shape id, and *will* create invalid XML
+         *   if two separate variables are used to create VML drawings or comments within the same worksheet
          */
         XLWorksheet& operator=(const XLWorksheet& other);
 

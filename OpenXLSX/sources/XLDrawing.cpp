@@ -167,6 +167,39 @@ XLShapeClientData::XLShapeClientData(const XMLNode& node)
  : m_clientDataNode(std::make_unique<XMLNode>(node))
 {}
 
+/**
+* @details copy constructor
+*/
+XLShapeClientData::XLShapeClientData(const XLShapeClientData& other)
+ : m_clientDataNode(std::make_unique<XMLNode>(*other.m_clientDataNode))
+{}
+
+/**
+* @details explicit default move constructor
+*/
+XLShapeClientData::XLShapeClientData(XLShapeClientData&& other) noexcept = default;
+
+/**
+ * @details explicit default destructor
+ */
+XLShapeClientData::~XLShapeClientData() = default;
+
+/**
+ * @details explicit copy assignment operator
+ */
+XLShapeClientData& XLShapeClientData::operator=(const XLShapeClientData& other)
+{
+    if (&other != this) {
+        XLShapeClientData temp = other;  // copy-construct
+        *this = std::move(temp);         // move-assign & invalidate temp
+    }
+    return *this;
+}
+
+/**
+ * @details explicit default move assignment operator
+ */
+XLShapeClientData& XLShapeClientData::operator=(XLShapeClientData&& other) noexcept = default;
 
 /**
  * @details XLShapeClientData getter functions
@@ -270,7 +303,7 @@ XLShapeStyle::XLShapeStyle(const XMLAttribute& styleAttribute)
 {}
 
 /**
- * @brief
+ * @brief explicit default destructor
  */
 XLShapeStyle::~XLShapeStyle() = default;
 
@@ -405,7 +438,39 @@ XLShape::XLShape() : m_shapeNode(std::make_unique<XMLNode>(XMLNode())) {}
 
 XLShape::XLShape(const XMLNode& node) : m_shapeNode(std::make_unique<XMLNode>(node)) {}
 
+/**
+ * @details copy constructor
+ */
+XLShape::XLShape(const XLShape& other)
+ : m_shapeNode(std::make_unique<XMLNode>(*other.m_shapeNode))
+ {}
+
+/**
+ * @details explicit default move constructor
+ */
+XLShape::XLShape(XLShape&& other) noexcept = default;
+
+/**
+ * @details explicit default destructor
+ */
 XLShape::~XLShape() = default;
+
+/**
+ * @details copy assignment operator
+ */
+XLShape& XLShape::operator=(const XLShape& other)
+{
+    if (&other != this) {
+        XLShape temp = other;    // copy-construct
+        *this = std::move(temp); // move-assign & invalidate temp
+    }
+    return *this;
+}
+
+/**
+ * @details explicit default move assignment operator
+ */
+XLShape& XLShape::operator=(XLShape&& other) noexcept = default;
 
 /**
  * @details getter functions: return the shape's attributes
@@ -523,6 +588,42 @@ XLVmlDrawing::XLVmlDrawing(XLXmlData* xmlData)
     appendAndGetAttribute(pathNode, "o:connecttype", "rect");
 }
 
+/**
+ * @details copy constructor
+ */
+XLVmlDrawing::XLVmlDrawing(const XLVmlDrawing& other)
+ : XLXmlFile(other), // base-class copy-constructor
+   m_shapeCount(other.m_shapeCount),
+   m_lastAssignedShapeId(other.m_lastAssignedShapeId),
+   m_defaultShapeTypeId(other.m_defaultShapeTypeId)
+{}
+
+/**
+ * @details explicit default move constructor
+ */
+XLVmlDrawing::XLVmlDrawing(XLVmlDrawing&& other) noexcept = default;
+
+/**
+ * @details explicit default destructor
+ */
+XLVmlDrawing::~XLVmlDrawing() = default;
+
+/**
+ * @details copy assignment operator
+ */
+XLVmlDrawing& XLVmlDrawing::operator=(const XLVmlDrawing& other)
+{
+    if (&other != this) {
+        XLVmlDrawing temp = other;  // copy-construct
+        *this = std::move(temp);    // move-assign & invalidate temp
+    }
+    return *this;
+}
+
+/**
+ * @details explicit default move assignment operator
+ */
+XLVmlDrawing& XLVmlDrawing::operator=(XLVmlDrawing&& other) noexcept = default;
 
 /**
  * @details get first shape node in document_element
@@ -667,7 +768,6 @@ XLShape XLVmlDrawing::createShape([[maybe_unused]] const XLShape& shapeTemplate 
     m_shapeCount++;
     return XLShape(node); // return object to manipulate new shape
 }
-
 
 /**
  * @details Print the underlying XML using pugixml::xml_node::print

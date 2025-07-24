@@ -104,26 +104,26 @@ namespace OpenXLSX
         ~XLMergeCells();
 
         /**
-         * @brief
+         * @brief Copy constructor
          * @param other
          */
         XLMergeCells(const XLMergeCells& other);
 
         /**
-         * @brief
+         * @brief Move constructor
          * @param other
          */
         XLMergeCells(XLMergeCells&& other);
 
         /**
-         * @brief
+         * @brief Copy assignment operator
          * @param other
          * @return
          */
         XLMergeCells& operator=(const XLMergeCells& other);
 
         /**
-         * @brief
+         * @brief Move assignment operator
          * @param other
          * @return
          */
