@@ -11,7 +11,12 @@
 // #include <libzippp.h>
 #include <zip.h>
 #ifdef ENABLE_NOWIDE
-    #include <nowide/cstdio.hpp>    // nowide::fopen, nowide::remove, nowide::rename
+#   ifdef ENABLE_LIBBOOST_NOWIDE
+        #include <boost/nowide/cstdio.hpp>
+        using namespace boost;
+#   else
+        #include <nowide/cstdio.hpp>    // nowide::fopen, nowide::remove, nowide::rename
+#   endif
 #else
     #include <cstdio>       // std::fopen
     #include <filesystem>   // std::filesystem::remove, std::filesystem::rename

@@ -8,9 +8,18 @@ Microsoft Excel® files, with the .xlsx format.
 As the heading says - the latest "Release" that is shown on https://github.com/troldal/OpenXLSX/releases is from 2021-11-06, and severely outdated - please pull / download the latest SW version directly from the repository in its current state. Link for those that do not want to use ```git```: https://github.com/troldal/OpenXLSX/archive/refs/heads/master.zip
 
 ## TBD / TODO:
-* with cmake pulling in zippy, is ```boost::nowide``` still needed at all on Windows?
-* if nowide is needed: ```headers/detail/Zippy.hpp``` for call to ```mz_zip_reader_init_file``` TBD: does miniz support unicode filenames on Windows?
-* is ```add_subdirectory(external/nowide EXCLUDE_FROM_ALL)``` needed in ```Examples/CMakeLists.txt```?
+* with cmake pulling in zippy, is `boost::nowide` still needed at all on Windows?
+* use of ```nowide``` stat in OpenXLSXFileSystemTools?
+* if nowide is needed: `headers/detail/Zippy.hpp` for call to `mz_zip_reader_init_file` TBD: does miniz support unicode filenames on Windows?
+* is `add_subdirectory(external/nowide EXCLUDE_FROM_ALL)` needed in `Examples/CMakeLists.txt`?
+
+## (aral-matrix) 30 July 2025 - enabled compilation against ```nowide``` installed on the operating system
+* added to cmake and GNU make: option `OPENXLSX_FORCE_NOWIDE` - set to `ON` to use force the use of `nowide` even on non-Windows systems (this flag is for testing purposes)
+* added to cmake and GNU make: option `OPENXLSX_ENABLE_LIBBOOST_NOWIDE` - set to `ON` to use `nowide` from an installed `libboost`
+* adjustments to accommodate system library `boost nowide` (include path starts with `boost/` and namespace is `boost::nowide` vs. `nowide`)
+* minor bugfixes: missing `#include <memory>` in `XLZipArchive.hpp`, `#include <stdexcept>` in `detail/LibZip.hpp`
+* added `Demo1A` to `Makefile.GNU`
+* added output of `nowide` status to `Demo4`
 
 ## (aral-matrix) 21 July 2025 - included nowide support in ```OpenXLSXFileSystemTools```, cleaned up cmake and GNU make options
 * BUGFIX ```Examples/CMakeLists.txt``` for Demo4 (to be tested): correctly add ```external/nowide``` to the include path

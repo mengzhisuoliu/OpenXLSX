@@ -3,6 +3,7 @@
 
 #include <cstdio>       // fprintf
 #include <random>       // std::random_device, std::mt19937, std::uniform_int_distribution
+#include <stdexcept>    // std::runtime_error
 #include <string>       // std::string
 #include <string.h>     // strerror
 #include <sys/stat.h>   // stat, struct stat

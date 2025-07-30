@@ -2,8 +2,15 @@
 #define OPENXLSX_TOOLS_H
 
 #ifdef ENABLE_NOWIDE
-    // #include <nowide/stat.hpp>
-    #include <nowide/cstdio.hpp>    // nowide::fopen, nowide::remove, nowide::rename
+    // TODO: use boost nowide stat!
+#   ifdef ENABLE_LIBBOOST_NOWIDE
+        // #include <boost/nowide/stat.hpp>
+        #include <boost/nowide/cstdio.hpp>    // nowide::fopen, nowide::remove, nowide::rename
+        using namespace boost;
+#   else
+        // #include <nowide/stat.hpp>
+        #include <nowide/cstdio.hpp>    // nowide::fopen, nowide::remove, nowide::rename
+#   endif
 #else
     #include <cstdio>       // std::fopen
     #include <filesystem>   // std::filesystem::remove, std::filesystem::rename

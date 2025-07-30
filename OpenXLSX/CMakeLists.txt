@@ -45,8 +45,12 @@ endif()
 #=======================================================================================================================
 
 if (OPENXLSX_ENABLE_NOWIDE)
-    add_library(NoWide INTERFACE IMPORTED)
-    target_include_directories(NoWide SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/external/nowide/>)
+    if (OPENXLSX_ENABLE_LIBBOOST_NOWIDE)
+        find_package(Boost 1.74 REQUIRED COMPONENTS nowide) # on Linux at least, this requires libboost-nowide-dev to be installed
+    else()
+        add_library(NoWide INTERFACE IMPORTED)
+        target_include_directories(NoWide SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/external/nowide/>)
+    endif()
 endif()
 
 if (NOT OPENXLSX_ENABLE_LIBZIP)
@@ -175,9 +179,12 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
     endif ()
 
     if (OPENXLSX_ENABLE_NOWIDE)
-        target_link_libraries(OpenXLSX
-                PRIVATE
-                $<BUILD_INTERFACE:NoWide>)
+        if (NOT OPENXLSX_ENABLE_LIBBOOST_NOWIDE)
+            # boost nowide is header-only, a "library" only makes sense in the context of the nowide header files shipped with OpenXLSX
+            target_link_libraries(OpenXLSX
+                    PRIVATE
+                    $<BUILD_INTERFACE:NoWide>)
+        endif()
     endif ()
 
     target_compile_definitions(OpenXLSX PUBLIC OPENXLSX_STATIC_DEFINE)
@@ -219,9 +226,12 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "SHARED")
     endif ()
 
     if (OPENXLSX_ENABLE_NOWIDE)
-        target_link_libraries(OpenXLSX
-                PRIVATE
-                $<BUILD_INTERFACE:NoWide>)
+        if (NOT OPENXLSX_ENABLE_LIBBOOST_NOWIDE)
+            # boost nowide is header-only, a "library" only makes sense in the context of the nowide header files shipped with OpenXLSX
+            target_link_libraries(OpenXLSX
+                    PRIVATE
+                    $<BUILD_INTERFACE:NoWide>)
+        endif()
     endif ()
 
     # Enable Link-Time Optimization (LTO)
@@ -238,6 +248,10 @@ endif()
 
 if (OPENXLSX_ENABLE_NOWIDE)
     target_compile_definitions(OpenXLSX PRIVATE ENABLE_NOWIDE)
+    if (OPENXLSX_ENABLE_LIBBOOST_NOWIDE)
+        # when libboost-nowide is used, a preprocessor directive is needed to change include path and namespace
+        target_compile_definitions(OpenXLSX PRIVATE ENABLE_LIBBOOST_NOWIDE)
+    endif ()
 endif ()
 if (OPENXLSX_ENABLE_LIBPUGIXML)
     target_compile_definitions(OpenXLSX PRIVATE USE_LIBPUGIXML)

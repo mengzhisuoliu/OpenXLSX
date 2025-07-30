@@ -36,13 +36,14 @@ option(OPENXLSX_BUILD_TESTS "Build and run library tests" ON)
 option(OPENXLSX_BUILD_BENCHMARKS "Build and run library benchmarks" OFF)
 option(OPENXLSX_ENABLE_LIBPUGIXML "Enable using libpugixml" OFF)
 option(OPENXLSX_ENABLE_LIBZIP "Enable using libzip" OFF)
+option(OPENXLSX_FORCE_NOWIDE "Force use of boost nowide, even on non-Windows systems (testing)" OFF)
+option(OPENXLSX_ENABLE_LIBBOOST_NOWIDE "Enable using libboost-nowide" OFF)
 option(OPENXLSX_ENABLE_LIBZIP_EXAMPLE "Build Demo1A example using libzip - requires libbz2-dev" OFF)
 option(OPENXLSX_SHARED_LIBRARY "Builds the shared library" OFF)
-
 #=======================================================================================================================
 # Add project configurations (#ifdef / #ifndef testable)
 #=======================================================================================================================
-if(WIN32)
+if(WIN32 OR ${OPENXLSX_FORCE_NOWIDE})
     set(OPENXLSX_ENABLE_NOWIDE ON)
 endif()
 

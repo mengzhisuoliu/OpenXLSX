@@ -1,12 +1,26 @@
 #include <OpenXLSX.hpp>
 
 #ifdef ENABLE_NOWIDE
-    #include <nowide/iostream.hpp>
-    using nowide::cout;
+#   ifdef ENABLE_LIBBOOST_NOWIDE
+        #include <boost/nowide/iostream.hpp>
+        using boost::nowide::cout;
+#   else
+        #include <nowide/iostream.hpp>
+        using nowide::cout;
+#   endif
 #else
     #include <iostream>
     using std::cout;
 #endif
+
+bool nowide_status()
+{
+#ifdef ENABLE_NOWIDE
+    return true;
+#else
+    return false;
+#endif
+}
 
 using namespace OpenXLSX;
 
@@ -15,6 +29,7 @@ int main()
     cout << "********************************************************************************\n";
     cout << "DEMO PROGRAM #04: Unicode\n";
     cout << "********************************************************************************\n";
+    cout << "nowide is " << ( nowide_status() ? "enabled" : "disabled" ) << "\n";
 
     // Unicode can be a real pain in the neck. While UTF-8 encoding has become the de facto standard
     // encoding on Linux, macOS and the internet, some systems use other encodings, most notably
