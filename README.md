@@ -12,6 +12,10 @@ As the heading says - the latest "Release" that is shown on https://github.com/t
 * use of ```nowide``` stat in OpenXLSXFileSystemTools?
 * if nowide is needed: `headers/detail/Zippy.hpp` for call to `mz_zip_reader_init_file` TBD: does miniz support unicode filenames on Windows?
 * is `add_subdirectory(external/nowide EXCLUDE_FROM_ALL)` needed in `Examples/CMakeLists.txt`?
+* implement `OPENXLSX_SHARED_LIBRARY` functionality in `Makefile.GNU`
+
+## (aral-matrix) 31 July 2025 - added use of cmake `find_package` for `LibZip` and `PugiXML`
+* `OpenXLSX/CMakeLists.txt`: added `find_package` for `LibZip` and `PugiXML`. Unfortunately, for `LibZip`, this generates an error unless the unneeded components `zipcmp`, `zipmerge` & `ziptool` are also installed on the system. TBD how to ignore those missing.
 
 ## (aral-matrix) 30 July 2025 - enabled compilation against ```nowide``` installed on the operating system
 * added to cmake and GNU make: option `OPENXLSX_FORCE_NOWIDE` - set to `ON` to use force the use of `nowide` even on non-Windows systems (this flag is for testing purposes)

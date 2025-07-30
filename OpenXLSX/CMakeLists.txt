@@ -53,7 +53,13 @@ if (OPENXLSX_ENABLE_NOWIDE)
     endif()
 endif()
 
-if (NOT OPENXLSX_ENABLE_LIBZIP)
+if (OPENXLSX_ENABLE_LIBZIP)
+    find_package(LibZip 1.7
+        CONFIG
+        COMPONENTS zip
+        QUIET OPTIONAL_COMPONENTS zipcmp zipmerge ziptool # requires the following tools to be installed: zipcmp zipmerge ziptool
+    )
+else()
     CPMFindPackage(
             NAME miniz
             GITHUB_REPOSITORY richgel999/miniz
@@ -62,7 +68,7 @@ if (NOT OPENXLSX_ENABLE_LIBZIP)
 endif ()
 
 if (OPENXLSX_ENABLE_LIBPUGIXML)
-    # nothing to do: pugixml headers should already be in include path, and libpugixml is added in the library link statements below
+    find_package(PugiXML 1.14 REQUIRED)
 else()
     add_library(PugiXML INTERFACE IMPORTED)
     target_include_directories(PugiXML SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/external/pugixml/>)
@@ -160,7 +166,7 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
     if (OPENXLSX_ENABLE_LIBPUGIXML)
         target_link_libraries(OpenXLSX
                 PRIVATE
-                -lpugixml)
+                pugixml::pugixml)
     else()
         # pugixml is used in header only mode - so whatever this does...
         target_link_libraries(OpenXLSX
@@ -170,7 +176,7 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
     if (OPENXLSX_ENABLE_LIBZIP)
         target_link_libraries(OpenXLSX
                 PRIVATE
-                -lzip)
+                libzip::zip)
     else ()
         target_link_libraries(OpenXLSX
                 PRIVATE
@@ -211,7 +217,7 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "SHARED")
     if (OPENXLSX_ENABLE_LIBPUGIXML)
         target_link_libraries(OpenXLSX
                 PRIVATE
-                -lpugixml)
+                pugixml::pugixml)
     else()
         # pugixml is used in header only mode - so whatever this does...
         target_link_libraries(OpenXLSX
@@ -221,7 +227,7 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "SHARED")
     if (OPENXLSX_ENABLE_LIBZIP)
         target_link_libraries(OpenXLSX
                 PRIVATE
-                -lzip)
+                libzip::zip)
     else ()
         target_link_libraries(OpenXLSX
                 PRIVATE
