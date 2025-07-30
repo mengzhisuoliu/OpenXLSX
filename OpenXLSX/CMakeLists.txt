@@ -179,7 +179,11 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
     endif ()
 
     if (OPENXLSX_ENABLE_NOWIDE)
-        if (NOT OPENXLSX_ENABLE_LIBBOOST_NOWIDE)
+        if (OPENXLSX_ENABLE_LIBBOOST_NOWIDE)
+            target_link_libraries(OpenXLSX
+                    PRIVATE
+                    Boost::nowide)
+        else()
             # boost nowide is header-only, a "library" only makes sense in the context of the nowide header files shipped with OpenXLSX
             target_link_libraries(OpenXLSX
                     PRIVATE
@@ -226,7 +230,11 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "SHARED")
     endif ()
 
     if (OPENXLSX_ENABLE_NOWIDE)
-        if (NOT OPENXLSX_ENABLE_LIBBOOST_NOWIDE)
+        if (OPENXLSX_ENABLE_LIBBOOST_NOWIDE)
+            target_link_libraries(OpenXLSX
+                    PRIVATE
+                    Boost::nowide)
+        else()
             # boost nowide is header-only, a "library" only makes sense in the context of the nowide header files shipped with OpenXLSX
             target_link_libraries(OpenXLSX
                     PRIVATE
