@@ -1,13 +1,13 @@
 #include <OpenXLSX.hpp>
 
 #ifdef ENABLE_NOWIDE
-#   ifdef ENABLE_LIBBOOST_NOWIDE
-        #include <boost/nowide/iostream.hpp>
-        using boost::nowide::cout;
-#   else
+// #   ifdef ENABLE_LIBBOOST_NOWIDE
+//         #include <boost/nowide/iostream.hpp>
+//         using boost::nowide::cout;
+// #   else
         #include <nowide/iostream.hpp>
         using nowide::cout;
-#   endif
+// #   endif
 #else
     #include <iostream>
     using std::cout;

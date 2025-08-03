@@ -47,8 +47,9 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #include <algorithm>
 #if defined(_WIN32)
 #    include <random>
-#endif
+#else
 #include <unistd.h>       // unlink
+#endif
 #include <vector>         // std::vector
 
 // ===== OpenXLSX Includes ===== //

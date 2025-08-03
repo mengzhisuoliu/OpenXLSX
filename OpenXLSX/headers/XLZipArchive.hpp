@@ -71,6 +71,10 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
     #define XLZipImplementation Zippy::ZipArchive
 #endif
 
+#ifdef _WIN32
+    using ssize_t = long long;
+#endif // _WIN32
+
 namespace OpenXLSX
 {
     /**

@@ -44,14 +44,14 @@ endif()
 #   INTERFACE libraries should be defined.
 #=======================================================================================================================
 
-if (OPENXLSX_ENABLE_NOWIDE)
-    if (OPENXLSX_ENABLE_LIBBOOST_NOWIDE)
-        find_package(Boost 1.74 REQUIRED COMPONENTS nowide) # on Linux at least, this requires libboost-nowide-dev to be installed
-    else()
-        add_library(NoWide INTERFACE IMPORTED)
-        target_include_directories(NoWide SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/external/nowide/>)
-    endif()
-endif()
+#if (OPENXLSX_ENABLE_NOWIDE)
+#    if (OPENXLSX_ENABLE_LIBBOOST_NOWIDE)
+#        find_package(Boost 1.74 REQUIRED COMPONENTS nowide) # on Linux at least, this requires libboost-nowide-dev to be installed
+#    else()
+#        add_library(NoWide INTERFACE IMPORTED)
+#        target_include_directories(NoWide SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/external/nowide/>)
+#    endif()
+#endif()
 
 if (OPENXLSX_ENABLE_LIBZIP)
     find_package(LibZip 1.7
@@ -185,16 +185,19 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
     endif ()
 
     if (OPENXLSX_ENABLE_NOWIDE)
-        if (OPENXLSX_ENABLE_LIBBOOST_NOWIDE)
-            target_link_libraries(OpenXLSX
-                    PRIVATE
-                    Boost::nowide)
-        else()
+#        if (OPENXLSX_ENABLE_LIBBOOST_NOWIDE)
+#            target_link_libraries(OpenXLSX
+#                    PRIVATE
+#                    Boost::nowide)
+#        else()
             # boost nowide is header-only, a "library" only makes sense in the context of the nowide header files shipped with OpenXLSX
+#            target_link_libraries(OpenXLSX
+#                    PRIVATE
+#                    $<BUILD_INTERFACE:NoWide>)
             target_link_libraries(OpenXLSX
                     PRIVATE
-                    $<BUILD_INTERFACE:NoWide>)
-        endif()
+                    nowide::nowide)
+#        endif()
     endif ()
 
     target_compile_definitions(OpenXLSX PUBLIC OPENXLSX_STATIC_DEFINE)
@@ -236,16 +239,19 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "SHARED")
     endif ()
 
     if (OPENXLSX_ENABLE_NOWIDE)
-        if (OPENXLSX_ENABLE_LIBBOOST_NOWIDE)
-            target_link_libraries(OpenXLSX
-                    PRIVATE
-                    Boost::nowide)
-        else()
+#        if (OPENXLSX_ENABLE_LIBBOOST_NOWIDE)
+#            target_link_libraries(OpenXLSX
+#                    PRIVATE
+#                    Boost::nowide)
+#        else()
             # boost nowide is header-only, a "library" only makes sense in the context of the nowide header files shipped with OpenXLSX
+#            target_link_libraries(OpenXLSX
+#                    PRIVATE
+#                    $<BUILD_INTERFACE:NoWide>)
             target_link_libraries(OpenXLSX
                     PRIVATE
-                    $<BUILD_INTERFACE:NoWide>)
-        endif()
+                    nowide::nowide)
+#        endif()
     endif ()
 
     # Enable Link-Time Optimization (LTO)
@@ -262,10 +268,10 @@ endif()
 
 if (OPENXLSX_ENABLE_NOWIDE)
     target_compile_definitions(OpenXLSX PRIVATE ENABLE_NOWIDE)
-    if (OPENXLSX_ENABLE_LIBBOOST_NOWIDE)
-        # when libboost-nowide is used, a preprocessor directive is needed to change include path and namespace
-        target_compile_definitions(OpenXLSX PRIVATE ENABLE_LIBBOOST_NOWIDE)
-    endif ()
+#    if (OPENXLSX_ENABLE_LIBBOOST_NOWIDE)
+#        # when libboost-nowide is used, a preprocessor directive is needed to change include path and namespace
+#        target_compile_definitions(OpenXLSX PRIVATE ENABLE_LIBBOOST_NOWIDE)
+#    endif ()
 endif ()
 if (OPENXLSX_ENABLE_LIBPUGIXML)
     target_compile_definitions(OpenXLSX PRIVATE USE_LIBPUGIXML)
@@ -381,11 +387,16 @@ install(
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenXLSX
 )
 
+
 # Targets
-if (OPENXLSX_ENABLE_LIBZIP)
-    set(CMAKE_INSTALL_TARGETS OpenXLSX)
-else ()
-    set(CMAKE_INSTALL_TARGETS OpenXLSX miniz)
+set(CMAKE_INSTALL_TARGETS OpenXLSX)
+
+if (NOT OPENXLSX_ENABLE_LIBZIP)
+    set(CMAKE_INSTALL_TARGETS ${CMAKE_INSTALL_TARGETS} miniz)
+endif ()
+
+if (OPENXLSX_ENABLE_NOWIDE)
+    set(CMAKE_INSTALL_TARGETS ${CMAKE_INSTALL_TARGETS} nowide)
 endif ()
 
 install(
