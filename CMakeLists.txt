@@ -34,12 +34,13 @@ option(OPENXLSX_CREATE_DOCS "Build library documentation (requires Doxygen and G
 option(OPENXLSX_BUILD_SAMPLES "Build sample programs" ON)
 option(OPENXLSX_BUILD_TESTS "Build and run library tests" ON)
 option(OPENXLSX_BUILD_BENCHMARKS "Build and run library benchmarks" OFF)
-option(OPENXLSX_ENABLE_LIBPUGIXML "Enable using libpugixml" OFF)
+#option(OPENXLSX_ENABLE_LIBPUGIXML "Enable using libpugixml" OFF)
 option(OPENXLSX_ENABLE_LIBZIP "Enable using libzip" OFF)
 option(OPENXLSX_FORCE_NOWIDE "Force use of boost nowide, even on non-Windows systems (testing)" OFF)
 #option(OPENXLSX_ENABLE_LIBBOOST_NOWIDE "Enable using libboost-nowide" OFF)
 option(OPENXLSX_ENABLE_LIBZIP_EXAMPLE "Build Demo1A example using libzip - requires libbz2-dev" OFF)
 option(OPENXLSX_SHARED_LIBRARY "Builds the shared library" OFF)
+option(OPENXLSX_COMPACT_MODE "Build library in compact mode (slower, but uses less memory)" OFF)
 #=======================================================================================================================
 # Add project configurations (#ifdef / #ifndef testable)
 #=======================================================================================================================
@@ -48,7 +49,7 @@ if(WIN32 OR ${OPENXLSX_FORCE_NOWIDE})
 endif()
 
 if(OPENXLSX_ENABLE_NOWIDE)
-    CPMAddPackage(
+    CPMFindPackage(
             NAME nowide
             GITHUB_REPOSITORY boostorg/nowide
             GIT_TAG standalone
@@ -56,6 +57,16 @@ if(OPENXLSX_ENABLE_NOWIDE)
             "NOWIDE_INSTALL ON"
     )
 endif()
+
+CPMFindPackage(
+        NAME pugixml
+        GITHUB_REPOSITORY zeux/pugixml
+        GIT_TAG v1.15
+        OPTIONS
+        "PUGIXML_COMPACT ${OPENXLSX_COMPACT_MODE}"
+)
+
+message(pugixml: ${pugixml_SOURCE_DIR})
 
 #=======================================================================================================================
 # Add project subdirectories
