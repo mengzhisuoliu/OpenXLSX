@@ -31,7 +31,7 @@ set(IGNORE_ME ${CMAKE_C_COMPILER}) # Suppress CMake warning message
 # Add build options
 #=======================================================================================================================
 option(OPENXLSX_ENABLE_LTO "Enables Link-Time Optimization (LTO)" ON)
-if (OPENXLSX_SHARED_LIBRARY)
+if (BUILD_SHARED_LIBS)
     set(OPENXLSX_LIBRARY_TYPE "SHARED" CACHE STRING "Set the library type to SHARED")
 else()
     set(OPENXLSX_LIBRARY_TYPE "STATIC" CACHE STRING "Set the library type to STATIC")
@@ -52,19 +52,19 @@ endif()
 #    endif()
 #endif()
 
-if (OPENXLSX_ENABLE_LIBZIP)
-    find_package(LibZip 1.7
-        CONFIG
-        COMPONENTS zip
-        QUIET OPTIONAL_COMPONENTS zipcmp zipmerge ziptool # requires the following tools to be installed: zipcmp zipmerge ziptool
-    )
-else()
-    CPMFindPackage(
-            NAME miniz
-            GITHUB_REPOSITORY richgel999/miniz
-            GIT_TAG 3.0.2
-    )
-endif ()
+# if (OPENXLSX_ENABLE_LIBZIP)
+#     find_package(LibZip 1.7
+#         CONFIG
+#         COMPONENTS zip
+#         QUIET OPTIONAL_COMPONENTS zipcmp zipmerge ziptool # requires the following tools to be installed: zipcmp zipmerge ziptool
+#     )
+# else()
+#     CPMFindPackage(
+#             NAME miniz
+#             GITHUB_REPOSITORY richgel999/miniz
+#             GIT_TAG 3.0.2
+#     )
+# endif ()
 
 #if (OPENXLSX_ENABLE_LIBPUGIXML)
 #    find_package(PugiXML 1.14 REQUIRED)
@@ -161,6 +161,8 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
             PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
             $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/headers>
+            ${Boost_INCLUDE_DIR}    # just in case
+            ${NOWIDE_INCLUDE_DIR}   # includes {Boost_INCLUDE_DIR}/boost
             $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)     # For export header
 #    if (OPENXLSX_ENABLE_LIBPUGIXML)
 #        target_link_libraries(OpenXLSX
@@ -195,7 +197,8 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
 #                    $<BUILD_INTERFACE:NoWide>)
             target_link_libraries(OpenXLSX
                     PRIVATE
-                    nowide::nowide)
+                    ${NOWIDE_TARGET})
+                    # nowide::nowide)
 #        endif()
     endif ()
 
@@ -215,6 +218,8 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "SHARED")
             PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
             $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/headers>
+            ${Boost_INCLUDE_DIR}    # just in case
+            ${NOWIDE_INCLUDE_DIR}   # includes {Boost_INCLUDE_DIR}/boost
             $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)     # For export header
 #    if (OPENXLSX_ENABLE_LIBPUGIXML)
 #        target_link_libraries(OpenXLSX
@@ -224,7 +229,7 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "SHARED")
         # pugixml is used in header only mode - so whatever this does...
         target_link_libraries(OpenXLSX
                 PRIVATE
-                pugixml::static)
+                pugixml::shared)
 #    endif()
     if (OPENXLSX_ENABLE_LIBZIP)
         target_link_libraries(OpenXLSX
@@ -249,7 +254,8 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "SHARED")
 #                    $<BUILD_INTERFACE:NoWide>)
             target_link_libraries(OpenXLSX
                     PRIVATE
-                    nowide::nowide)
+                    ${NOWIDE_TARGET})
+                    # nowide::nowide)
 #        endif()
     endif ()
 
@@ -388,14 +394,14 @@ install(
 
 
 # Targets
-set(CMAKE_INSTALL_TARGETS OpenXLSX pugixml)
+set(CMAKE_INSTALL_TARGETS OpenXLSX ${PUGIXML_INSTALL_TARGET})
 
 if (NOT OPENXLSX_ENABLE_LIBZIP)
-    set(CMAKE_INSTALL_TARGETS ${CMAKE_INSTALL_TARGETS} miniz)
+    set(CMAKE_INSTALL_TARGETS ${CMAKE_INSTALL_TARGETS} ${ZIP_LIBRARY_INSTALL_TARGET})
 endif ()
 
 if (OPENXLSX_ENABLE_NOWIDE)
-    set(CMAKE_INSTALL_TARGETS ${CMAKE_INSTALL_TARGETS} nowide)
+    set(CMAKE_INSTALL_TARGETS ${CMAKE_INSTALL_TARGETS} ${NOWIDE_INSTALL_TARGET})
 endif ()
 
 install(
@@ -443,6 +449,3 @@ install(
         NAMESPACE OpenXLSX::
         DESTINATION ${ConfigPackageLocation}
 )
-
-
-
