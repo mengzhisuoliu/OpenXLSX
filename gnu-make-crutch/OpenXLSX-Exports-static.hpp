@@ -33,7 +33,6 @@
 #  define OPENXLSX_DEPRECATED_NO_EXPORT OPENXLSX_HIDDEN OPENXLSX_DEPRECATED
 #endif
 
-/* NOLINTNEXTLINE(readability-avoid-unconditional-preprocessor-if) */
 #if 0 /* DEFINE_NO_DEPRECATED */
 #  ifndef OPENXLSX_NO_DEPRECATED
 #    define OPENXLSX_NO_DEPRECATED

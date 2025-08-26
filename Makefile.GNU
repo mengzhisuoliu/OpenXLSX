@@ -1,6 +1,17 @@
 # GNU Makefile for OpenXLSX modules & demos
-# Version: 2025-08-16 15:30 CEST
-$(error 2025-08-16 15:30 CEST: With recent changes to the project configuration, the GNU Makefile is currently non-functional)
+# Version: 2025-08-26 15:15 CEST
+# $(error 2025-08-16 15:30 CEST: With recent changes to the project configuration, the GNU Makefile is currently non-functional)
+
+$(info 2025-08-26 Temporary override of options (only supported configuration is with libpugixml and libzip preinstalled on the build system))
+$(info ___________It remains TBD whether it will be possible (or is even desired) to pull in dependencies from the GNU Makefile)
+OPENXLSX_ENABLE_LIBPUGIXML=ON
+OPENXLSX_ENABLE_LIBZIP=ON
+OPENXLSX_ENABLE_LIBBOOST_NOWIDE=ON
+OPENXLSX_SHARED_LIBRARY=OFF
+$(info OPENXLSX_ENABLE_LIBPUGIXML         $(OPENXLSX_ENABLE_LIBPUGIXML))
+$(info OPENXLSX_ENABLE_LIBZIP             $(OPENXLSX_ENABLE_LIBZIP))
+$(info OPENXLSX_ENABLE_LIBBOOST_NOWIDE    $(OPENXLSX_ENABLE_LIBBOOST_NOWIDE))
+$(info OPENXLSX_SHARED_LIBRARY            $(OPENXLSX_SHARED_LIBRARY))
 
 # Makefile option OPENXLSX_ENABLE_LIBPUGIXML: Scripts/make-gnu.sh OPENXLSX_ENABLE_LIBPUGIXML=ON
 ifeq ("$(OPENXLSX_ENABLE_LIBPUGIXML)", "ON")
@@ -337,7 +348,11 @@ $(OBJ_DIR)/$(PUGIXML_SUBDIR)/%.o: $(OPENXLSX_DIR)/$(PUGIXML_SUBDIR)/%.cpp | $(OB
 # rule for zippy .cpp files: N/A, as zippy is header only
 
 $(OPENXLSX_DIR)/OpenXLSX-Exports.hpp:
-	cp gnu-make-crutch/OpenXLSX-Exports.hpp $@
+ifeq ("$(USE_SHARED_LIBRARY)", "yes")
+	cp gnu-make-crutch/OpenXLSX-Exports-shared.hpp $@
+else
+	cp gnu-make-crutch/OpenXLSX-Exports-static.hpp $@
+endif
 	
 # # rule for shared .cpp files
 # $(OBJ_DIR)/$(SHARED_SUBDIR)/%.o: $(OPENXLSX_DIR)/$(SRC_DIR)/$(SHARED_SUBDIR)/%.cpp | $(OBJ_DIR) $(OBJ_DIR)/$(SHARED_SUBDIR)/
@@ -370,9 +385,9 @@ $(OBJ_DIR)/$(ZIPPY_SUBDIR)/:
 .SECONDARY:
 
 # indicate all rules without target output
-.PHONY: default all clean cleanObjects cleanTargets echo lib library OpenXLSX
+.PHONY: default all clean cleanObjects cleanTargets cleanCrutch echo lib library OpenXLSX
 
-clean: cleanObjects cleanTargets
+clean: cleanObjects cleanTargets cleanCrutch
 
 cleanObjects:
 	rm -f $(addprefix $(OBJ_DIR)/,$(OBJS_DEMO0) $(OBJS_DEMO1) $(OBJS_DEMO2) $(OBJS_DEMO3) $(OBJS_DEMO4) $(OBJS_DEMO5) $(OBJS_DEMO6) $(OBJS_DEMO7) $(OBJS_DEMO8) $(OBJS_DEMO9) $(OBJS_DEMO10)) \
@@ -384,6 +399,9 @@ cleanObjects:
 
 cleanTargets:
 	rm -f $(addprefix $(BIN_DIR)/,Demo0) $(addprefix $(BIN_DIR)/,$(TARGETS)) $(addprefix $(BIN_DIR)/,$(ADDITIONAL_TARGETS))
+
+cleanCrutch:
+	rm $(OPENXLSX_DIR)/OpenXLSX-Exports.hpp 2>/dev/null
 
 
 # have a look at the established configuration

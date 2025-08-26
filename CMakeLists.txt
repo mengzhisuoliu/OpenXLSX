@@ -38,20 +38,58 @@ option(OPENXLSX_ENABLE_LIBZIP         "Enable using libzip" OFF) # when OFF, def
 option(OPENXLSX_FORCE_NOWIDE          "Force use of boost nowide, even on non-Windows systems (testing)" OFF)
 option(OPENXLSX_ENABLE_LIBZIP_EXAMPLE "Build Demo1A example using libzip - requires libbz2-dev" OFF)
 option(         BUILD_SHARED_LIBS     "Builds the shared library" OFF) # replaced OPENXLSX_SHARED_LIBRARY with cmake option reserved for that purpose
+option(OPENXLSX_BUNDLED_STATIC_LIB    "(static library only) Link library dependencies into a bundled OpenXLSX library file" OFF)
 option(OPENXLSX_COMPACT_MODE          "Build library in compact mode (slower, but uses less memory)" OFF)
-
-# workaround option for CPM_LOCAL_PACKAGES_ONLY
 option(OPENXLSX_CPM_LOCAL_PACKAGES_ONLY "CPM shall only use packages already installed on the host OS, otherwise fail" OFF)
+
+# OPENXLSX_CPM_LOCAL_PACKAGES_ONLY is a selection option between CPM_LOCAL_PACKAGES_ONLY vs. CPM_DOWNLOAD_ALL
 if(${OPENXLSX_CPM_LOCAL_PACKAGES_ONLY})
     set(CPM_LOCAL_PACKAGES_ONLY ON) # Defining this directly as an option in this file doesn't seem to work, as stupid as it is
+
     set(NOWIDE_TARGET Boost::nowide)
     set(NOWIDE_INSTALL_TARGET "")  # TBD: none needed?
+
+    # if(${BUILD_SHARED_LIBS})
+        set(PUGIXML_TARGET pugixml) # for local packages, pugixml::shared does not seem to be defined. Just pugixml seems to always work
+    # else()
+        # set(PUGIXML_TARGET pugixml::static)
+    # endif()
     set(PUGIXML_INSTALL_TARGET "") # TBD: none needed?
+    set(PUGIXML_STATIC_LIBRARY "pugixml")
 else()
     set(CPM_DOWNLOAD_ALL ON) # Force download so that a local package is not used while a component is missing (e.g. Boost::nowide)
+
     set(NOWIDE_TARGET nowide::nowide)
     set(NOWIDE_INSTALL_TARGET nowide)
+
+    if(${BUILD_SHARED_LIBS})
+        set(PUGIXML_TARGET pugixml::shared) # actually, just pugixml seems to work fine for a target - but let's be explicit
+    else()
+        set(PUGIXML_TARGET pugixml::static) # see above
+    endif()
     set(PUGIXML_INSTALL_TARGET pugixml)
+    set(PUGIXML_STATIC_LIBRARY "pugixml-static")
+endif()
+
+
+if(${OPENXLSX_BUNDLED_STATIC_LIB} AND ${BUILD_SHARED_LIBS})
+    message( FATAL_ERROR "Can not use option OPENXLSX_BUNDLED_STATIC_LIB with shared library" )
+endif()
+
+if(${OPENXLSX_BUNDLED_STATIC_LIB} AND ${OPENXLSX_CPM_LOCAL_PACKAGES_ONLY})
+    message( WARNING "option OPENXLSX_BUNDLED_STATIC_LIB with OPENXLSX_CPM_LOCAL_PACKAGES_ONLY may fail when locally a installed dependency is not available as a static library" )
+endif()
+
+if(${OPENXLSX_CPM_LOCAL_PACKAGES_ONLY} AND NOT ${OPENXLSX_ENABLE_LIBZIP})
+    message( WARNING "option OPENXLSX_CPM_LOCAL_PACKAGES_ONLY without option OPENXLSX_ENABLE_LIBZIP may fail unless libminiz is preinstalled on the system" )
+endif()
+
+if(NOT ${OPENXLSX_CPM_LOCAL_PACKAGES_ONLY} AND ${OPENXLSX_ENABLE_LIBZIP})
+    message( FATAL_ERROR "option OPENXLSX_ENABLE_LIBZIP without option OPENXLSX_CPM_LOCAL_PACKAGES_ONLY is currently unsupported (until libzip dependency can be pulled in automatically)" )
+endif()
+
+if(${OPENXLSX_BUNDLED_STATIC_LIB})
+    message( NOTICE "NOTE: bundled static library libOpenXLSX-bundled.a will NOT be installed to the target system by this build configuration" )
 endif()
 
 #=======================================================================================================================
@@ -86,14 +124,15 @@ if (OPENXLSX_ENABLE_LIBZIP)
         COMPONENTS zip
         QUIET OPTIONAL_COMPONENTS zipcmp zipmerge ziptool # requires the following tools to be installed: zipcmp zipmerge ziptool
     )
-    set(ZIP_LIBRARY_INSTALL_TARGET "") # TBD: none needed?
+    set(ZIP_LIBRARY libzip) # to be identified as dependency in package config
     # TODO: Help needed - how to make CPMFindPackage work with the libzip repo?
     # CPMFindPackage(
     #         NAME libzip
     #         GITHUB_REPOSITORY nih-at/libzip
     #         GIT_TAG 1.11.4
     # )
-    # set(ZIP_LIBRARY_INSTALL_TARGET libzip)
+    # set(ZIP_LIBRARY_INSTALL_TARGET "") # TBD: none needed?
+    set(ZIP_LIBRARY_INSTALL_TARGET libzip)
 else()
     CPMFindPackage(
             NAME miniz
@@ -101,6 +140,7 @@ else()
             GIT_TAG 3.0.2
             # use of reserved BUILD_SHARED_LIBS automatically passes this option through
     )
+    set(ZIP_LIBRARY miniz) # to be identified as dependency in package config
     set(ZIP_LIBRARY_INSTALL_TARGET miniz)
 endif ()
 
@@ -140,49 +180,54 @@ endif()
 # Summarize OpenXLSX configuration
 #=======================================================================================================================
 message(     NOTICE     "-- OpenXLSX Configuration:" )
-message(     NOTICE     "   ++ Build library documentation:       ${OPENXLSX_CREATE_DOCS}" )
-message(     NOTICE     "   ++ Build sample programs:             ${OPENXLSX_BUILD_SAMPLES}" )
-message(     NOTICE     "   ++ Build and run library tests:       ${OPENXLSX_BUILD_TESTS}" )
-message(     NOTICE     "   ++ Build and run library benchmarks:  ${OPENXLSX_BUILD_BENCHMARKS}" )
-message(     NOTICE     "   ++ Build Demo1A example using libzip: ${OPENXLSX_ENABLE_LIBZIP_EXAMPLE}" )
+message(     NOTICE     "   ++ Build library documentation:           ${OPENXLSX_CREATE_DOCS}" )
+message(     NOTICE     "   ++ Build sample programs:                 ${OPENXLSX_BUILD_SAMPLES}" )
+message(     NOTICE     "   ++ Build and run library tests:           ${OPENXLSX_BUILD_TESTS}" )
+message(     NOTICE     "   ++ Build and run library benchmarks:      ${OPENXLSX_BUILD_BENCHMARKS}" )
+message(     NOTICE     "   ++ Enable using libzip:                   ${OPENXLSX_ENABLE_LIBZIP}" )
+message(     NOTICE     "   ++ Force use of boost nowide:             ${OPENXLSX_FORCE_NOWIDE}" )
+message(     NOTICE     "   ++ Build Demo1A example using libzip:     ${OPENXLSX_ENABLE_LIBZIP_EXAMPLE}" )
 if(OPENXLSX_ENABLE_LIBZIP_EXAMPLE AND NOT OPENXLSX_BUILD_SAMPLES)
     message( WARNING    "Demo1A will not be built because sample programs are disabled!" )
 endif()
-    message( NOTICE     "   ++ Build library in compact mode:     ${OPENXLSX_COMPACT_MODE}" )
+    message( NOTICE     "   ++ Build the shared library:              ${BUILD_SHARED_LIBS}" )
+    message( NOTICE     "   ++ Make a bundled static library file:    ${OPENXLSX_BUNDLED_STATIC_LIB}" )
+    message( NOTICE     "   ++ Build library in compact mode:         ${OPENXLSX_COMPACT_MODE}" )
+    message( NOTICE     "   ++ CPM shall only use installed packages: ${OPENXLSX_CPM_LOCAL_PACKAGES_ONLY}" )
     message( NOTICE     "   ++" )
 
 if(BUILD_SHARED_LIBS)
-    message( NOTICE     "   ++ Library type:                shared" )
+    message( NOTICE     "   ++ Library type:                          shared" )
 else()
-    message( NOTICE     "   ++ Library type:                static" )
+    message( NOTICE     "   ++ Library type:                          static" )
 endif()
 
 if(OPENXLSX_ENABLE_NOWIDE)
-    message( NOTICE     "   ++ Unicode support:             Boost nowide" )
+    message( NOTICE     "   ++ Unicode support:                       Boost nowide" )
     if("${Boost_INCLUDE_DIR}" STREQUAL "")
-        message( NOTICE "   ++ Boost_INCLUDE_DIR:           (empty)" )
+        message( NOTICE "   ++ Boost_INCLUDE_DIR:                     (empty)" )
     else()
-        message( NOTICE "   ++ Boost_INCLUDE_DIR:           ${Boost_INCLUDE_DIR}" )
-        message( NOTICE "   ++ NOWIDE_INCLUDE_DIR:          ${NOWIDE_INCLUDE_DIR}" )
+        message( NOTICE "   ++ Boost_INCLUDE_DIR:                     ${Boost_INCLUDE_DIR}" )
+        message( NOTICE "   ++ NOWIDE_INCLUDE_DIR:                    ${NOWIDE_INCLUDE_DIR}" )
     endif()
 else()
-    message( NOTICE     "   ++ Unicode support:             (OS) native" )
+    message( NOTICE     "   ++ Unicode support:                       (OS) native" )
 endif()
 
 if (OPENXLSX_ENABLE_LIBZIP)
-    message( NOTICE     "   ++ zip library:                 libzip" )
+    message( NOTICE     "   ++ zip library:                           libzip" )
 else()
-    message( NOTICE     "   ++ zip library:                 miniz" )
+    message( NOTICE     "   ++ zip library:                           miniz" )
 endif()
 if(CPM_LOCAL_PACKAGES_ONLY)
-    message( NOTICE     "   ++ CPM package source:          CPM_LOCAL_PACKAGES_ONLY" )
+    message( NOTICE     "   ++ CPM package source:                    CPM_LOCAL_PACKAGES_ONLY" )
 endif()
 if(CPM_DOWNLOAD_ALL)
-    message( NOTICE     "   ++ CPM package source:          CPM_DOWNLOAD_ALL" )
+    message( NOTICE     "   ++ CPM package source:                    CPM_DOWNLOAD_ALL" )
 endif()
 
 # NOTE: for some reason, cmake with --log-level VERBOSE (or DEBUG) prefixes message output with "-- "
-message( VERBOSE        "   ++ pugixml_SOURCE_DIR:          ${pugixml_SOURCE_DIR}" )
-message( VERBOSE        "   ++ NOWIDE_INSTALL_TARGET:       ${NOWIDE_INSTALL_TARGET}" )
-message( VERBOSE        "   ++ ZIP_LIBRARY_INSTALL_TARGET:  ${ZIP_LIBRARY_INSTALL_TARGET}" )
-message( VERBOSE        "   ++ PUGIXML_INSTALL_TARGET:      ${PUGIXML_INSTALL_TARGET}" )
+message( VERBOSE        "   ++ pugixml_SOURCE_DIR:                    ${pugixml_SOURCE_DIR}" )
+message( VERBOSE        "   ++ NOWIDE_INSTALL_TARGET:                 ${NOWIDE_INSTALL_TARGET}" )
+message( VERBOSE        "   ++ ZIP_LIBRARY_INSTALL_TARGET:            ${ZIP_LIBRARY_INSTALL_TARGET}" )
+message( VERBOSE        "   ++ PUGIXML_INSTALL_TARGET:                ${PUGIXML_INSTALL_TARGET}" )

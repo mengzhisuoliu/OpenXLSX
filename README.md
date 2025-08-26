@@ -15,8 +15,25 @@ If a project builds without errors, this version of the library is safe to use. 
 * finalize code review after hiding `pugixml` headers from the library interface
 * use of ```nowide``` stat in OpenXLSXFileSystemTools?
 * if nowide is needed: `headers/detail/Zippy.hpp` for call to `mz_zip_reader_init_file` TBD: does miniz support unicode filenames on Windows?
-* restore `Makefile.GNU` functionality
-* implement `BUILD_SHARED_LIBS` functionality in `Makefile.GNU`
+* check if `Makefile.GNU` functionality can be provided for dependencies that need to be fetched from external sources
+* TBD: implement `BUILD_SHARED_LIBS` functionality in `Makefile.GNU`
+
+## How to compile a program against an installed(!) OpenXLSX library
+Invoking `pkg-config --cflags` will yield the proper include flags, and `pkg-config --static --libs` will yield the linker instructions for the OpenXLSX library and its dependencies (pugixml and zip library).
+The sequence of arguments to the compiler is important:
+1) cflags (include paths)
+2) the cpp file(s) that use OpenXLSX
+3) the linker flags (libs)
+For this reason, the below call invokes pkg-config twice.
+```
+g++ `pkg-config --cflags OpenXLSX` myprogram.cpp `pkg-config --static --libs OpenXLSX`
+```
+
+## (aral-matrix) 26 August 2025 - added a library pkg-config (.pc) file, also added option for building a static bundled library file
+* CMake build configuration now also creates & installs `pkg-config` files that can be used as demonstrated in the new `Scripts/compile.sh`
+* build option `OPENXLSX_BUNDLED_STATIC_LIB` will now create `libOpenXLSX-bundled.a` library file that is not installed, but can be linked against while including all dependencies (only works with `BUILD_SHARED_LIBS=OFF`, and `OPENXLSX_CPM_LOCAL_PACKAGES_ONLY=OFF` or all dependencies available as static libraries on the build system). This uses the newly added `OpenXLSX/bundle_static_library.cmake` (under MIT License, Copyright (c) 2019 Cristian Adam).
+* re-enabled the `Makefile.GNU`, but until full support for options is back, this Makefile is overriding some options to the only supported configurations
+* removed some obsolete (and commented-out) code from the various CMakeFiles.txt
 
 ## (aral-matrix) 16 August 2025 - dropped `external` source code from repository, refined cmake configuration
 * implemented changes from @troldal to drop external source code

@@ -1,6 +1,6 @@
 include("${CMAKE_CURRENT_LIST_DIR}/OpenXLSXTargets.cmake")
 # # TBD: the below do not appear to be necessary, nor do they seem to have any effect?
-# if (OPENXLSX_ENABLE_NOWIDE AND OPENXLSX_ENABLE_LIBBOOST_NOWIDE)
+# if (OPENXLSX_ENABLE_NOWIDE)
 #     find_dependency(Boost 1.74 CONFIG)
 # endif()
 # if (OPENXLSX_ENABLE_LIBZIP)

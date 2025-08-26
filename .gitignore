@@ -71,7 +71,8 @@
 # exclude everything *in* gnu-make-crutch folder
 /gnu-make-crutch/*
 # re-include specifically what is desired from gnu-make-crutch folder
-!/gnu-make-crutch/OpenXLSX-Exports.hpp
+!/gnu-make-crutch/OpenXLSX-Exports-shared.hpp
+!/gnu-make-crutch/OpenXLSX-Exports-static.hpp
 
 # include Notes folder
 !/Notes
@@ -88,9 +89,8 @@
 # exclude everything *in* OpenXLSX folder
 /OpenXLSX/*
 # re-include specifically what is desired from OpenXLSX folder
+!/OpenXLSX/bundle_static_library.cmake
 !/OpenXLSX/CMakeLists.txt
-!/OpenXLSX/external
-!/OpenXLSX/external/*
 !/OpenXLSX/headers
 !/OpenXLSX/headers/*
 !/OpenXLSX/OpenXLSXConfig.cmake
@@ -106,6 +106,7 @@
 !/Scripts/demos-cleanup.sh
 !/Scripts/cmake-cleanup.sh
 !/Scripts/cmake-uninstall.sh
+!/Scripts/compile.sh
 !/Scripts/demos-cleanup.sh
 !/Scripts/demos-run-all.sh
 !/Scripts/guarded-xml-format.sh
