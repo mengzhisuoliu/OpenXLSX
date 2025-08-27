@@ -447,7 +447,7 @@ namespace     // anonymous namespace for module local functions
 
 
 /**
- * @details Constructor. Initializes an empty XLNumberFormat object
+ * @details Default constructor. Initializes an empty XLNumberFormat object
  */
 XLNumberFormat::XLNumberFormat() : m_numberFormatNode(std::make_unique<XMLNode>()) {}
 
@@ -456,17 +456,36 @@ XLNumberFormat::XLNumberFormat() : m_numberFormatNode(std::make_unique<XMLNode>(
  */
 XLNumberFormat::XLNumberFormat(const XMLNode& node) : m_numberFormatNode(std::make_unique<XMLNode>(node)) {}
 
-XLNumberFormat::~XLNumberFormat() = default;
-
+/**
+ * @details Copy constructor
+ */
 XLNumberFormat::XLNumberFormat(const XLNumberFormat& other)
     : m_numberFormatNode(std::make_unique<XMLNode>(*other.m_numberFormatNode))
 {}
 
+/**
+ * @details Move constructor
+ */
+XLNumberFormat::XLNumberFormat(XLNumberFormat&& other) noexcept = default;
+
+/**
+ * @details
+ */
+XLNumberFormat::~XLNumberFormat() = default;
+
+/**
+ * @details Copy assignment operator
+ */
 XLNumberFormat& XLNumberFormat::operator=(const XLNumberFormat& other)
 {
     if (&other != this) *m_numberFormatNode = *other.m_numberFormatNode;
     return *this;
 }
+
+/**
+ * @details Move assignment operator
+ */
+XLNumberFormat& XLNumberFormat::operator=(XLNumberFormat&& other) noexcept = default;
 
 /**
  * @details Returns the numFmtId value
@@ -523,21 +542,29 @@ XLNumberFormats::XLNumberFormats(const XMLNode& numberFormats)
     }
 }
 
-XLNumberFormats::~XLNumberFormats()
-{
-    m_numberFormats.clear(); // delete vector with all children
-}
-
+/**
+ * @details Copy constructor
+ */
 XLNumberFormats::XLNumberFormats(const XLNumberFormats& other)
     : m_numberFormatsNode(std::make_unique<XMLNode>(*other.m_numberFormatsNode)),
       m_numberFormats(other.m_numberFormats)
 {}
 
+/**
+ * @details Move constructor
+ */
 XLNumberFormats::XLNumberFormats(XLNumberFormats&& other)
     : m_numberFormatsNode(std::move(other.m_numberFormatsNode)),
       m_numberFormats(std::move(other.m_numberFormats))
 {}
 
+/**
+ * @details
+ */
+XLNumberFormats::~XLNumberFormats()
+{
+    m_numberFormats.clear(); // delete vector with all children
+}
 
 /**
  * @details Copy assignment operator
@@ -551,6 +578,11 @@ XLNumberFormats& XLNumberFormats::operator=(const XLNumberFormats& other)
     }
     return *this;
 }
+
+/**
+ * @details Move assignment operator.
+ */
+XLNumberFormats& XLNumberFormats::operator=(XLNumberFormats&& other) noexcept = default;
 
 /**
  * @details Returns the amount of numberFormats held by the class
@@ -637,18 +669,36 @@ XLFont::XLFont() : m_fontNode(std::make_unique<XMLNode>()) {}
  */
 XLFont::XLFont(const XMLNode& node) : m_fontNode(std::make_unique<XMLNode>(node)) {}
 
-XLFont::~XLFont() = default;
-
+/**
+ * @details Copy constructor
+ */
 XLFont::XLFont(const XLFont& other)
     : m_fontNode(std::make_unique<XMLNode>(*other.m_fontNode))
 {}
 
+/**
+ * @details Move constructor
+ */
+XLFont::XLFont(XLFont&& other) noexcept = default;
+
+/**
+ * @details
+ */
+XLFont::~XLFont() = default;
+
+/**
+ * @details Copy assignment operator
+ */
 XLFont& XLFont::operator=(const XLFont& other)
 {
     if (&other != this) *m_fontNode = *other.m_fontNode;
     return *this;
 }
 
+/**
+ * @details Move assignment operator
+ */
+XLFont& XLFont::operator=(XLFont&& other) noexcept = default;
 
 /**
  * @details Returns the font name property
@@ -784,21 +834,29 @@ XLFonts::XLFonts(const XMLNode& fonts)
     }
 }
 
-XLFonts::~XLFonts()
-{
-    m_fonts.clear(); // delete vector with all children
-}
-
+/**
+ * @details Copy constructor
+ */
 XLFonts::XLFonts(const XLFonts& other)
     : m_fontsNode(std::make_unique<XMLNode>(*other.m_fontsNode)),
       m_fonts(other.m_fonts)
 {}
 
+/**
+ * @details Move constructor
+ */
 XLFonts::XLFonts(XLFonts&& other)
     : m_fontsNode(std::move(other.m_fontsNode)),
       m_fonts(std::move(other.m_fonts))
 {}
 
+/**
+ * @details
+ */
+XLFonts::~XLFonts()
+{
+    m_fonts.clear(); // delete vector with all children
+}
 
 /**
  * @details Copy assignment operator
@@ -812,6 +870,11 @@ XLFonts& XLFonts::operator=(const XLFonts& other)
     }
     return *this;
 }
+
+/**
+ * @details Move assignment operator
+ */
+XLFonts& XLFonts::operator=(XLFonts&& other) noexcept = default;
 
 /**
  * @details Returns the amount of fonts held by the class
@@ -885,7 +948,17 @@ XLDataBarColor::XLDataBarColor(const XLDataBarColor& other)
 {}
 
 /**
- * @details Assign values of other to this
+ * @details Move Constructor
+ */
+XLDataBarColor::XLDataBarColor(XLDataBarColor&& other) noexcept = default;
+
+/**
+ * @details
+ */
+XLDataBarColor::~XLDataBarColor() = default;
+
+/**
+ * @details Copy assignment operator
  */
 XLDataBarColor& XLDataBarColor::operator=(const XLDataBarColor& other)
 {
@@ -894,10 +967,9 @@ XLDataBarColor& XLDataBarColor::operator=(const XLDataBarColor& other)
 }
 
 /**
- * @details
+ * @details Move assignment operator
  */
-XLDataBarColor::~XLDataBarColor() = default;
-
+XLDataBarColor& XLDataBarColor::operator=(XLDataBarColor&& other) noexcept = default;
 
 /**
  * @details Getter functions
@@ -965,18 +1037,28 @@ XLGradientStop::XLGradientStop(const XLGradientStop& other)
 {}
 
 /**
- * @brief
+ * @details Move Constructor
+ */
+XLGradientStop::XLGradientStop(XLGradientStop&& other) noexcept = default;
+
+/**
+ * @details
  */
 XLGradientStop::~XLGradientStop() = default;
 
 /**
- * @details Assign values of other to this
+ * @details Copy assignment operator
  */
 XLGradientStop& XLGradientStop::operator=(const XLGradientStop& other)
 {
     if (&other != this) *m_stopNode = *other.m_stopNode;
     return *this;
 }
+
+/**
+ * @details Move assignment operator
+ */
+XLGradientStop& XLGradientStop::operator=(XLGradientStop&& other) noexcept = default;
 
 /**
  * @details Getter functions
@@ -1035,21 +1117,29 @@ XLGradientStops::XLGradientStops(const XMLNode& gradient)
     }
 }
 
-XLGradientStops::~XLGradientStops()
-{
-    m_gradientStops.clear(); // delete vector with all children
-}
-
+/**
+ * @details Copy constructor
+ */
 XLGradientStops::XLGradientStops(const XLGradientStops& other)
     : m_gradientNode(std::make_unique<XMLNode>(*other.m_gradientNode)),
       m_gradientStops(other.m_gradientStops)
 {}
 
+/**
+ * @details Move constructor
+ */
 XLGradientStops::XLGradientStops(XLGradientStops&& other)
     : m_gradientNode(std::move(other.m_gradientNode)),
       m_gradientStops(std::move(other.m_gradientStops))
 {}
 
+/**
+ * @details
+ */
+XLGradientStops::~XLGradientStops()
+{
+    m_gradientStops.clear(); // delete vector with all children
+}
 
 /**
  * @details Copy assignment operator
@@ -1063,6 +1153,11 @@ XLGradientStops& XLGradientStops::operator=(const XLGradientStops& other)
     }
     return *this;
 }
+
+/**
+ * @details Move assignment operator.
+ */
+XLGradientStops& XLGradientStops::operator=(XLGradientStops&& other) noexcept = default;
 
 /**
  * @details Returns the amount of gradient stops held by the class
@@ -1134,17 +1229,36 @@ XLFill::XLFill() : m_fillNode(std::make_unique<XMLNode>()) {}
  */
 XLFill::XLFill(const XMLNode& node) : m_fillNode(std::make_unique<XMLNode>(node)) {}
 
-XLFill::~XLFill() = default;
-
+/**
+ * @details Copy constructor
+ */
 XLFill::XLFill(const XLFill& other)
     : m_fillNode(std::make_unique<XMLNode>(*other.m_fillNode))
 {}
 
+/**
+ * @details Move constructor
+ */
+XLFill::XLFill(XLFill&& other) noexcept = default;
+
+/**
+ * @details
+ */
+XLFill::~XLFill() = default;
+
+/**
+ * @details Copy assignment operator
+ */
 XLFill& XLFill::operator=(const XLFill& other)
 {
     if (&other != this) *m_fillNode = *other.m_fillNode;
     return *this;
 }
+
+/**
+ * @details Move assignment operator
+ */
+XLFill& XLFill::operator=(XLFill&& other) noexcept = default;
 
 /**
  * @details Returns the name of the first element child of fill
@@ -1354,21 +1468,29 @@ XLFills::XLFills(const XMLNode& fills)
     }
 }
 
-XLFills::~XLFills()
-{
-    m_fills.clear(); // delete vector with all children
-}
-
+/**
+ * @details Copy constructor
+ */
 XLFills::XLFills(const XLFills& other)
     : m_fillsNode(std::make_unique<XMLNode>(*other.m_fillsNode)),
       m_fills(other.m_fills)
 {}
 
+/**
+ * @details Move constructor
+ */
 XLFills::XLFills(XLFills&& other)
     : m_fillsNode(std::move(other.m_fillsNode)),
       m_fills(std::move(other.m_fills))
 {}
 
+/**
+ * @details
+ */
+XLFills::~XLFills()
+{
+    m_fills.clear(); // delete vector with all children
+}
 
 /**
  * @details Copy assignment operator
@@ -1382,6 +1504,11 @@ XLFills& XLFills::operator=(const XLFills& other)
     }
     return *this;
 }
+
+/**
+ * @details Move assignment operator
+ */
+XLFills& XLFills::operator=(XLFills&& other) noexcept = default;
 
 /**
  * @details Returns the amount of fills held by the class
@@ -1445,17 +1572,36 @@ XLLine::XLLine() : m_lineNode(std::make_unique<XMLNode>()) {}
  */
 XLLine::XLLine(const XMLNode& node) : m_lineNode(std::make_unique<XMLNode>(node)) {}
 
-XLLine::~XLLine() = default;
-
+/**
+ * @details Copy constructor
+ */
 XLLine::XLLine(const XLLine& other)
     : m_lineNode(std::make_unique<XMLNode>(*other.m_lineNode))
 {}
 
+/**
+ * @details Move constructor
+ */
+XLLine::XLLine(XLLine&& other) noexcept = default;
+
+/**
+ * @details
+ */
+XLLine::~XLLine() = default;
+
+/**
+ * @details Copy assignment operator
+ */
 XLLine& XLLine::operator=(const XLLine& other)
 {
     if (&other != this) *m_lineNode = *other.m_lineNode;
     return *this;
 }
+
+/**
+ * @details Move assignment operator
+ */
+XLLine& XLLine::operator=(XLLine&& other) noexcept = default;
 
 /**
  * @details Returns the line style (XLLineStyleNone if line is not set)
@@ -1529,17 +1675,36 @@ XLBorder::XLBorder() : m_borderNode(std::make_unique<XMLNode>()) {}
  */
 XLBorder::XLBorder(const XMLNode& node) : m_borderNode(std::make_unique<XMLNode>(node)) {}
 
-XLBorder::~XLBorder() = default;
-
+/**
+ * @details Copy constructor
+ */
 XLBorder::XLBorder(const XLBorder& other)
     : m_borderNode(std::make_unique<XMLNode>(*other.m_borderNode))
 {}
 
+/**
+ * @details Move constructor
+ */
+XLBorder::XLBorder(XLBorder&& other) noexcept = default;
+
+/**
+ * @details
+ */
+XLBorder::~XLBorder() = default;
+
+/**
+ * @details Copy assignment operator
+ */
 XLBorder& XLBorder::operator=(const XLBorder& other)
 {
     if (&other != this) *m_borderNode = *other.m_borderNode;
     return *this;
 }
+
+/**
+ * @details Move assignment operator
+ */
+XLBorder& XLBorder::operator=(XLBorder&& other) noexcept = default;
 
 /**
  * @details determines whether the diagonalUp property is set
@@ -1640,21 +1805,29 @@ XLBorders::XLBorders(const XMLNode& borders)
     }
 }
 
-XLBorders::~XLBorders()
-{
-    m_borders.clear(); // delete vector with all children
-}
-
+/**
+ * @details Copy constructor
+ */
 XLBorders::XLBorders(const XLBorders& other)
     : m_bordersNode(std::make_unique<XMLNode>(*other.m_bordersNode)),
       m_borders(other.m_borders)
 {}
 
+/**
+ * @details Move constructor
+ */
 XLBorders::XLBorders(XLBorders&& other)
     : m_bordersNode(std::move(other.m_bordersNode)),
       m_borders(std::move(other.m_borders))
 {}
 
+/**
+ * @details
+ */
+XLBorders::~XLBorders()
+{
+    m_borders.clear(); // delete vector with all children
+}
 
 /**
  * @details Copy assignment operator
@@ -1668,6 +1841,11 @@ XLBorders& XLBorders::operator=(const XLBorders& other)
     }
     return *this;
 }
+
+/**
+ * @details Move assignment operator
+ */
+XLBorders& XLBorders::operator=(XLBorders&& other) noexcept = default;
 
 /**
  * @details Returns the amount of border descriptions held by the class
@@ -1731,17 +1909,36 @@ XLAlignment::XLAlignment() : m_alignmentNode(std::make_unique<XMLNode>()) {}
  */
 XLAlignment::XLAlignment(const XMLNode& node) : m_alignmentNode(std::make_unique<XMLNode>(node)) {}
 
-XLAlignment::~XLAlignment() = default;
-
+/**
+ * @details Copy constructor
+ */
 XLAlignment::XLAlignment(const XLAlignment& other)
     : m_alignmentNode(std::make_unique<XMLNode>(*other.m_alignmentNode))
 {}
 
+/**
+ * @details Move constructor
+ */
+XLAlignment::XLAlignment(XLAlignment&& other) noexcept = default;
+
+/**
+ * @details
+ */
+XLAlignment::~XLAlignment() = default;
+
+/**
+ * @details Copy assignment operator.
+ */
 XLAlignment& XLAlignment::operator=(const XLAlignment& other)
 {
     if (&other != this) *m_alignmentNode = *other.m_alignmentNode;
     return *this;
 }
+
+/**
+ * @details Move assignment operator.
+ */
+XLAlignment& XLAlignment::operator=(XLAlignment&& other) noexcept = default;
 
 /**
  * @details Returns the horizontal alignment style
@@ -1831,13 +2028,27 @@ XLCellFormat::XLCellFormat(const XMLNode& node, bool permitXfId)
    m_permitXfId(permitXfId)
 {}
 
-XLCellFormat::~XLCellFormat() = default;
-
+/**
+ * @details Copy constructor
+ */
 XLCellFormat::XLCellFormat(const XLCellFormat& other)
     : m_cellFormatNode(std::make_unique<XMLNode>(*other.m_cellFormatNode)),
       m_permitXfId(other.m_permitXfId)
 {}
 
+/**
+ * @details Move constructor
+ */
+XLCellFormat::XLCellFormat(XLCellFormat&& other) noexcept = default;
+
+/**
+ * @details
+ */
+XLCellFormat::~XLCellFormat() = default;
+
+/*
+ * @details Copy assignment operator
+ */
 XLCellFormat& XLCellFormat::operator=(const XLCellFormat& other)
 {
     if (&other != this) {
@@ -1846,6 +2057,11 @@ XLCellFormat& XLCellFormat::operator=(const XLCellFormat& other)
     }
     return *this;
 }
+
+/**
+ * @details Move assignment operator
+ */
+XLCellFormat& XLCellFormat::operator=(XLCellFormat&& other) noexcept = default;
 
 /**
  * @details determines the numberFormatId
@@ -1945,7 +2161,7 @@ bool XLCellFormat::setHidden(bool set)
 }
 
 /**
- * @brief Unsupported setter function
+ * @details Unsupported setter function
  */
 bool XLCellFormat::setExtLst(XLUnsupportedElement const& newExtLst) { OpenXLSX::ignore(newExtLst); return false; }
 
@@ -2001,23 +2217,31 @@ XLCellFormats::XLCellFormats(const XMLNode& cellStyleFormats, bool permitXfId)
     }
 }
 
-XLCellFormats::~XLCellFormats()
-{
-    m_cellFormats.clear(); // delete vector with all children
-}
-
+/**
+ * @details Copy constructor
+ */
 XLCellFormats::XLCellFormats(const XLCellFormats& other)
     : m_cellFormatsNode(std::make_unique<XMLNode>(*other.m_cellFormatsNode)),
       m_cellFormats(other.m_cellFormats),
       m_permitXfId(other.m_permitXfId)
 {}
 
+/**
+ * @details Move constructor
+ */
 XLCellFormats::XLCellFormats(XLCellFormats&& other)
     : m_cellFormatsNode(std::move(other.m_cellFormatsNode)),
       m_cellFormats(std::move(other.m_cellFormats)),
       m_permitXfId(other.m_permitXfId)
 {}
 
+/**
+ * @details
+ */
+XLCellFormats::~XLCellFormats()
+{
+    m_cellFormats.clear(); // delete vector with all children
+}
 
 /**
  * @details Copy assignment operator
@@ -2032,6 +2256,11 @@ XLCellFormats& XLCellFormats::operator=(const XLCellFormats& other)
     }
     return *this;
 }
+
+/**
+ * @details Move assignment operator
+ */
+XLCellFormats& XLCellFormats::operator=(XLCellFormats&& other) noexcept = default;
 
 /**
  * @details Returns the amount of cell format descriptions held by the class
@@ -2111,17 +2340,36 @@ XLCellStyle::XLCellStyle() : m_cellStyleNode(std::make_unique<XMLNode>()) {}
  */
 XLCellStyle::XLCellStyle(const XMLNode& node) : m_cellStyleNode(std::make_unique<XMLNode>(node)) {}
 
-XLCellStyle::~XLCellStyle() = default;
-
+/**
+ * @details Copy constructor
+ */
 XLCellStyle::XLCellStyle(const XLCellStyle& other)
     : m_cellStyleNode(std::make_unique<XMLNode>(*other.m_cellStyleNode))
 {}
 
+/**
+ * @details Move constructor
+ */
+XLCellStyle::XLCellStyle(XLCellStyle&& other) noexcept = default;
+
+/**
+ * @details
+ */
+XLCellStyle::~XLCellStyle() = default;
+
+/**
+ * @details Copy assignment operator
+ */
 XLCellStyle& XLCellStyle::operator=(const XLCellStyle& other)
 {
     if (&other != this) *m_cellStyleNode = *other.m_cellStyleNode;
     return *this;
 }
+
+/**
+ * @details Move assignment operator
+ */
+XLCellStyle& XLCellStyle::operator=(XLCellStyle&& other) noexcept = default;
 
 /**
  * @details Returns the style empty status
@@ -2149,7 +2397,7 @@ bool XLCellStyle::setHidden       (bool set)                 { return appendAndS
 bool XLCellStyle::setCustomBuiltin(bool set)                 { return appendAndSetAttribute(*m_cellStyleNode, "customBuiltin", (set ? "true" : "false")).empty() == false;        }
 
 /**
- * @brief Unsupported setter function
+ * @details Unsupported setter function
  */
 bool XLCellStyle::setExtLst(XLUnsupportedElement const& newExtLst) { OpenXLSX::ignore(newExtLst); return false; }
 
@@ -2193,21 +2441,29 @@ XLCellStyles::XLCellStyles(const XMLNode& cellStyles)
     }
 }
 
-XLCellStyles::~XLCellStyles()
-{
-    m_cellStyles.clear(); // delete vector with all children
-}
-
+/**
+ * @details Copy constructor
+ */
 XLCellStyles::XLCellStyles(const XLCellStyles& other)
     : m_cellStylesNode(std::make_unique<XMLNode>(*other.m_cellStylesNode)),
       m_cellStyles(other.m_cellStyles)
 {}
 
+/**
+ * @details Move constructor
+ */
 XLCellStyles::XLCellStyles(XLCellStyles&& other)
     : m_cellStylesNode(std::move(other.m_cellStylesNode)),
       m_cellStyles(std::move(other.m_cellStyles))
 {}
 
+/**
+ * @details
+ */
+XLCellStyles::~XLCellStyles()
+{
+    m_cellStyles.clear(); // delete vector with all children
+}
 
 /**
  * @details Copy assignment operator
@@ -2221,6 +2477,11 @@ XLCellStyles& XLCellStyles::operator=(const XLCellStyles& other)
     }
     return *this;
 }
+
+/**
+ * @details Move assignment operator
+ */
+XLCellStyles& XLCellStyles::operator=(XLCellStyles&& other) noexcept = default;
 
 /**
  * @details Returns the amount of numberFormats held by the class
@@ -2285,17 +2546,37 @@ XLDiffCellFormat::XLDiffCellFormat() : m_diffCellFormatNode(std::make_unique<XML
  */
 XLDiffCellFormat::XLDiffCellFormat(const XMLNode& node) : m_diffCellFormatNode(std::make_unique<XMLNode>(node)) {}
 
-XLDiffCellFormat::~XLDiffCellFormat() = default;
-
+/**
+ * @details Copy constructor
+ */
 XLDiffCellFormat::XLDiffCellFormat(const XLDiffCellFormat& other)
     : m_diffCellFormatNode(std::make_unique<XMLNode>(*other.m_diffCellFormatNode))
 {}
 
+/**
+ * @details Move constructor
+ */
+XLDiffCellFormat::XLDiffCellFormat(XLDiffCellFormat&& other) noexcept = default;
+
+/**
+ * @details
+ */
+XLDiffCellFormat::~XLDiffCellFormat() = default;
+
+/**
+ * @details Copy assignment operator
+ */
 XLDiffCellFormat& XLDiffCellFormat::operator=(const XLDiffCellFormat& other)
 {
     if (&other != this) *m_diffCellFormatNode = *other.m_diffCellFormatNode;
     return *this;
 }
+
+/**
+ * @details Move assignment operator
+ */
+XLDiffCellFormat& XLDiffCellFormat::operator=(XLDiffCellFormat&& other) noexcept = default;
+
 
 /**
  * @details Returns the differential cell format empty status
@@ -2342,7 +2623,7 @@ XLBorder XLDiffCellFormat::border() const
 // bool XLDiffCellFormat::setName         (std::string newName)      { return appendAndSetAttribute(*m_diffCellFormatNode, "name", newName).empty() == false; }
 
 /**
- * @brief Unsupported setter function
+ * @details Unsupported setter function
  */
 bool XLDiffCellFormat::setExtLst(XLUnsupportedElement const& newExtLst) { OpenXLSX::ignore(newExtLst); return false; }
 
@@ -2380,21 +2661,29 @@ XLDiffCellFormats::XLDiffCellFormats(const XMLNode& diffCellFormats)
     }
 }
 
-XLDiffCellFormats::~XLDiffCellFormats()
-{
-    m_diffCellFormats.clear(); // delete vector with all children
-}
-
+/**
+ * @details Copy constructor
+ */
 XLDiffCellFormats::XLDiffCellFormats(const XLDiffCellFormats& other)
     : m_diffCellFormatsNode(std::make_unique<XMLNode>(*other.m_diffCellFormatsNode)),
       m_diffCellFormats(other.m_diffCellFormats)
 {}
 
+/**
+ * @details Move constructor
+ */
 XLDiffCellFormats::XLDiffCellFormats(XLDiffCellFormats&& other)
     : m_diffCellFormatsNode(std::move(other.m_diffCellFormatsNode)),
       m_diffCellFormats(std::move(other.m_diffCellFormats))
 {}
 
+/**
+ * @details
+ */
+XLDiffCellFormats::~XLDiffCellFormats()
+{
+    m_diffCellFormats.clear(); // delete vector with all children
+}
 
 /**
  * @details Copy assignment operator
@@ -2408,6 +2697,11 @@ XLDiffCellFormats& XLDiffCellFormats::operator=(const XLDiffCellFormats& other)
     }
     return *this;
 }
+
+/**
+ * @details Move assignment operator
+ */
+XLDiffCellFormats& XLDiffCellFormats::operator=(XLDiffCellFormats&& other) noexcept = default;
 
 /**
  * @details Returns the amount of differential cell formats held by the class

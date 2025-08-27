@@ -445,7 +445,7 @@ namespace OpenXLSX
          * @brief Move Constructor.
          * @param other Object to be moved.
          */
-        XLCfRule(XLCfRule&& other) noexcept = default;
+        XLCfRule(XLCfRule&& other) noexcept;
 
         /**
          * @brief
@@ -464,7 +464,7 @@ namespace OpenXLSX
          * @param other Right hand side of assignment operation.
          * @return A reference to lhs object.
          */
-        XLCfRule& operator=(XLCfRule&& other) noexcept = default;
+        XLCfRule& operator=(XLCfRule&& other) noexcept;
 
         /**
          * @brief Test if this is an empty node
@@ -575,7 +575,7 @@ namespace OpenXLSX
          * @brief Move Constructor.
          * @param other Object to be moved.
          */
-        XLCfRules(XLCfRules&& other) noexcept = default;
+        XLCfRules(XLCfRules&& other) noexcept;
 
         /**
          * @brief
@@ -594,7 +594,7 @@ namespace OpenXLSX
          * @param other Right hand side of assignment operation.
          * @return A reference to lhs object.
          */
-        XLCfRules& operator=(XLCfRules&& other) noexcept = default;
+        XLCfRules& operator=(XLCfRules&& other) noexcept;
 
         /**
          * @brief Test if this is an empty node
@@ -693,7 +693,7 @@ namespace OpenXLSX
          * @brief Move Constructor.
          * @param other Object to be moved.
          */
-        XLConditionalFormat(XLConditionalFormat&& other) noexcept = default;
+        XLConditionalFormat(XLConditionalFormat&& other) noexcept;
 
         /**
          * @brief
@@ -712,7 +712,7 @@ namespace OpenXLSX
          * @param other Right hand side of assignment operation.
          * @return A reference to lhs object.
          */
-        XLConditionalFormat& operator=(XLConditionalFormat&& other) noexcept = default;
+        XLConditionalFormat& operator=(XLConditionalFormat&& other) noexcept;
 
         /**
          * @brief Test if this is an empty node
@@ -812,7 +812,7 @@ namespace OpenXLSX
          * @param other Right hand side of assignment operation.
          * @return A reference to lhs object.
          */
-        XLConditionalFormats& operator=(XLConditionalFormats&& other) noexcept = default;
+        XLConditionalFormats& operator=(XLConditionalFormats&& other) noexcept;
 
         /**
          * @brief Test if this is an empty node
@@ -885,11 +885,6 @@ namespace OpenXLSX
         explicit XLWorksheet(XLXmlData* xmlData);
 
         /**
-         * @brief Destructor.
-         */
-        ~XLWorksheet() = default;
-
-        /**
          * @brief Copy Constructor.
          * @warning Use comments() and vmlDrawing() with extreme caution: the underlying XLVmlDrawing class manages the last assigned shape id, and *will* create invalid XML
          *   if two separate variables are used to create VML drawings or comments within the same worksheet
@@ -900,6 +895,11 @@ namespace OpenXLSX
          * @brief Move Constructor.
          */
         XLWorksheet(XLWorksheet&& other);
+
+        /**
+         * @brief Destructor.
+         */
+        ~XLWorksheet();
 
         /**
          * @brief Copy assignment operator.
@@ -1341,40 +1341,40 @@ namespace OpenXLSX
         XLChartsheet() : XLSheetBase(nullptr) {};
 
         /**
-         * @brief
+         * @brief Constructor
          * @param xmlData
          */
         explicit XLChartsheet(XLXmlData* xmlData);
 
         /**
-         * @brief
+         * @brief Copy constructor
          * @param other
          */
-        XLChartsheet(const XLChartsheet& other) = default;
+        XLChartsheet(const XLChartsheet& other);
 
         /**
-         * @brief
+         * @brief Move constructor
          * @param other
          */
-        XLChartsheet(XLChartsheet&& other) noexcept = default;
+        XLChartsheet(XLChartsheet&& other) noexcept;
 
         /**
-         * @brief
+         * @brief Destructor
          */
         ~XLChartsheet();
 
         /**
-         * @brief
+         * @brief Copy assignment operator
          * @return
          */
-        XLChartsheet& operator=(const XLChartsheet& other) = default;
+        XLChartsheet& operator=(const XLChartsheet& other);
 
         /**
-         * @brief
+         * @brief Move assignment operator
          * @param other
          * @return
          */
-        XLChartsheet& operator=(XLChartsheet&& other) noexcept = default;
+        XLChartsheet& operator=(XLChartsheet&& other) noexcept;
 
     private:
 
@@ -1432,37 +1432,37 @@ namespace OpenXLSX
         explicit XLSheet(XLXmlData* xmlData);
 
         /**
-         * @brief The copy constructor.
+         * @brief Copy constructor.
          * @param other The object to be copied.
          * @note The default copy constructor is used, i.e. only shallow copying of pointer data members.
          */
-        XLSheet(const XLSheet& other) = default;
+        XLSheet(const XLSheet& other);
 
         /**
-         * @brief
+         * @brief Move constructor
          * @param other
          */
-        XLSheet(XLSheet&& other) noexcept = default;
+        XLSheet(XLSheet&& other) noexcept;
 
         /**
          * @brief The destructor
          * @note The default destructor is used, since cleanup of pointer data members is not required.
          */
-        ~XLSheet() = default;
+        ~XLSheet();
 
         /**
-         * @brief Assignment operator
+         * @brief Copy assignment operator
          * @return A reference to the new object.
          * @note The default assignment operator is used, i.e. only shallow copying of pointer data members.
          */
-        XLSheet& operator=(const XLSheet& other) = default;
+        XLSheet& operator=(const XLSheet& other);
 
         /**
-         * @brief
+         * @brief Move assignment operator
          * @param other
          * @return
          */
-        XLSheet& operator=(XLSheet&& other) noexcept = default;
+        XLSheet& operator=(XLSheet&& other) noexcept;
 
         /**
          * @brief Method for getting the current visibility state of the sheet.

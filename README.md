@@ -12,7 +12,6 @@ After hiding `pugixml` headers from the library interface, a code review needs t
 If a project builds without errors, this version of the library is safe to use. But be aware that by using a not-yet-reviewed class, a compiler error may occur.
 
 ## TBD / TODO:
-* finalize code review after hiding `pugixml` headers from the library interface
 * use of ```nowide``` stat in OpenXLSXFileSystemTools?
 * if nowide is needed: `headers/detail/Zippy.hpp` for call to `mz_zip_reader_init_file` TBD: does miniz support unicode filenames on Windows?
 * check if `Makefile.GNU` functionality can be provided for dependencies that need to be fetched from external sources
@@ -28,6 +27,9 @@ For this reason, the below call invokes pkg-config twice.
 ```
 g++ `pkg-config --cflags OpenXLSX` myprogram.cpp `pkg-config --static --libs OpenXLSX`
 ```
+
+## (aral-matrix) 27 August 2025 - finalized code review after hiding `pugixml` headers from the library interface
+* finished removing default constructors, destructors and assignment operators from XLStyles header files
 
 ## (aral-matrix) 26 August 2025 - added a library pkg-config (.pc) file, also added option for building a static bundled library file
 * CMake build configuration now also creates & installs `pkg-config` files that can be used as demonstrated in the new `Scripts/compile.sh`

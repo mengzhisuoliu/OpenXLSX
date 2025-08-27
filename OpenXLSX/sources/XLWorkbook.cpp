@@ -68,15 +68,40 @@ namespace
 }    // namespace
 
 /**
+ * @details Default constructor
+ */
+XLWorkbook::XLWorkbook() = default;
+
+/**
  * @details The constructor initializes the member variables and calls the loadXMLData from the
  * XLAbstractXMLFile base class.
  */
 XLWorkbook::XLWorkbook(XLXmlData* xmlData) : XLXmlFile(xmlData) {}
 
 /**
+ * @details Copy constructor
+ */
+XLWorkbook::XLWorkbook(const XLWorkbook& other) = default;
+
+/**
+ * @details Move constructor
+ */
+XLWorkbook::XLWorkbook(XLWorkbook&& other) = default;
+
+/**
  * @details
  */
 XLWorkbook::~XLWorkbook() = default;
+
+/**
+ * @brief Copy assignment operator
+ */
+XLWorkbook& XLWorkbook::operator=(const XLWorkbook& other) = default;
+
+/**
+ * @brief Move assignment operator
+ */
+XLWorkbook& XLWorkbook::operator=(XLWorkbook&& other) = default;
 
 /**
  * @details

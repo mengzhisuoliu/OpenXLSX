@@ -249,6 +249,11 @@ void XLProperties::createFromTemplate()
 /**
  * @details
  */
+XLProperties::XLProperties() = default;
+
+/**
+ * @details
+ */
 XLProperties::XLProperties(XLXmlData* xmlData) : XLXmlFile(xmlData)
 {
     XMLNode doc = xmlData->getXmlDocument()->document_element();
@@ -410,6 +415,11 @@ void XLAppProperties::createFromTemplate(XMLDocument const & workbookXml)
     props.append_child("HyperlinksChanged").text().set(false);
     props.append_child("AppVersion").text().set("16.0300");
 }
+
+/**
+ * @details
+ */
+XLAppProperties::XLAppProperties() = default;
 
 /**
  * @details

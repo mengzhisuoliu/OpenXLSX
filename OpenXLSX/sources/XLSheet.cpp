@@ -278,6 +278,31 @@ XLSheet::XLSheet(XLXmlData* xmlData) : XLXmlFile(xmlData)
 }
 
 /**
+* @details Copy constructor.
+*/
+XLSheet::XLSheet(const XLSheet& other) = default;
+
+/**
+* @details Move constructor
+ */
+XLSheet::XLSheet(XLSheet&& other) noexcept = default;
+
+/**
+* @details
+ */
+XLSheet::~XLSheet() = default;
+
+/**
+* @details Copy assignment operator
+ */
+XLSheet& XLSheet::operator=(const XLSheet& other) = default;
+
+/**
+* @details Move assignment operator
+ */
+XLSheet& XLSheet::operator=(XLSheet&& other) noexcept = default;
+
+/**
  * @details This method uses visitor pattern to return the name() member variable of the underlying
  * sheet object (XLWorksheet or XLChartsheet).
  */
@@ -425,17 +450,36 @@ XLCfRule::XLCfRule() : m_cfRuleNode(std::make_unique<XMLNode>()) {}
  */
 XLCfRule::XLCfRule(const XMLNode& node) : m_cfRuleNode(std::make_unique<XMLNode>(node)) {}
 
+/**
+ * @details Copy constructor
+ */
 XLCfRule::XLCfRule(const XLCfRule& other)
     : m_cfRuleNode(std::make_unique<XMLNode>(*other.m_cfRuleNode))
 {}
 
+/**
+ * @details Move constructor
+ */
+XLCfRule::XLCfRule(XLCfRule&& other) noexcept = default;
+
+/**
+ * @details
+ */
 XLCfRule::~XLCfRule() = default;
 
+/**
+ * @details Copy assignment operator
+ */
 XLCfRule& XLCfRule::operator=(const XLCfRule& other)
 {
     if (&other != this) *m_cfRuleNode = *other.m_cfRuleNode;
     return *this;
 }
+
+/**
+ * @details Move assignment operator
+ */
+XLCfRule& XLCfRule::operator=(XLCfRule&& other) noexcept = default;
 
 /**
  * @details Returns the node empty status
@@ -551,17 +595,36 @@ XLCfRules::XLCfRules() : m_conditionalFormattingNode(std::make_unique<XMLNode>()
  */
 XLCfRules::XLCfRules(const XMLNode& node) : m_conditionalFormattingNode(std::make_unique<XMLNode>(node)) {}
 
+/**
+ * @details Copy constructor
+ */
 XLCfRules::XLCfRules(const XLCfRules& other)
     : m_conditionalFormattingNode(std::make_unique<XMLNode>(*other.m_conditionalFormattingNode))
 {}
 
+/**
+ * @details Move constructor
+ */
+XLCfRules::XLCfRules(XLCfRules&& other) noexcept = default;
+
+/**
+ * @details
+ */
 XLCfRules::~XLCfRules() = default;
 
+/**
+ * @details Copy assignment operator
+ */
 XLCfRules& XLCfRules::operator=(const XLCfRules& other)
 {
     if (&other != this) *m_conditionalFormattingNode = *other.m_conditionalFormattingNode;
     return *this;
 }
+
+/**
+ * @details Move assignment operator
+ */
+XLCfRules& XLCfRules::operator=(XLCfRules&& other) noexcept = default;
 
 /**
  * @details Returns the node empty status
@@ -771,17 +834,36 @@ XLConditionalFormat::XLConditionalFormat() : m_conditionalFormattingNode(std::ma
  */
 XLConditionalFormat::XLConditionalFormat(const XMLNode& node) : m_conditionalFormattingNode(std::make_unique<XMLNode>(node)) {}
 
+/**
+ * @details Copy constructor
+ */
 XLConditionalFormat::XLConditionalFormat(const XLConditionalFormat& other)
     : m_conditionalFormattingNode(std::make_unique<XMLNode>(*other.m_conditionalFormattingNode))
 {}
 
+/**
+ * @details Move constructor
+ */
+XLConditionalFormat::XLConditionalFormat(XLConditionalFormat&& other) noexcept = default;
+
+/**
+ * @details
+ */
 XLConditionalFormat::~XLConditionalFormat() = default;
 
+/**
+ * @details Copy assignment operator
+ */
 XLConditionalFormat& XLConditionalFormat::operator=(const XLConditionalFormat& other)
 {
     if (&other != this) *m_conditionalFormattingNode = *other.m_conditionalFormattingNode;
     return *this;
 }
+
+/**
+ * @details Move assignment operator
+ */
+XLConditionalFormat& XLConditionalFormat::operator=(XLConditionalFormat&& other) noexcept = default;
 
 /**
  * @details Returns the node empty status
@@ -827,16 +909,24 @@ XLConditionalFormats::XLConditionalFormats(const XMLNode& sheet)
     : m_sheetNode(std::make_unique<XMLNode>(sheet))
 {}
 
-XLConditionalFormats::~XLConditionalFormats() {}
-
+/**
+ * @details Copy constructor
+ */
 XLConditionalFormats::XLConditionalFormats(const XLConditionalFormats& other)
     : m_sheetNode(std::make_unique<XMLNode>(*other.m_sheetNode))
 {}
 
+/**
+ * @details Move constructor
+ */
 XLConditionalFormats::XLConditionalFormats(XLConditionalFormats&& other)
     : m_sheetNode(std::move(other.m_sheetNode))
 {}
 
+/**
+ * @details
+ */
+XLConditionalFormats::~XLConditionalFormats() {}
 
 /**
  * @details Copy assignment operator
@@ -846,6 +936,15 @@ XLConditionalFormats& XLConditionalFormats::operator=(const XLConditionalFormats
     if (&other != this) {
         *m_sheetNode = *other.m_sheetNode;
     }
+    return *this;
+}
+
+/**
+ * @details Move assignment operator
+ */
+XLConditionalFormats& XLConditionalFormats::operator=(XLConditionalFormats&& other) noexcept
+{
+    m_sheetNode = std::move(other.m_sheetNode);
     return *this;
 }
 
@@ -1008,6 +1107,11 @@ XLWorksheet::XLWorksheet(XLWorksheet&& other) : XLSheetBase< XLWorksheet >(other
     m_comments      = std::move(other.m_comments);       //  "     XLComments         "
     m_tables        = std::move(other.m_tables);         //  "     XLTables           "
 }
+
+/**
+ * @details
+ */
+XLWorksheet::~XLWorksheet() = default;
 
 /**
  * @details copy-assign an XLWorksheet from other
@@ -1773,9 +1877,29 @@ XLRelationships& XLWorksheet::relationships()
 XLChartsheet::XLChartsheet(XLXmlData* xmlData) : XLSheetBase(xmlData) {}
 
 /**
+* @details Copy constructor
+ */
+XLChartsheet::XLChartsheet(const XLChartsheet& other) = default;
+
+/**
+ * @details Move constructor
+ */
+XLChartsheet::XLChartsheet(XLChartsheet&& other) noexcept = default;
+
+/**
  * @details Destructor. Default implementation used.
  */
 XLChartsheet::~XLChartsheet() = default;
+
+/**
+ * @details Copy assignment operator
+ */
+XLChartsheet& XLChartsheet::operator=(const XLChartsheet& other) = default;
+
+/**
+ * @details Move assignment operator
+ */
+XLChartsheet& XLChartsheet::operator=(XLChartsheet&& other) noexcept = default;
 
 /**
  * @details

@@ -330,6 +330,11 @@ bool XLRelationshipItem::empty() const { return m_relationshipNode->empty(); }
 
 
 /**
+* @details Default constructor
+*/
+XLRelationships::XLRelationships() = default;
+
+/**
  * @details Creates a XLRelationships object, which will read the XML file with the given path
  *  The pathTo the relationships XML file will be verified & stored in m_path, which is subsequently
  *   used to return all relationship targets as absolute paths within the XLSX archive

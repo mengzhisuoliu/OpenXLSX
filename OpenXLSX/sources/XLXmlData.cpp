@@ -53,6 +53,22 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 
 using namespace OpenXLSX;
 
+
+// ===== XLXmlSavingDeclaration
+
+/**
+ * @details Copy constructor
+ */
+XLXmlSavingDeclaration::XLXmlSavingDeclaration(XLXmlSavingDeclaration const & other) = default;
+
+
+// ===== XLXmlData
+
+/**
+ * @details
+ */
+XLXmlData::XLXmlData() = default;
+
 /**
  * @details
  */
@@ -69,7 +85,17 @@ XLXmlData::XLXmlData(XLDocument* parentDoc, const std::string& xmlPath, const st
 /**
  * @details
  */
+XLXmlData::XLXmlData(XLXmlData&& other) noexcept = default;
+
+/**
+ * @details
+ */
 XLXmlData::~XLXmlData() = default;
+
+/**
+ * @details
+ */
+XLXmlData& XLXmlData::operator=(XLXmlData&& other) noexcept = default;
 
 /**
  * @details

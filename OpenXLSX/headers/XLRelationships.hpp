@@ -227,12 +227,12 @@ namespace OpenXLSX {
     {
     public:    // ---------- Public Member Functions ---------- //
         /**
-         * @brief
+         * @brief Default constructor
          */
-        XLRelationships() = default;
+        XLRelationships();
 
         /**
-         * @brief
+         * @brief Nominal constructor
          * @param xmlData
          * @param pathTo Initialize m_path from this: the path to the relationships file origin of xmlData
          * @note m_path is used to resolve relative relationship target paths to an absolute

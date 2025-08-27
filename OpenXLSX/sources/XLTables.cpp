@@ -73,6 +73,31 @@ XLTables::XLTables(XLXmlData* xmlData) : XLXmlFile(xmlData)
 }
 
 /**
+ * @details Copy constructor.
+ */
+XLTables::XLTables(const XLTables& other) = default;
+
+/**
+ * @details Move constructor
+ */
+XLTables::XLTables(XLTables&& other) noexcept = default;
+
+/**
+ * @details
+ */
+XLTables::~XLTables() = default;
+
+/**
+ * @brief Copy assignment operator
+ */
+XLTables& XLTables::operator=(const XLTables&) = default;
+
+/**
+ * @brief Move assignment operator
+ */
+XLTables& XLTables::operator=(XLTables&& other) noexcept = default;
+
+/**
  * @details getters
  */
 /*

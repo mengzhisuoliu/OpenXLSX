@@ -85,7 +85,7 @@ namespace OpenXLSX
         /**
          * @brief Default constructor.
          */
-        XLXmlFile() = default;
+        XLXmlFile();
 
         /**
          * @brief Constructor. Creates an object based on the xmlData input.
@@ -97,13 +97,13 @@ namespace OpenXLSX
          * @brief Copy constructor. Default implementation used.
          * @param other The object to copy.
          */
-        XLXmlFile(const XLXmlFile& other) = default;
+        XLXmlFile(const XLXmlFile& other);
 
         /**
          * @brief Move constructor. Default implementation used.
          * @param other The object to move.
          */
-        XLXmlFile(XLXmlFile&& other) noexcept = default;
+        XLXmlFile(XLXmlFile&& other) noexcept;
 
         /**
          * @brief Destructor. Default implementation used.
@@ -123,14 +123,14 @@ namespace OpenXLSX
          * @param other The object to copy.
          * @return A reference to the new object.
          */
-        XLXmlFile& operator=(const XLXmlFile& other) = default;
+        XLXmlFile& operator=(const XLXmlFile& other);
 
         /**
          * @brief The move assignment operator. The default implementation has been used.
          * @param other The object to move.
          * @return A reference to the new object.
          */
-        XLXmlFile& operator=(XLXmlFile&& other) noexcept = default;
+        XLXmlFile& operator=(XLXmlFile&& other) noexcept;
 
     protected:    // ===== PROTECTED MEMBER FUNCTIONS
         /**

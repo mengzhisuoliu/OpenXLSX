@@ -81,7 +81,7 @@ namespace OpenXLSX
         /**
          * @brief
          */
-        XLProperties() = default;
+        XLProperties();
 
         /**
          * @brief
@@ -183,7 +183,7 @@ namespace OpenXLSX
         /**
          * @brief
          */
-        XLAppProperties() = default;
+        XLAppProperties();
 
         /**
          * @brief enable XLAppProperties to re-create a worksheet list in docProps/app.xml <TitlesOfParts> element from workbookXml

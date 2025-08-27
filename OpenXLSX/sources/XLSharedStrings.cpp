@@ -60,6 +60,12 @@ namespace OpenXLSX {
 using namespace OpenXLSX;
 
 /**
+ * @details Default constructor
+ */
+XLSharedStrings::XLSharedStrings() = default;
+
+
+/**
  * @details Constructs a new XLSharedStrings object. Only one (common) object is allowed per XLDocument instance.
  * A filepath to the underlying XML file must be provided.
  */
@@ -82,10 +88,31 @@ XLSharedStrings::XLSharedStrings(XLXmlData* xmlData, std::deque<std::string>* st
         );
 }
 
+
+/**
+ * @details Copy constructor
+ */
+XLSharedStrings::XLSharedStrings(const XLSharedStrings& other) = default;
+
+/**
+ * @details Move constructor
+ */
+XLSharedStrings::XLSharedStrings(XLSharedStrings&& other) noexcept = default;
+
 /**
  * @details
  */
 XLSharedStrings::~XLSharedStrings() = default;
+
+/**
+ * @details Copy assignment operator
+ */
+XLSharedStrings& XLSharedStrings::operator=(const XLSharedStrings& other) = default;
+
+/**
+ * @details Move assignment operator
+ */
+XLSharedStrings& XLSharedStrings::operator=(XLSharedStrings&& other) noexcept = default;
 
 /**
  * @details Look up a string index by the string content. If the string does not exist, the returned index is -1.

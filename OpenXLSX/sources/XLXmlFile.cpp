@@ -53,6 +53,11 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 using namespace OpenXLSX;
 
 /**
+ * @details Default constructor
+ */
+XLXmlFile::XLXmlFile() = default;
+
+/**
  * @details The constructor creates a new object with the parent XLDocument and the file path as input, with
  * an optional input being a std::string with the XML data. If the XML data is provided by a string, any file with
  * the same path in the .zip file will be overwritten upon saving of the document. If no xmlData is provided,
@@ -60,7 +65,30 @@ using namespace OpenXLSX;
  */
 XLXmlFile::XLXmlFile(XLXmlData* xmlData) : m_xmlData(xmlData) {}
 
+/**
+ * @details Copy constructor
+ */
+XLXmlFile::XLXmlFile(const XLXmlFile& other) = default;
+
+/**
+ * @details Move constructor
+ */
+XLXmlFile::XLXmlFile(XLXmlFile&& other) noexcept = default;
+
+/**
+ * @details
+ */
 XLXmlFile::~XLXmlFile() = default;
+
+/**
+ * @details Copy assignment operator
+ */
+XLXmlFile& XLXmlFile::operator=(const XLXmlFile& other) = default;
+
+/**
+ * @details Move assignment operator
+ */
+XLXmlFile& XLXmlFile::operator=(XLXmlFile&& other) noexcept = default;
 
 /**
  * @details This method sets the XML data with a std::string as input. The underlying XMLDocument reads the data.
