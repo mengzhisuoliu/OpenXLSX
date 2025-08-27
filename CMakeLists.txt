@@ -134,11 +134,17 @@ if (OPENXLSX_ENABLE_LIBZIP)
     # set(ZIP_LIBRARY_INSTALL_TARGET "") # TBD: none needed?
     set(ZIP_LIBRARY_INSTALL_TARGET libzip)
 else()
+    if(WIN32)
+        set(OPENXLSX_MINIZ_BUILD_MODE "OFF") # for miniz on windows, the shared library fails to build - so build the shared OpenXLSX library against the static miniz lib in that case
+    else()
+        set(OPENXLSX_MINIZ_BUILD_MODE "${BUILD_SHARED_LIBS}")
+    endif()
+
     CPMFindPackage(
             NAME miniz
             GITHUB_REPOSITORY richgel999/miniz
             GIT_TAG 3.0.2
-            # use of reserved BUILD_SHARED_LIBS automatically passes this option through
+            OPTIONS "BUILD_SHARED_LIBS ${OPENXLSX_MINIZ_BUILD_MODE}"
     )
     set(ZIP_LIBRARY miniz) # to be identified as dependency in package config
     set(ZIP_LIBRARY_INSTALL_TARGET miniz)
