@@ -79,7 +79,7 @@ int main()
     // possible, an exception will be thrown. For that reason, it is often best
     // to use a container of XLCellValue objects, and then later determine the
     // data type for each object.
-    for (auto& row : XLRowReverseRange(wks.rows())) { // use XLRowReverseRange to reverse-iterate over a range of rows
+    for (auto& row : XLReverseRange(wks.rows())) { // use XLReverseRange to reverse-iterate over a range of rows
         readValues = row.values();
 
         // Count the number of cell values

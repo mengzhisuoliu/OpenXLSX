@@ -29,9 +29,11 @@ g++ `pkg-config --cflags OpenXLSX` myprogram.cpp `pkg-config --static --libs Ope
 ```
 
 ## (aral-matrix) 28 August 2025 - implemented reverse iteration over row ranges
-* new classes `XLRowReverseIterator` and `XLRowReverseRange`
+* new class `XLRowReverseIterator` (XLRow.hpp)
 * implemented `XLRowRange::rbegin()` and `XLRowRange::rend()` to reverse-iterate over a row range
-* using `XLRowReverseRange`, range-based reverse iteration is demonstrated in `Examples/Demo6.cpp`, Example usage: `for (auto& row : XLRowReverseRange(wks.rows(firstRow, lastRow)))`
+* new templated class `XLReverseRange` (XLIterator.hpp) to reverse a range of class T that exposes ```T::rbegin()``` and ```T::rend()``` and typedef ```T::reverse_iterator```
+* using `XLReverseRange`, range-based reverse iteration is demonstrated in `Examples/Demo6.cpp`, Example usage: `for (auto& row : XLReverseRange(wks.rows(firstRow, lastRow)))`
+* currently, only XLRowRange supports reverse iteration
 
 ## (aral-matrix) 27 August 2025 - finalized code review after hiding `pugixml` headers from the library interface
 * finished removing default constructors, destructors and assignment operators from XLStyles header files

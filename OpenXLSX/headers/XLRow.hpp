@@ -576,6 +576,8 @@ namespace OpenXLSX
         //----------------------------------------------------------------------------------------------------------------------
 
     public:
+        typedef XLRowReverseIterator reverse_iterator; // to be used by templated class XLReverseRange
+
         /**
          * @brief constructor
          * @param dataNode
@@ -655,29 +657,6 @@ namespace OpenXLSX
         uint32_t                 m_firstRow;      /**< The cell reference of the first cell in the range */
         uint32_t                 m_lastRow;       /**< The cell reference of the last cell in the range */
         XLSharedStringsRef       m_sharedStrings; /**< */
-    };
-
-    class OPENXLSX_EXPORT XLRowReverseRange {
-    public:
-        /**
-         * @brief Construct a reverse row range from an lvalue (existing variable)
-         */
-        XLRowReverseRange(XLRowRange& rr)
-            : m_RR(nullptr),
-              m_rr(rr)
-        {}
-        /**
-         * @brief Construct a reverse row range from an rvalue (temporary variable)
-         */
-        XLRowReverseRange(XLRowRange&& rr)
-            : m_RR(std::make_unique<XLRowRange>(rr)),
-              m_rr(*m_RR)
-        {}
-        XLRowReverseIterator begin() { return m_rr.rbegin(); }
-        XLRowReverseIterator end() { return m_rr.rend(); }
-    private:
-        std::unique_ptr<XLRowRange> m_RR;
-        XLRowRange& m_rr;
     };
 
 }    // namespace OpenXLSX
