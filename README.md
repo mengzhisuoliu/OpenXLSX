@@ -7,10 +7,6 @@ Microsoft Excel® files, with the .xlsx format.
 
 As the heading says - the latest "Release" that is shown on https://github.com/troldal/OpenXLSX/releases is from 2021-11-06, and severely outdated - please pull / download the latest SW version directly from the repository in its current state. Link for those that do not want to use ```git```: https://github.com/troldal/OpenXLSX/archive/refs/heads/master.zip
 
-## NOTE: This development-tree is currently pending finalization of a code review hiding `pugixml` headers - use at your own risk
-After hiding `pugixml` headers from the library interface, a code review needs to elminate remaining destructors, constructors and assignment operators that are defaulted in OpenXLSX header files. Until then, a project may produce an error on compiling (when such defaulted functions are instantiated).
-If a project builds without errors, this version of the library is safe to use. But be aware that by using a not-yet-reviewed class, a compiler error may occur.
-
 ## TBD / TODO:
 * use of ```nowide``` stat in OpenXLSXFileSystemTools?
 * if nowide is needed: `headers/detail/Zippy.hpp` for call to `mz_zip_reader_init_file` TBD: does miniz support unicode filenames on Windows?
