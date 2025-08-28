@@ -28,6 +28,11 @@ For this reason, the below call invokes pkg-config twice.
 g++ `pkg-config --cflags OpenXLSX` myprogram.cpp `pkg-config --static --libs OpenXLSX`
 ```
 
+## (aral-matrix) 28 August 2025 - implemented reverse iteration over row ranges
+* new classes `XLRowReverseIterator` and `XLRowReverseRange`
+* implemented `XLRowRange::rbegin()` and `XLRowRange::rend()` to reverse-iterate over a row range
+* using `XLRowReverseRange`, range-based reverse iteration is demonstrated in `Examples/Demo6.cpp`, Example usage: `for (auto& row : XLRowReverseRange(wks.rows(firstRow, lastRow)))`
+
 ## (aral-matrix) 27 August 2025 - finalized code review after hiding `pugixml` headers from the library interface
 * finished removing default constructors, destructors and assignment operators from XLStyles header files
 
