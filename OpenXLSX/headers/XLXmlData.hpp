@@ -77,23 +77,41 @@ namespace OpenXLSX
         /**
          * @brief Default constructor
          */
-        XLXmlSavingDeclaration() : m_version(XLXmlDefaultVersion), m_encoding(XLXmlDefaultEncoding), m_standalone(XLXmlNotStandalone) {}
+        XLXmlSavingDeclaration();
 
         /**
          * @brief Nominal constructor
          */
-        XLXmlSavingDeclaration(std::string version, std::string encoding, bool standalone = XLXmlNotStandalone)
-            : m_version(version), m_encoding(encoding), m_standalone(standalone) {}
+        XLXmlSavingDeclaration(std::string version, std::string encoding, bool standalone = XLXmlNotStandalone);
 
         /**
          * @brief Copy constructor
          */
-        XLXmlSavingDeclaration(XLXmlSavingDeclaration const & other);
+        XLXmlSavingDeclaration(const XLXmlSavingDeclaration& other);
+
+        /**
+         * @brief Move constructor
+         */
+        XLXmlSavingDeclaration(XLXmlSavingDeclaration&& other) noexcept;
 
         /**
          * @brief Destructor
          */
-        ~XLXmlSavingDeclaration() {}
+        ~XLXmlSavingDeclaration();
+
+        /**
+         * @brief Copy assignment operator
+         * @param other the XLXmlSavingDeclaration object to be copied
+         * @return A reference to the copied-to object.
+         */
+        XLXmlSavingDeclaration& operator=(const XLXmlSavingDeclaration& other);
+
+        /**
+         * @brief Move assignment operator
+         * @param other the XLXmlSavingDeclaration object to be moved from.
+         * @return A reference to the moved-to object.
+         */
+        XLXmlSavingDeclaration& operator=(XLXmlSavingDeclaration&& other) noexcept;
 
         /**
          * @brief getter functions: version, encoding, standalone
