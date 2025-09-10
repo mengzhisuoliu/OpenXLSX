@@ -34,7 +34,7 @@ option(OPENXLSX_CREATE_DOCS           "Build library documentation (requires Dox
 option(OPENXLSX_BUILD_SAMPLES         "Build sample programs" ON)
 option(OPENXLSX_BUILD_TESTS           "Build and run library tests" ON) # TBD: are these still functional?
 option(OPENXLSX_BUILD_BENCHMARKS      "Build and run library benchmarks" OFF)
-option(OPENXLSX_ENABLE_LIBZIP         "Enable using libzip" OFF) # when OFF, default zip library is miniz. NOTE: libzip currently does NOT support CPM_DOWNLOAD_ALL
+option(OPENXLSX_ENABLE_LIBZIP         "Enable using libzip" OFF) # when OFF, default zip library is miniz
 option(OPENXLSX_FORCE_NOWIDE          "Force use of boost nowide, even on non-Windows systems (testing)" OFF)
 option(OPENXLSX_ENABLE_LIBZIP_EXAMPLE "Build Demo1A example using libzip - requires libbz2-dev" OFF)
 option(         BUILD_SHARED_LIBS     "Builds the shared library" OFF) # replaced OPENXLSX_SHARED_LIBRARY with cmake option reserved for that purpose
@@ -71,7 +71,8 @@ else()
     set(PUGIXML_STATIC_LIBRARY "pugixml-static")
 endif()
 
-
+#  NOTE: when building an executable against the *shared object* OpenXLSX library, /usr/local/lib will not be in the (ldconfig) default libraries search path
+#        and needs to be configured, e.g. by LD_LIBRARY_PATH=/usr/local/lib ./a.out
 if(${OPENXLSX_BUNDLED_STATIC_LIB} AND ${BUILD_SHARED_LIBS})
     message( FATAL_ERROR "Can not use option OPENXLSX_BUNDLED_STATIC_LIB with shared library" )
 endif()
@@ -82,10 +83,6 @@ endif()
 
 if(${OPENXLSX_CPM_LOCAL_PACKAGES_ONLY} AND NOT ${OPENXLSX_ENABLE_LIBZIP})
     message( WARNING "option OPENXLSX_CPM_LOCAL_PACKAGES_ONLY without option OPENXLSX_ENABLE_LIBZIP may fail unless libminiz is preinstalled on the system" )
-endif()
-
-if(NOT ${OPENXLSX_CPM_LOCAL_PACKAGES_ONLY} AND ${OPENXLSX_ENABLE_LIBZIP})
-    message( FATAL_ERROR "option OPENXLSX_ENABLE_LIBZIP without option OPENXLSX_CPM_LOCAL_PACKAGES_ONLY is currently unsupported (until libzip dependency can be pulled in automatically)" )
 endif()
 
 if(${OPENXLSX_BUNDLED_STATIC_LIB})
@@ -119,19 +116,24 @@ if (OPENXLSX_ENABLE_LIBZIP)
     # NOTE: libzip 1.11.4 is the newest version as of 2025-08-16 and not available on most host systems, so a lower version tag should be used.
     #        However, 1.11.4 is the first version that allows building libzip separately from the (unneeded) components zipcmp zipmerge ziptool
     #        Maybe check for available version & if 1.11.4 is available, exclude unneeded components - or does this happen automatically?
-    find_package(LibZip 1.7
-        CONFIG
-        COMPONENTS zip
-        QUIET OPTIONAL_COMPONENTS zipcmp zipmerge ziptool # requires the following tools to be installed: zipcmp zipmerge ziptool
-    )
-    set(ZIP_LIBRARY libzip) # to be identified as dependency in package config
-    # TODO: Help needed - how to make CPMFindPackage work with the libzip repo?
-    # CPMFindPackage(
-    #         NAME libzip
-    #         GITHUB_REPOSITORY nih-at/libzip
-    #         GIT_TAG 1.11.4
+    # find_package(LibZip 1.7
+    #     CONFIG
+    #     COMPONENTS zip
+    #     QUIET OPTIONAL_COMPONENTS zipcmp zipmerge ziptool # requires the following tools to be installed: zipcmp zipmerge ziptool
     # )
-    # set(ZIP_LIBRARY_INSTALL_TARGET "") # TBD: none needed?
+    set(ZIP_LIBRARY libzip) # to be identified as dependency in package config
+    CPMFindPackage(
+            NAME libzip
+            GITHUB_REPOSITORY nih-at/libzip
+            GIT_TAG v1.11.4
+            OPTIONS "COMPONENTS zip"                                    # only relevant for find_package (i.e. OPENXLSX_CPM_LOCAL_PACKAGES_ONLY=ON)
+            OPTIONS "QUIET OPTIONAL_COMPONENTS zipcmp zipmerge ziptool" # "
+            OPTIONS "BUILD_TOOLS OFF"                                   # only relevant for CPMFindPackage (i.e. OPENXLSX_CPM_LOCAL_PACKAGES_ONLY=OFF)
+            OPTIONS "BUILD_REGRESS OFF"                                 # "
+            OPTIONS "BUILD_OSSFUZZ OFF"                                 # "
+            OPTIONS "BUILD_EXAMPLES OFF"                                # "
+            OPTIONS "BUILD_DOC OFF"                                     # "
+    )
     set(ZIP_LIBRARY_INSTALL_TARGET libzip)
 else()
     if(WIN32)

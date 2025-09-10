@@ -410,7 +410,8 @@ namespace LibZip {
          * @return amount of entries in the zip archive
          * @return -1 on error (m_za is not open / nullptr)
          */
-        ssize_t EntryCount() const { return zip_get_num_files(m_za); }
+        ssize_t EntryCount() const { return zip_get_num_entries(m_za, 0); } // TBC that zip_flags_t flags = 0 effects the same behavior as obsolete zip_get_num_files
+        //                         { return zip_get_num_files(m_za); }
 
         /**
          * @brief get entry name by index

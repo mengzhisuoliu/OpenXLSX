@@ -29,6 +29,9 @@ g++ `pkg-config --cflags OpenXLSX` myprogram.cpp `pkg-config --static --libs Ope
 
 ## Recent changes
 
+### (aral-matrix) 10 September 2025 - implemented support for libzip installation from github repo (to be tested on Windows)
+* `OPENXLSX_ENABLE_LIBZIP=ON` now works with `OPENXLSX_CPM_LOCAL_PACKAGES_ONLY=OFF` - pending confirmation of a test on Windows
+
 ### (aral-matrix) 28 August 2025 - implemented reverse iteration over row ranges
 * new class `XLRowReverseIterator` (XLRow.hpp)
 * implemented `XLRowRange::rbegin()` and `XLRowRange::rend()` to reverse-iterate over a row range
