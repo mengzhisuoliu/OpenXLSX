@@ -2,6 +2,9 @@
 # Preamble
 #=======================================================================================================================
 cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
+set(OPENXLSX_MAJOR_VERSION 0)
+set(OPENXLSX_MINOR_VERSION 4)
+set(OPENXLSX_MICRO_VERSION 2)
 project(OpenXLSX VERSION 0.4.2 LANGUAGES CXX)
 
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
@@ -19,6 +22,11 @@ set(IGNORE_ME ${CMAKE_C_COMPILER}) # Suppress CMake warning message
 # Include CPM package manager
 #=======================================================================================================================
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/CPM.cmake)
+
+#=======================================================================================================================
+# Include tool to get git commit metadata
+#=======================================================================================================================
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/get-git-HEAD-ID.cmake)
 
 #=======================================================================================================================
 # Output Directories.
@@ -188,6 +196,8 @@ endif()
 # Summarize OpenXLSX configuration
 #=======================================================================================================================
 message(     NOTICE     "-- OpenXLSX Configuration:" )
+message(     NOTICE     "   ++ git HEAD (short):                      ${GIT_COMMIT_ID}" )
+message(     NOTICE     "   ++ git HEAD commit timestamp:             ${GIT_COMMIT_ID_TIME}" )
 message(     NOTICE     "   ++ Build library documentation:           ${OPENXLSX_CREATE_DOCS}" )
 message(     NOTICE     "   ++ Build sample programs:                 ${OPENXLSX_BUILD_SAMPLES}" )
 message(     NOTICE     "   ++ Build and run library tests:           ${OPENXLSX_BUILD_TESTS}" )
@@ -239,3 +249,23 @@ message( VERBOSE        "   ++ pugixml_SOURCE_DIR:                    ${pugixml_
 message( VERBOSE        "   ++ NOWIDE_INSTALL_TARGET:                 ${NOWIDE_INSTALL_TARGET}" )
 message( VERBOSE        "   ++ ZIP_LIBRARY_INSTALL_TARGET:            ${ZIP_LIBRARY_INSTALL_TARGET}" )
 message( VERBOSE        "   ++ PUGIXML_INSTALL_TARGET:                ${PUGIXML_INSTALL_TARGET}" )
+
+
+#=======================================================================================================================
+# Configure CPack for debian package generation - thank you @ https://github.com/Jacob-Burckhardt for the suggestions
+#=======================================================================================================================
+configure_file ("${CMAKE_CURRENT_LIST_DIR}/cmake/libopenxlsxCPackOptions.cmake.in"
+                "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libopenxlsxCPackOptions.cmake"
+                @ONLY)
+
+set (CPACK_PROJECT_CONFIG_FILE
+     "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libopenxlsxCPackOptions.cmake")
+
+# must include the CPack project config file here or the settings won't be used
+include ("${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libopenxlsxCPackOptions.cmake")
+
+# include( CPack ) must always be invoked after all CPACK\_\* variables are defined
+include( CPack )
+message(     NOTICE     "   ++ CPACK_PACKAGE_VERSION:                 ${CPACK_PACKAGE_VERSION}" )
+
+# TODO: how to trigger cpack -G DEB from cmake

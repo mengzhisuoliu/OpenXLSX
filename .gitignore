@@ -44,6 +44,8 @@
 /cmake/*
 # re-include specifically what is desired from cmake folder
 !/cmake/CPM.cmake
+!/cmake/get-git-HEAD-ID.cmake
+!/cmake/libopenxlsxCPackOptions.cmake.in
 
 # include Documentation folder
 !/Documentation

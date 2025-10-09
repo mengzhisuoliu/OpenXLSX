@@ -29,6 +29,12 @@ g++ `pkg-config --cflags OpenXLSX` myprogram.cpp `pkg-config --static --libs Ope
 
 ## Recent changes
 
+### (aral-matrix) 09 October 2025 - Work in progress: CPack configuration for a debian package
+* added `cmake/get-git-HEAD-ID.cmake` and `cmake/libopenxlsxCPackOptions.cmake.in`
+* `CMakeLists.txt`: `CPack` configuration is generated and can be invoked with `cpack -G DEB` - *CAUTION*: the debian package will most likely not function at this stage due to missing dependencies
+* TBD how to invoke package generation directly from CMake
+* TODO: correctly identify the dependencies (pugixml, libzip, nowide) for CPack
+
 ### (aral-matrix) 10 September 2025 - implemented support for libzip installation from github repo (to be tested on Windows)
 * `OPENXLSX_ENABLE_LIBZIP=ON` now works with `OPENXLSX_CPM_LOCAL_PACKAGES_ONLY=OFF` - pending confirmation of a test on Windows
 
