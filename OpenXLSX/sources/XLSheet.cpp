@@ -1404,7 +1404,12 @@ XLColumn XLWorksheet::column(std::string const& columnRef) const { return column
 /**
  * @details Returns an XLCellReference to the last cell using rowCount() and columnCount() methods.
  */
-XLCellReference XLWorksheet::lastCell() const noexcept { return { rowCount(), columnCount() }; }
+XLCellReference XLWorksheet::lastCell() const noexcept {
+    uint32_t rowCnt = rowCount();
+    uint16_t colCnt = columnCount();
+    if( rowCnt > 0 && colCnt > 0 ) return XLCellReference( rowCnt, colCnt ); // Fix for issue #382: bounds check without exception
+    return XLCellReference();    // default-construct reference to last cell (= "A1")
+}
 
 /**
  * @details Iterates through the rows and finds the maximum number of cells.

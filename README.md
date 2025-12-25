@@ -29,6 +29,9 @@ g++ `pkg-config --cflags OpenXLSX` myprogram.cpp `pkg-config --static --libs Ope
 
 ## Recent changes
 
+### (aral-matrix) 25 December 2025 - Fix for issue #382: XLWorksheet::range() bounds check without exception
+* added a check for an empty worksheet in `XLWorksheet::range()` to prevent an exception raised from `XLCellReference` constructor
+
 ### (aral-matrix) 09 October 2025 - Work in progress: CPack configuration for a debian package
 * added `cmake/get-git-HEAD-ID.cmake` and `cmake/libopenxlsxCPackOptions.cmake.in`
 * `CMakeLists.txt`: `CPack` configuration is generated and can be invoked with `cpack -G DEB` - *CAUTION*: the debian package will most likely not function at this stage due to missing dependencies
