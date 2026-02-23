@@ -18,30 +18,123 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(IGNORE_ME ${CMAKE_C_COMPILER}) # Suppress CMake warning message
 
+# ============================================================================
+# Policy Settings
+# ============================================================================
+set(CMAKE_POLICY_DEFAULT_CMP0077 NEW) # Respect BUILD_SHARED_LIBS / suppress warning in nowide - TBD if this is unproblematic
+
+#=======================================================================================================================
+# Build options
+#=======================================================================================================================
+# 2026-02-23 working configurations:
+# - static library build (BUILD_SHARED_LIBS OFF)
+# - either setting for OPENXLSX_LOCAL_PACKAGES_ONLY (OFF = automatically fetch dependencies, ON = error out if dependency is not available locally)
+#
+# 2026-02-23 remaining issues:
+# - shared libraries with FETCH_DEPS_AUTO: target pugixml::shared is not available
+# - shared libraries with FORCE_FETCH_ALL: linker errors when compiling the demos
+# - manage_dependency shall handle different targets for local and remote library version
+# -  PREFER_STATIC currently not working
+option(OPENXLSX_CREATE_DOCS           "Build library documentation (requires Doxygen and Graphviz/Dot to be installed)" ON)
+option(OPENXLSX_BUILD_SAMPLES         "Build sample programs" ON)
+option(OPENXLSX_BUILD_TESTS           "Build and run library tests" OFF) # TBD: are these still functional?
+option(OPENXLSX_BUILD_BENCHMARKS      "Build and run library benchmarks" OFF)
+option(OPENXLSX_ENABLE_LIBZIP         "Enable using libzip" OFF) # when OFF, default zip library is miniz
+option(OPENXLSX_FORCE_NOWIDE          "Force use of boost nowide, even on non-Windows systems (testing)" OFF)
+option(OPENXLSX_ENABLE_LIBZIP_EXAMPLE "Build Demo1A example using libzip - requires libbz2-dev" OFF)
+option(         BUILD_SHARED_LIBS     "Builds the shared library" OFF) # cmake option reserved for that purpose
+option(OPENXLSX_BUNDLED_STATIC_LIB    "(static library only) Link library dependencies into a bundled OpenXLSX library file" OFF)
+option(OPENXLSX_COMPACT_MODE          "Build library in compact mode (slower, but uses less memory)" OFF)
+option(OPENXLSX_LOCAL_PACKAGES_ONLY   "only use dependencies already installed on the host OS, otherwise fail" OFF)
+
 #=======================================================================================================================
 # Include CPM package manager
 #=======================================================================================================================
 # include(${CMAKE_CURRENT_LIST_DIR}/cmake/CPM.cmake)
 
 #=======================================================================================================================
+# Options for tool manage_dependency
+#=======================================================================================================================
+# actual options are replaced with below variables, controlled by OpenXLSX options
+# # option(         BUILD_SHARED_LIBS     "Builds the shared library" OFF) # already defined above for OpenXLSX
+# option(PREFER_STATIC "Prefer static linking over shared libraries" OFF)
+# option(USE_SYSTEM_LIBS "Use system-installed libraries when available" OFF)
+# option(FETCH_DEPS_AUTO "Automatically fetch missing dependencies" OFF)
+# option(FORCE_FETCH_ALL "Ignore system libraries and fetch all deps" OFF)
+#                          # Default: all off
+set(PREFER_STATIC OFF)     # Prefer static linking over shared libraries
+set(USE_SYSTEM_LIBS OFF)   # Use system-installed libraries when available
+set(FETCH_DEPS_AUTO OFF)   # Automatically fetch missing dependencies
+#                          # NOTE: with default settings, FETCH_DEPS_AUTO will get enabled because USE_SYSTEM_LIBS is OFF
+set(FORCE_FETCH_ALL OFF)   # Ignore system libraries and fetch all deps
+
+#=======================================================================================================================
+# Manage configurations
+#=======================================================================================================================
+if(${OPENXLSX_BUNDLED_STATIC_LIB})
+    set(PREFER_STATIC ON) # TODO: test / debug manage_dependency behavior for PREFER_STATIC
+endif()
+if(${OPENXLSX_LOCAL_PACKAGES_ONLY})
+    set(USE_SYSTEM_LIBS ON)
+    set(FETCH_DEPS_AUTO OFF)
+    set(FORCE_FETCH_ALL OFF)
+else()
+    set(USE_SYSTEM_LIBS ON)
+    set(FETCH_DEPS_AUTO ON)
+    set(FORCE_FETCH_ALL OFF)
+endif()
+# test FORCE_FETCH_ALL BEGIN
+# # set(FORCE_FETCH_ALL ON)
+# test FORCE_FETCH_ALL END
+
+# TODO: manage_dependency LOCAL_TARGET_NAME vs TARGET_NAME
+if(${OPENXLSX_LOCAL_PACKAGES_ONLY}) # TODO: make manage_dependency handle the different alias as LOCAL_TARGET_NAME
+    set(NOWIDE_ALIAS Boost::nowide)
+    set(NOWIDE_INSTALL_TARGET "")
+
+    # if(${BUILD_SHARED_LIBS})
+        set(PUGIXML_TARGET pugixml) # for local packages, pugixml::shared does not seem to be defined. Just pugixml seems to always work
+    # else()
+        # set(PUGIXML_TARGET pugixml::static)
+    # endif()
+    set(PUGIXML_STATIC_LIBRARY "pugixml") # TBD how to handle this one
+    set(PUGIXML_INSTALL_TARGET "")                 # needed for manage_dependency
+else()
+    set(NOWIDE_ALIAS nowide::nowide)
+    set(NOWIDE_INSTALL_TARGET "nowide")
+    set(NOWIDE_INSTALL OFF)
+
+    if(${BUILD_SHARED_LIBS})
+        set(PUGIXML_TARGET pugixml::shared) # actually, just pugixml seems to work fine for a target - but let's be explicit
+    else()
+        set(PUGIXML_TARGET pugixml::static) # see above
+    endif()
+    set(PUGIXML_STATIC_LIBRARY "pugixml-static")
+    set(PUGIXML_INSTALL_TARGET "")                 # needed for manage_dependency
+endif()
+
+#  NOTE: when building an executable against the *shared object* OpenXLSX library, /usr/local/lib will not be in the (ldconfig) default libraries search path
+#        and needs to be configured, e.g. by LD_LIBRARY_PATH=/usr/local/lib ./a.out
+if(${OPENXLSX_BUNDLED_STATIC_LIB} AND ${BUILD_SHARED_LIBS})
+    message( FATAL_ERROR "Can not use option OPENXLSX_BUNDLED_STATIC_LIB with shared library" )
+endif()
+
+if(${OPENXLSX_BUNDLED_STATIC_LIB} AND ${OPENXLSX_LOCAL_PACKAGES_ONLY})
+    message( WARNING "option OPENXLSX_BUNDLED_STATIC_LIB with OPENXLSX_LOCAL_PACKAGES_ONLY may fail when locally a installed dependency is not available as a static library" )
+endif()
+
+if(${OPENXLSX_LOCAL_PACKAGES_ONLY} AND NOT ${OPENXLSX_ENABLE_LIBZIP})
+    message( WARNING "option OPENXLSX_LOCAL_PACKAGES_ONLY without option OPENXLSX_ENABLE_LIBZIP may fail unless libminiz is preinstalled on the system" )
+endif()
+
+if(${OPENXLSX_BUNDLED_STATIC_LIB})
+    message( NOTICE "NOTE: bundled static library libOpenXLSX-bundled.a will NOT be installed to the target system by this build configuration" )
+endif()
+
+
+#=======================================================================================================================
 # Include tool to manage dependencies
 #=======================================================================================================================
-# Options for tool:
-# -----------------
-option(         BUILD_SHARED_LIBS     "Builds the shared library" OFF) # replaced OPENXLSX_SHARED_LIBRARY with cmake option reserved for that purpose
-option(PREFER_STATIC "Prefer static linking over shared libraries" OFF)
-option(USE_SYSTEM_LIBS "Use system-installed libraries when available" ON)
-option(FETCH_DEPS_AUTO "Automatically fetch missing dependencies" ON)
-option(FORCE_FETCH_ALL "Ignore system libraries and fetch all deps" OFF)
-
-# 2025-01-26 remaining issues:
-# - for install targets, Boost::nowide install target is an alias, boost_nowide produces an error about conflicting paths
-# - shared libraries with FETCH_DEPS_AUTO: target pugixml::shared is not available
-# - shared libraries with FORCE_FETCH_ALL: linker errors when compiling the demos
-# - [...]
-
-# Include for tool:
-# -----------------
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/manage-dependency.cmake)
 
 #=======================================================================================================================
@@ -57,74 +150,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/output)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/output)
 
 #=======================================================================================================================
-# Add build options
-#=======================================================================================================================
-option(OPENXLSX_CREATE_DOCS           "Build library documentation (requires Doxygen and Graphviz/Dot to be installed)" ON)
-option(OPENXLSX_BUILD_SAMPLES         "Build sample programs" ON)
-option(OPENXLSX_BUILD_TESTS           "Build and run library tests" ON) # TBD: are these still functional?
-option(OPENXLSX_BUILD_BENCHMARKS      "Build and run library benchmarks" OFF)
-option(OPENXLSX_ENABLE_LIBZIP         "Enable using libzip" ON) # when OFF, default zip library is miniz
-option(OPENXLSX_FORCE_NOWIDE          "Force use of boost nowide, even on non-Windows systems (testing)" OFF)
-option(OPENXLSX_ENABLE_LIBZIP_EXAMPLE "Build Demo1A example using libzip - requires libbz2-dev" OFF)
-# option(         BUILD_SHARED_LIBS     "Builds the shared library" OFF) # replaced OPENXLSX_SHARED_LIBRARY with cmake option reserved for that purpose
-option(OPENXLSX_BUNDLED_STATIC_LIB    "(static library only) Link library dependencies into a bundled OpenXLSX library file" OFF)
-option(OPENXLSX_COMPACT_MODE          "Build library in compact mode (slower, but uses less memory)" OFF)
-option(OPENXLSX_CPM_LOCAL_PACKAGES_ONLY "CPM shall only use packages already installed on the host OS, otherwise fail" OFF)
-
-# OPENXLSX_CPM_LOCAL_PACKAGES_ONLY is a selection option between CPM_LOCAL_PACKAGES_ONLY vs. CPM_DOWNLOAD_ALL
-if(${OPENXLSX_CPM_LOCAL_PACKAGES_ONLY})
-    set(CPM_LOCAL_PACKAGES_ONLY ON) # Defining this directly as an option in this file doesn't seem to work, as stupid as it is
-
-    set(NOWIDE_TARGET Boost::nowide)
-    set(NOWIDE_INSTALL_TARGET "")  # TBD: none needed?
-
-    # if(${BUILD_SHARED_LIBS})
-        set(PUGIXML_TARGET pugixml) # for local packages, pugixml::shared does not seem to be defined. Just pugixml seems to always work
-    # else()
-        # set(PUGIXML_TARGET pugixml::static)
-    # endif()
-    set(PUGIXML_INSTALL_TARGET "") # TBD: none needed?
-    set(PUGIXML_STATIC_LIBRARY "pugixml")
-else()
-    set(CPM_DOWNLOAD_ALL ON) # Force download so that a local package is not used while a component is missing (e.g. Boost::nowide)
-
-    set(NOWIDE_TARGET nowide::nowide)
-    set(NOWIDE_INSTALL_TARGET nowide)
-
-    # Test with manage_dependency:
-    set(NOWIDE_TARGET Boost::nowide)
-    # set(NOWIDE_INSTALL_TARGET boost_nowide)
-    set(NOWIDE_INSTALL_TARGET Boost::nowide)
-
-    if(${BUILD_SHARED_LIBS})
-        set(PUGIXML_TARGET pugixml::shared) # actually, just pugixml seems to work fine for a target - but let's be explicit
-    else()
-        set(PUGIXML_TARGET pugixml::static) # see above
-    endif()
-    # set(PUGIXML_INSTALL_TARGET pugixml)   # needed for CPMFindPackage
-    set(PUGIXML_INSTALL_TARGET "")        # needed for manage_dependency
-    set(PUGIXML_STATIC_LIBRARY "pugixml-static")
-endif()
-
-#  NOTE: when building an executable against the *shared object* OpenXLSX library, /usr/local/lib will not be in the (ldconfig) default libraries search path
-#        and needs to be configured, e.g. by LD_LIBRARY_PATH=/usr/local/lib ./a.out
-if(${OPENXLSX_BUNDLED_STATIC_LIB} AND ${BUILD_SHARED_LIBS})
-    message( FATAL_ERROR "Can not use option OPENXLSX_BUNDLED_STATIC_LIB with shared library" )
-endif()
-
-if(${OPENXLSX_BUNDLED_STATIC_LIB} AND ${OPENXLSX_CPM_LOCAL_PACKAGES_ONLY})
-    message( WARNING "option OPENXLSX_BUNDLED_STATIC_LIB with OPENXLSX_CPM_LOCAL_PACKAGES_ONLY may fail when locally a installed dependency is not available as a static library" )
-endif()
-
-if(${OPENXLSX_CPM_LOCAL_PACKAGES_ONLY} AND NOT ${OPENXLSX_ENABLE_LIBZIP})
-    message( WARNING "option OPENXLSX_CPM_LOCAL_PACKAGES_ONLY without option OPENXLSX_ENABLE_LIBZIP may fail unless libminiz is preinstalled on the system" )
-endif()
-
-if(${OPENXLSX_BUNDLED_STATIC_LIB})
-    message( NOTICE "NOTE: bundled static library libOpenXLSX-bundled.a will NOT be installed to the target system by this build configuration" )
-endif()
-
-#=======================================================================================================================
 # Add project configurations (#ifdef / #ifndef testable)
 #=======================================================================================================================
 if(WIN32 OR ${OPENXLSX_FORCE_NOWIDE})
@@ -132,31 +157,20 @@ if(WIN32 OR ${OPENXLSX_FORCE_NOWIDE})
 endif()
 
 if(OPENXLSX_ENABLE_NOWIDE)
-    # CPMFindPackage(
-    #         NAME Boost
-    #         VERSION 1.73.0
-    #         GITHUB_REPOSITORY boostorg/nowide
-    #         # NAME nowide
-    #         GIT_TAG standalone
-    #         OPTIONS
-    #         "NOWIDE_INSTALL ON"
-    #         FIND_PACKAGE_ARGUMENTS "COMPONENTS nowide"
-    # )
     manage_dependency(
-        LIB_NAME     Boost
-        PACKAGE_NAME nowide
-        TARGET_NAME  Boost::nowide
-        GITHUB_REPO  boostorg/nowide
-        GIT_TAG   1.73.0
-        # HEADER_FILE  fmt/core.h # not sure how to use this
-        # GIT_TAG standalone
+        LIB_NAME        Nowide
+        PACKAGE_NAME    Boost
+        COMPONENTS      nowide
+        TARGET_NAME     ${NOWIDE_ALIAS}
+        GIT_REPOSITORY  https://codeberg.org/lars_uffmann/nowide_standalone.git
+        GIT_TAG         v11.3.1-fixed
+        # GITHUB_REPO  boostorg/nowide
+        # GIT_TAG   1.73.0
+        #
+        # OPTIONS currently not supported by manage_dependency
         # OPTIONS
-        #     "NOWIDE_INSTALL ON"
-        # FIND_PACKAGE_ARGUMENTS "COMPONENTS nowide"
+        #     "NOWIDE_INSTALL OFF"
     )
-    if(NOT "${Boost_INCLUDE_DIR}" STREQUAL "")
-        set(NOWIDE_INCLUDE_DIR "${Boost_INCLUDE_DIR}/boost")
-    endif()
 endif()
 
 if (OPENXLSX_ENABLE_LIBZIP)
@@ -176,9 +190,9 @@ if (OPENXLSX_ENABLE_LIBZIP)
     #         NAME libzip
     #         GITHUB_REPOSITORY nih-at/libzip
     #         GIT_TAG v1.11.4
-    #         OPTIONS "COMPONENTS zip"                                    # only relevant for find_package (i.e. OPENXLSX_CPM_LOCAL_PACKAGES_ONLY=ON)
+    #         OPTIONS "COMPONENTS zip"                                    # only relevant for find_package (i.e. OPENXLSX_LOCAL_PACKAGES_ONLY=ON)
     #         OPTIONS "QUIET OPTIONAL_COMPONENTS zipcmp zipmerge ziptool" # "
-    #         OPTIONS "BUILD_TOOLS OFF"                                   # only relevant for CPMFindPackage (i.e. OPENXLSX_CPM_LOCAL_PACKAGES_ONLY=OFF)
+    #         OPTIONS "BUILD_TOOLS OFF"                                   # only relevant for CPMFindPackage (i.e. OPENXLSX_LOCAL_PACKAGES_ONLY=OFF)
     #         OPTIONS "BUILD_REGRESS OFF"                                 # "
     #         OPTIONS "BUILD_OSSFUZZ OFF"                                 # "
     #         OPTIONS "BUILD_EXAMPLES OFF"                                # "
@@ -189,12 +203,12 @@ if (OPENXLSX_ENABLE_LIBZIP)
         PACKAGE_NAME LibZip
         TARGET_NAME  libzip::zip
         GITHUB_REPO  nih-at/libzip
-        GITHUB_TAG   v1.11.3
+        GIT_TAG      v1.11.3
         VERSION      1.11.3
         COMPONENTS   zip
-            # OPTIONS "COMPONENTS zip"                                    # only relevant for find_package (i.e. OPENXLSX_CPM_LOCAL_PACKAGES_ONLY=ON)
+            # OPTIONS "COMPONENTS zip"                                    # only relevant for find_package (i.e. OPENXLSX_LOCAL_PACKAGES_ONLY=ON)
             # OPTIONS "QUIET OPTIONAL_COMPONENTS zipcmp zipmerge ziptool" # "
-            OPTIONS "BUILD_TOOLS OFF"                                   # only relevant for CPMFindPackage (i.e. OPENXLSX_CPM_LOCAL_PACKAGES_ONLY=OFF)
+            OPTIONS "BUILD_TOOLS OFF"                                   # only relevant for CPMFindPackage (i.e. OPENXLSX_LOCAL_PACKAGES_ONLY=OFF)
             OPTIONS "BUILD_REGRESS OFF"                                 # "
             OPTIONS "BUILD_OSSFUZZ OFF"                                 # "
             OPTIONS "BUILD_EXAMPLES OFF"                                # "
@@ -220,7 +234,7 @@ else()
         PACKAGE_NAME miniz
         TARGET_NAME  miniz
         GITHUB_REPO  richgel999/miniz
-        GITHUB_TAG   3.0.2
+        GIT_TAG      3.0.2
     )
 
     set(ZIP_LIBRARY miniz) # to be identified as dependency in package config
@@ -238,11 +252,9 @@ endif ()
 manage_dependency(
     LIB_NAME     pugixml
     PACKAGE_NAME pugixml
-    # TARGET_NAME  pugixml
     TARGET_NAME  ${PUGIXML_TARGET}
     GITHUB_REPO  zeux/pugixml
     GIT_TAG      v1.15
-    # GITHUB_TAG   v1.15
     OPTIONS "PUGIXML_COMPACT ${OPENXLSX_COMPACT_MODE}"
 )
 
@@ -272,7 +284,7 @@ endif()
 #=======================================================================================================================
 # Summarize OpenXLSX configuration
 #=======================================================================================================================
-message(     NOTICE     "-- OpenXLSX Configuration:" )
+message(     NOTICE     "-- OpenXLSX configuration:" )
 message(     NOTICE     "   ++ git HEAD (short):                      ${GIT_COMMIT_ID}" )
 message(     NOTICE     "   ++ git HEAD commit timestamp:             ${GIT_COMMIT_ID_TIME}" )
 message(     NOTICE     "   ++ Build library documentation:           ${OPENXLSX_CREATE_DOCS}" )
@@ -288,7 +300,7 @@ endif()
     message( NOTICE     "   ++ Build the shared library:              ${BUILD_SHARED_LIBS}" )
     message( NOTICE     "   ++ Make a bundled static library file:    ${OPENXLSX_BUNDLED_STATIC_LIB}" )
     message( NOTICE     "   ++ Build library in compact mode:         ${OPENXLSX_COMPACT_MODE}" )
-    message( NOTICE     "   ++ CPM shall only use installed packages: ${OPENXLSX_CPM_LOCAL_PACKAGES_ONLY}" )
+    message( NOTICE     "   ++ Only use installed packages:           ${OPENXLSX_LOCAL_PACKAGES_ONLY}" )
     message( NOTICE     "   ++" )
 
 if(BUILD_SHARED_LIBS)
@@ -303,7 +315,7 @@ if(OPENXLSX_ENABLE_NOWIDE)
         message( NOTICE "   ++ Boost_INCLUDE_DIR:                     (empty)" )
     else()
         message( NOTICE "   ++ Boost_INCLUDE_DIR:                     ${Boost_INCLUDE_DIR}" )
-        message( NOTICE "   ++ NOWIDE_INCLUDE_DIR:                    ${NOWIDE_INCLUDE_DIR}" )
+        # message( NOTICE "   ++ NOWIDE_INCLUDE_DIR:                    ${NOWIDE_INCLUDE_DIR}" )
     endif()
 else()
     message( NOTICE     "   ++ Unicode support:                       (OS) native" )
@@ -314,15 +326,20 @@ if (OPENXLSX_ENABLE_LIBZIP)
 else()
     message( NOTICE     "   ++ zip library:                           miniz" )
 endif()
-if(CPM_LOCAL_PACKAGES_ONLY)
-    message( NOTICE     "   ++ CPM package source:                    CPM_LOCAL_PACKAGES_ONLY" )
-endif()
-if(CPM_DOWNLOAD_ALL)
-    message( NOTICE     "   ++ CPM package source:                    CPM_DOWNLOAD_ALL" )
-endif()
 
+message(     NOTICE     "   manage_dependency configuration:" )
+message(     NOTICE     "   ++ PREFER_STATIC:                         ${PREFER_STATIC}" )
+message(     NOTICE     "   ++ USE_SYSTEM_LIBS:                       ${USE_SYSTEM_LIBS}" )
+message(     NOTICE     "   ++ FETCH_DEPS_AUTO:                       ${FETCH_DEPS_AUTO}" )
+message(     NOTICE     "   ++ FORCE_FETCH_ALL:                       ${FORCE_FETCH_ALL}" )
+
+# message( NOTICE         "   TEST1 nowide_SOURCE_DIR:                  ${nowide_SOURCE_DIR}" ) # TBD - can this be fetched?
+# message( NOTICE         "   TEST2 nowide_SOURCE_DIR:                  ${Nowide_SOURCE_DIR}" )
+# message( NOTICE         "   TEST3 nowide_SOURCE_DIR:                  ${nowide_nowide_SOURCE_DIR}" )
+# message( NOTICE         "   TEST4 nowide_SOURCE_DIR:                  ${Boost_nowide_SOURCE_DIR}" )
 # NOTE: for some reason, cmake with --log-level VERBOSE (or DEBUG) prefixes message output with "-- "
-message( VERBOSE        "   ++ pugixml_SOURCE_DIR:                    ${pugixml_SOURCE_DIR}" )
+message( VERBOSE        "   VERBOSE configuration information:" )
+# message( VERBOSE        "   ++ pugixml_SOURCE_DIR:                    ${pugixml_SOURCE_DIR}" ) # TBD - can this be fetched?
 message( VERBOSE        "   ++ NOWIDE_INSTALL_TARGET:                 ${NOWIDE_INSTALL_TARGET}" )
 message( VERBOSE        "   ++ ZIP_LIBRARY_INSTALL_TARGET:            ${ZIP_LIBRARY_INSTALL_TARGET}" )
 message( VERBOSE        "   ++ PUGIXML_INSTALL_TARGET:                ${PUGIXML_INSTALL_TARGET}" )

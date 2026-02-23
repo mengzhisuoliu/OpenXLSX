@@ -31,18 +31,25 @@ endif()
 # Enhanced Helper Functions
 # ============================================================================
 
-# Safely finds or fetches a dependency
+# Function: manage_dependency
+# Purpose:  Safely finds or fetches a dependency
 function(manage_dependency)
     set(options "")
     set(oneValueArgs 
-        LIB_NAME 
-        PACKAGE_NAME 
-        VERSION      # 2026-01-25: use this to supply a local required version for find_package with PACKAGE_NAME
-        TARGET_NAME 
-        GITHUB_REPO 
-        GITHUB_TAG   # use this to supply the github version tag (can be preceeded by a 'v' whereas VERSION is typically(?) numerical only
+        LIB_NAME     # arbitrary label for the desired dependency for logging output
+        PACKAGE_NAME # library name in the OS repositories for find_package
+        VERSION      # use this to supply a local required version for find_package with PACKAGE_NAME
+        COMPONENTS   # use if find_package shall only make available certain components
+        TARGET_NAME  # the installation target that should be provided by the dependency
+        #
+        GITHUB_REPO  # use for github repositories only
+        GIT_REPOSITORY  # use to provide a full repository URL
+        GIT_TAG      # use this to supply the github version tag (can be preceeded by a 'v' whereas VERSION is typically(?) numerical only
+        #
+        URL          # URL & URL_HASH can be used together instead of GITHUB_REPO (GIT_REPOSITORY) & GIT_TAG
+        URL_HASH     #
+        #
         HEADER_FILE  # TBD: what is the point of HEADER_FILE?
-        COMPONENTS
     )
     set(multiValueArgs EXTRA_ARGS)
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -100,17 +107,43 @@ function(manage_dependency)
 
     # Fetch if needed
     if(should_fetch)
-        message(STATUS "Fetching ${ARG_LIB_NAME} from GitHub")
+        if( NOT "${ARG_GITHUB_REPO}" STREQUAL "" )
+            set( ARG_GIT_REPOSITORY "https://github.com/${ARG_GITHUB_REPO}.git" )
+        endif()
+        message(STATUS "Fetching ${ARG_LIB_NAME} from ${ARG_GIT_REPOSITORY}")
 
         include(FetchContent)
 
-        FetchContent_Declare(
-            ${ARG_LIB_NAME}_fetch
-            GIT_REPOSITORY https://github.com/${ARG_GITHUB_REPO}.git
-            GIT_TAG        ${ARG_GITHUB_TAG}
-            GIT_SHALLOW    TRUE
-            OVERRIDE_FIND_PACKAGE  # Important: override system package
-        )
+# message( NOTICE "FetchContent_Declare(" )
+# message( NOTICE "    ${ARG_LIB_NAME}_fetch" )
+# if( "${ARG_URL}" STREQUAL "" OR "${ARG_URL_HASH}" STREQUAL "" )
+#     message( NOTICE "    GIT_REPOSITORY ${ARG_GIT_REPOSITORY}" )
+#     message( NOTICE "    GIT_TAG        ${ARG_GIT_TAG}" )
+# else()
+#     message( NOTICE "    URL            ${ARG_URL}" )
+#     message( NOTICE "    URL_HASH       ${ARG_URL_HASH}" )
+# endif()
+# message( NOTICE "    GIT_SHALLOW    TRUE" )
+# message( NOTICE "    OVERRIDE_FIND_PACKAGE  # Important: override system package" )
+# message( NOTICE ")" )
+        if( "${ARG_URL}" STREQUAL "" OR "${ARG_URL_HASH}" STREQUAL "" )
+            message( NOTICE "Fetching via github repository ${ARG_GIT_REPOSITORY} with tag ${ARG_GIT_TAG}" )
+            FetchContent_Declare(
+                ${ARG_LIB_NAME}_fetch
+                GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
+                GIT_TAG        ${ARG_GIT_TAG}
+                GIT_SHALLOW    TRUE
+                OVERRIDE_FIND_PACKAGE  # Important: override system package
+            )
+        else()
+            message( NOTICE "Fetching via URL ${ARG_URL}" )
+            FetchContent_Declare(
+                ${ARG_LIB_NAME}_fetch
+                URL      ${ARG_URL}
+                URL_HASH ${ARG_URL_HASH}
+                OVERRIDE_FIND_PACKAGE  # Important: override system package
+            )
+        endif()
 
         # Set appropriate build type
         if(PREFER_STATIC)

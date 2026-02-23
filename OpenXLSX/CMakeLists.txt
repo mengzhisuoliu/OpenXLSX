@@ -163,8 +163,6 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
             PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
             $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/headers>
-            ${Boost_INCLUDE_DIR}    # just in case
-            ${NOWIDE_INCLUDE_DIR}   # includes {Boost_INCLUDE_DIR}/boost
             $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)     # For export header
 
     target_link_libraries(OpenXLSX
@@ -180,10 +178,9 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
                 miniz)
     endif ()
     if (OPENXLSX_ENABLE_NOWIDE)
-        # boost nowide is header-only, a "library" only makes sense in the context of nowide include paths
         target_link_libraries(OpenXLSX
                 PRIVATE
-                ${NOWIDE_TARGET})
+                ${NOWIDE_ALIAS})
     endif ()
 
     target_compile_definitions(OpenXLSX PUBLIC OPENXLSX_STATIC_DEFINE)
@@ -256,8 +253,6 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "SHARED")
             PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
             $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/headers>
-            ${Boost_INCLUDE_DIR}    # just in case
-            ${NOWIDE_INCLUDE_DIR}   # includes {Boost_INCLUDE_DIR}/boost
             $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)     # For export header
 
     target_link_libraries(OpenXLSX
@@ -273,10 +268,9 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "SHARED")
                 miniz)
     endif ()
     if (OPENXLSX_ENABLE_NOWIDE)
-        # boost nowide is header-only, a "library" only makes sense in the context of nowide include paths
         target_link_libraries(OpenXLSX
                 PRIVATE
-                ${NOWIDE_TARGET})
+                ${NOWIDE_ALIAS})
     endif ()
 
     # Enable Link-Time Optimization (LTO)
