@@ -29,6 +29,11 @@ g++ `pkg-config --cflags OpenXLSX` myprogram.cpp `pkg-config --static --libs Ope
 
 ## Recent changes
 
+### (aral-matrix) 16 March 2026 - Dynamically pull in dependencies from external sources (operating system or code repository)
+* upped OpenXLSX library version to `0.5.0`
+* static build: all dependencies are now linked in dynamically depending on the project configuration from available / allowed sources, which can be the OS or code repositories
+* dynamic library build is not yet supported with the new dependency management, so it is currently disabled
+
 ### (aral-matrix) 25 December 2025 - Fix for issue #382: XLWorksheet::range() bounds check without exception
 * added a check for an empty worksheet in `XLWorksheet::range()` to prevent an exception raised from `XLCellReference` constructor
 

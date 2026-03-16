@@ -45,7 +45,7 @@
 # re-include specifically what is desired from cmake folder
 !/cmake/get-git-HEAD-ID.cmake
 !/cmake/libopenxlsxCPackOptions.cmake.in
-!/cmake/manage-dependency.cmake
+!/cmake/manage_dependency.cmake
 
 # include Documentation folder
 !/Documentation
@@ -108,12 +108,12 @@
 # re-include specifically what is desired from Scripts folder
 !/Scripts/demos-cleanup.sh
 !/Scripts/cmake-cleanup.sh
-!/Scripts/cmake-uninstall.sh
 !/Scripts/compile.sh
 !/Scripts/demos-cleanup.sh
 !/Scripts/demos-run-all.sh
 !/Scripts/guarded-xml-format.sh
 !/Scripts/make-gnu.sh
+!/Scripts/uninstall-manifest.sh
 !/Scripts/xml-format-all.sh
 !/Scripts/xml-format.sh
 
