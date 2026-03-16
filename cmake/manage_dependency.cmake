@@ -177,8 +177,8 @@ function(manage_dependency)
         #
         TARGET_NAME  # expected target (can be an alias) that should be provided by the dependency
         TARGET_NAME_SYSTEM  # this is the target that shold be provided when the library is provided by the system
-        # NOTE: depending on how the dependency is made available, manage_dependency will set the variable PROVIDED_TARGET to
-        #        either TARGET_NAME or TARGET_NAME_SYSTEM, so that PROVIDED_TARGET can be used as DEPENDENCY_TARGET in target_link_interface
+        # NOTE: depending on how the dependency is made available, manage_dependency will set the variable ${LIB_NAME}_PROVIDED_TARGET to
+        #        either TARGET_NAME or TARGET_NAME_SYSTEM, so that ${LIB_NAME}_PROVIDED_TARGET can be used as DEPENDENCY_TARGET in target_link_interface
     )
     set(multiValueArgs EXTRA_ARGS)
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -188,8 +188,9 @@ function(manage_dependency)
     set(SAVED_CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH})
 
     set(should_fetch FALSE) # 2026-01-25: default initialization
-    set(PROVIDED_TARGET ${ARG_TARGET_NAME} PARENT_SCOPE)    # default: PROVIDED_TARGET should be the name as provided by a fetched dependency
-    #                                                       #  To be overridden by TARGET_NAME_SYSTEM if a system library is used
+    set(${ARG_LIB_NAME}_PROVIDED_TARGET     # default: ${LIB_NAME}_PROVIDED_TARGET should be the name as provided by a fetched dependency
+        ${ARG_TARGET_NAME} PARENT_SCOPE)    #
+    #                                       #  To be overridden by TARGET_NAME_SYSTEM if a system library is used
 
     # Determine search strategy
     if(NOT USE_SYSTEM_LIBS)
@@ -266,8 +267,9 @@ function(manage_dependency)
                 set(should_fetch ${FETCH_DEPS_AUTO})
             else()  # else: PREFER_STATIC OFF OR LIBRARY_TYPE is not SHARED
                 set(should_fetch FALSE)
-                set(PROVIDED_TARGET ${ARG_TARGET_NAME_SYSTEM} PARENT_SCOPE) # PROVIDED_TARGET should be the name as provided by an installed library
-                set(ARG_TARGET_NAME ${ARG_TARGET_NAME_SYSTEM})              # also, the variable ${ARG_TARGET_NAME_SYSTEM}_FOUND will be set to TRUE, so adjust ARG_TARGET_NAME
+                set(${ARG_LIB_NAME}_PROVIDED_TARGET             # ${ARG_LIB_NAME}_PROVIDED_TARGET should be the name as provided by an installed library
+                    ${ARG_TARGET_NAME_SYSTEM} PARENT_SCOPE)     #
+                set(ARG_TARGET_NAME ${ARG_TARGET_NAME_SYSTEM})  # also, the variable ${ARG_TARGET_NAME_SYSTEM}_FOUND will be set to TRUE, so adjust ARG_TARGET_NAME
                 message(STATUS "Found system ${ARG_LIB_NAME}: ${${ARG_PACKAGE_NAME}_VERSION}")
             endif()
         else()

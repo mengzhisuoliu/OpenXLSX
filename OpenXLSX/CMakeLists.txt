@@ -304,13 +304,20 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "SHARED")
                 miniz)
     endif ()
     if (OPENXLSX_ENABLE_NOWIDE)
-        message( FATAL_ERROR "shared build currently not supported for nowide" )
-        # target_link_libraries(OpenXLSX
-        #         PRIVATE
-        #         ${NOWIDE_ALIAS})
+        # message( FATAL_ERROR "shared build currently not supported for nowide" )
+        target_link_libraries(OpenXLSX
+                PRIVATE
+                ${NOWIDE_ALIAS})
 
-        # link to the built archive file so that OpenXLSX does not require NOWIDE_INSTALL_TARGET to be in the export set
-        target_link_libraries(OpenXLSX PRIVATE $<TARGET_FILE:${NOWIDE_INSTALL_TARGET}>)
+        if(TARGET ${NOWIDE_TARGET})
+            get_target_property(NOWIDE_IS_IMPORTED "${NOWIDE_ALIAS}" IMPORTED)
+            if(NOT NOWIDE_IS_IMPORTED)
+                set(NOWIDE_INSTALL_TARGET ${NOWIDE_TARGET})
+            endif()
+        endif()
+
+        # # link to the built archive file so that OpenXLSX does not require NOWIDE_INSTALL_TARGET to be in the export set
+        # target_link_libraries(OpenXLSX PRIVATE $<TARGET_FILE:${NOWIDE_INSTALL_TARGET}>)
 
         # ensure nowide is built before OpenXLSX (so that archive exists at link time)
         add_dependencies(OpenXLSX ${NOWIDE_ALIAS})
@@ -453,8 +460,6 @@ endif ()
 
 if (OPENXLSX_ENABLE_NOWIDE)
     set(CMAKE_INSTALL_TARGETS ${CMAKE_INSTALL_TARGETS} ${NOWIDE_INSTALL_TARGET})
-    # # do NOT set ${NOWIDE_INSTALL_TARGET} as install target, with direct link against the TARGET_FILE above, this is no longer needed
-    # set(CMAKE_INSTALL_TARGETS ${CMAKE_INSTALL_TARGETS} nowide_interface)
 endif ()
 
 install(

@@ -7,6 +7,13 @@ Microsoft Excel® files, with the .xlsx format.
 
 As the heading says - the latest "Release" that is shown on https://github.com/troldal/OpenXLSX/releases is from 2021-11-06, and severely outdated - please pull / download the latest SW version directly from the repository in its current state. Link for those that do not want to use ```git```: https://github.com/troldal/OpenXLSX/archive/refs/heads/master.zip
 
+## TBD / TODO before merge into master:
+* pugixml package config (.pc) file is not being installed
+* verify logic of PUGIXML_INSTALL_TARGET
+* install OpenXLSX into a /usr/local/lib/OpenXLSX subfolder
+* when OPENXLSX_MONOLITHIC_LIBRARY=ON, use target_link_interface instead of target_link_library for remaining dependencies (libzip/miniz, pugixml)
+* TBD if OPENXLSX_MONOLITHIC_LIBRARY even makes sense - are symbols linkable when contained in a single library file?
+
 ## TBD / TODO:
 * use of ```nowide``` stat in OpenXLSXFileSystemTools?
 * if nowide is needed: `headers/detail/Zippy.hpp` for call to `mz_zip_reader_init_file` TBD: does miniz support unicode filenames on Windows?

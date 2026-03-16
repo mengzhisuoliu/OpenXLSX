@@ -41,6 +41,9 @@ endif()
 # - TBD: static/shared library build on Windows 11 with clang_cl, MSVC, gcc
 
 # 2026-03-16 remaining issues:
+# - pugixml package config (.pc) file is not being installed
+# - verify logic of PUGIXML_INSTALL_TARGET
+# - install OpenXLSX into a /usr/local/lib/OpenXLSX subfolder
 # - when OPENXLSX_MONOLITHIC_LIBRARY=ON, use target_link_interface instead of target_link_library for remaining dependencies (libzip/miniz, pugixml)
 # - TBD if OPENXLSX_MONOLITHIC_LIBRARY even makes sense - are symbols linkable when contained in a single library file?
 #
@@ -131,19 +134,23 @@ if(OPENXLSX_LOCAL_PACKAGES_ONLY)
     set(NOWIDE_ALIAS Boost::nowide)
 
     set(PUGIXML_TARGET pugixml) # for local packages, pugixml::shared does not seem to be defined. Just pugixml seems to always work
-    set(PUGIXML_STATIC_LIBRARY "pugixml") # TBD how to handle this one
-    set(PUGIXML_INSTALL_TARGET "")        # needed for manage_dependency
+    set(PUGIXML_STATIC_LIBRARY "pugixml") # used for OPENXLSX_BUNDLED_STATIC_LIB at the moment
+
+    set(PUGIXML_INSTALL_TARGET "") # nothing to install
 else()
     set(NOWIDE_ALIAS nowide::nowide)
 
     if(${BUILD_SHARED_LIBS})
         set(PUGIXML_TARGET pugixml::shared) # actually, just pugixml seems to work fine for a target - but let's be explicit
-        set(PUGIXML_TARGET pugixml) # 2026-02-24 TEST
+        # set(PUGIXML_TARGET pugixml) # 2026-02-24 TEST
+        set(PUGIXML_INSTALL_TARGET "pugixml")
     else()
         set(PUGIXML_TARGET pugixml::static) # see above
+        set(PUGIXML_INSTALL_TARGET "pugixml-static")
     endif()
-    set(PUGIXML_STATIC_LIBRARY "pugixml-static")
-    set(PUGIXML_INSTALL_TARGET "")                 # needed for manage_dependency
+    set(PUGIXML_STATIC_LIBRARY "pugixml-static")    # used for OPENXLSX_BUNDLED_STATIC_LIB at the moment
+
+    # NOTE: PUGIXML_INSTALL_TARGET should ideally be derived from manage_dependency pugixml_PROVIDED_TARGET - but this currently reports aliases incompatible with install
 endif()
 
 #  NOTE: when building an executable against the *shared object* OpenXLSX library, /usr/local/lib will not be in the (ldconfig) default libraries search path
@@ -248,8 +255,8 @@ if(OPENXLSX_ENABLE_NOWIDE)
         URL            ${NOWIDE_URL_PARAM}
         URL_HASH       ${NOWIDE_URL_HASH_PARAM}
     )
-    message( STATUS "manage_dependency reported PROVIDED_TARGET as ${PROVIDED_TARGET}" )
-    set(NOWIDE_TARGET ${PROVIDED_TARGET} CACHE STRING "" FORCE)
+    message( STATUS "manage_dependency reported Nowide_PROVIDED_TARGET as ${Nowide_PROVIDED_TARGET}" )
+    set(NOWIDE_TARGET ${Nowide_PROVIDED_TARGET} CACHE STRING "" FORCE)
 
     # restore manage_dependency / USE_SYSTEM_LIBS configuration if it was modified
     if(OPENXLSX_NOWIDE_STANDALONE)
@@ -327,6 +334,9 @@ manage_dependency(
     GIT_TAG         v1.15
     # OPTIONS         "PUGIXML_COMPACT ${OPENXLSX_COMPACT_MODE}" # TBD how to pass on PUGIXML options
 )
+message( STATUS "manage_dependency reported puxixml_PROVIDED_TARGET as ${pugixml_PROVIDED_TARGET}" )
+# set(PUGIXML_INSTALL_TARGET ${pugixml_PROVIDED_TARGET} CACHE STRING "" FORCE)
+# unfortunately, pugixml_PROVIDED_TARGET is an alias, which does not behave well with cmake install
 
 
 #=======================================================================================================================
