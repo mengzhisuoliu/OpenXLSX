@@ -36,14 +36,13 @@ endif()
 #=======================================================================================================================
 # 2026-03-16 working configurations:
 # - static library build (BUILD_SHARED_LIBS OFF)
+# - shared library build (BUILD_SHARED_LIBS ON)
 # - either setting for OPENXLSX_LOCAL_PACKAGES_ONLY (OFF = automatically fetch dependencies, ON = error out if dependency is not available locally)
-# - TBD: static library build on Windows 11 with clang_cl, MSVC, gcc
+# - TBD: static/shared library build on Windows 11 with clang_cl, MSVC, gcc
 
 # 2026-03-16 remaining issues:
 # - when OPENXLSX_MONOLITHIC_LIBRARY=ON, use target_link_interface instead of target_link_library for remaining dependencies (libzip/miniz, pugixml)
 # - TBD if OPENXLSX_MONOLITHIC_LIBRARY even makes sense - are symbols linkable when contained in a single library file?
-# - shared libraries with FETCH_DEPS_AUTO: target pugixml::shared is not available
-# - shared libraries with FORCE_FETCH_ALL: linker errors when compiling the demos
 #
 option(OPENXLSX_CREATE_DOCS           "Build library documentation (requires Doxygen and Graphviz/Dot to be installed)" ON)
 option(OPENXLSX_BUILD_SAMPLES         "Build sample programs" ON)
@@ -83,9 +82,6 @@ option(FORCE_FETCH_ALL "Ignore system libraries and fetch all deps"    OFF)     
 #=======================================================================================================================
 # Manage configurations
 #=======================================================================================================================
-if(BUILD_SHARED_LIBS)
-    message( FATAL_ERROR "setting BUILD_SHARED_LIBS is currently not functional - this is on the TO-DO list" )
-endif()
 if(OPENXLSX_COMPACT_MODE)
     message( WARNING "setting OPENXLSX_COMPACT_MODE is currently not communicated to dependencies (pugixml) - they will be built normally - this is on the TO-DO list" )
 endif()
