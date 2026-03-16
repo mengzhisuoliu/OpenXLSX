@@ -158,6 +158,12 @@ endfunction()
 
 # Function: manage_dependency
 # Purpose:  Safely finds or fetches a dependency
+# Options:  -
+# Parameters: (see below)
+# Returns:
+#   ${LIB_NAME}_FETCHED         (PARENT_SCOPE): TRUE if dependency was downloaded from a repository, FALSE if dependency was provided by find_package
+#   ${LIB_NAME}_PROVIDED_TARGET (PARENT_SCOPE): (potentially aliased) target provided by the dependency
+#   ${LIB_NAME}_INSTALL_TARGET  (PARENT_SCOPE): (alias resolved) install target to be used for the dependency, if any
 # Author:   This function is a friendly contribution by NLATP (openxlsx.genetics016@passinbox.com)
 function(manage_dependency)
     set(options "")
@@ -187,10 +193,13 @@ function(manage_dependency)
     set(SAVED_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
     set(SAVED_CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH})
 
+    # Initialize return values to defaults
+    set(${ARG_LIB_NAME}_FETCHED FALSE PARENT_SCOPE)     # assume dependency will be found already installed
+    set(${ARG_LIB_NAME}_PROVIDED_TARGET                 # this shall should be set to the name provided by a fetched dependency
+        ${ARG_TARGET_NAME} PARENT_SCOPE)                #   (to be overridden by TARGET_NAME_SYSTEM if a system library is used)
+    set(${ARG_LIB_NAME}_INSTALL_TARGET "" PARENT_SCOPE) # no install target for an already installed dependency
+
     set(should_fetch FALSE) # 2026-01-25: default initialization
-    set(${ARG_LIB_NAME}_PROVIDED_TARGET     # default: ${LIB_NAME}_PROVIDED_TARGET should be the name as provided by a fetched dependency
-        ${ARG_TARGET_NAME} PARENT_SCOPE)    #
-    #                                       #  To be overridden by TARGET_NAME_SYSTEM if a system library is used
 
     # Determine search strategy
     if(NOT USE_SYSTEM_LIBS)
@@ -235,7 +244,7 @@ function(manage_dependency)
             endif()
 
             if(TARGET_STATIC AND "${TARGET_STATIC}" MATCHES "\\.a$" )
-                message( NOTICE "TARGET_STATIC matches \\.a$" )
+                message( NOTICE "manage_dependency: TARGET_STATIC matches \\.a$" )
             else()
                 set(TARGET_STATIC FALSE)
             endif()
@@ -258,19 +267,19 @@ function(manage_dependency)
             # get_target_property(LIBRARY_TYPE ${ARG_TARGET_NAME} TYPE)
             get_target_property(LIBRARY_TYPE ${ARG_TARGET_NAME_SYSTEM} TYPE)
 
-            message(STATUS "${ARG_TARGET_NAME_SYSTEM} target TYPE = ${LIBRARY_TYPE}")
+            message(STATUS "manage_dependency: ${ARG_TARGET_NAME_SYSTEM} target TYPE = ${LIBRARY_TYPE}")
             # get_target_property(LIBRARY_LOCATION ${ARG_TARGET_NAME} IMPORTED_LOCATION_RELEASE)
             # message(STATUS "${ARG_TARGET_NAME} target IMPORTED_LOCATION_RELEASE = ${LIBRARY_LOCATION}")
             # message(STATUS "${ARG_TARGET_NAME} variables: ${ARG_PACKAGE_NAME}_LIBRARIES=${${ARG_PACKAGE_NAME}_LIBRARIES}")
             if(PREFER_STATIC AND "${LIBRARY_TYPE}" STREQUAL "SHARED_LIBRARY" )
-                message( FATAL_ERROR "Found system ${ARG_LIB_NAME} as shared library, but static library is required" )
+                message( FATAL_ERROR "manage_dependency: Found system ${ARG_LIB_NAME} as shared library, but static library is required" )
                 set(should_fetch ${FETCH_DEPS_AUTO})
             else()  # else: PREFER_STATIC OFF OR LIBRARY_TYPE is not SHARED
                 set(should_fetch FALSE)
                 set(${ARG_LIB_NAME}_PROVIDED_TARGET             # ${ARG_LIB_NAME}_PROVIDED_TARGET should be the name as provided by an installed library
                     ${ARG_TARGET_NAME_SYSTEM} PARENT_SCOPE)     #
                 set(ARG_TARGET_NAME ${ARG_TARGET_NAME_SYSTEM})  # also, the variable ${ARG_TARGET_NAME_SYSTEM}_FOUND will be set to TRUE, so adjust ARG_TARGET_NAME
-                message(STATUS "Found system ${ARG_LIB_NAME}: ${${ARG_PACKAGE_NAME}_VERSION}")
+                message(STATUS "manage_dependency: Found system ${ARG_LIB_NAME}: ${${ARG_PACKAGE_NAME}_VERSION}")
             endif()
         else()
             set(should_fetch ${FETCH_DEPS_AUTO})       # BUGFIX 2026-01-25: was previously not evaluating variable FETCH_DEPS_AUTO
@@ -321,9 +330,28 @@ function(manage_dependency)
     # Verify target exists
     if(NOT TARGET ${ARG_TARGET_NAME})
         message(FATAL_ERROR
-            "Dependency ${ARG_LIB_NAME} (target ${ARG_TARGET_NAME}) not available. "
+            "manage_dependency: Dependency ${ARG_LIB_NAME} (target ${ARG_TARGET_NAME}) not available. "
             "Check your system installation or enable FETCH_DEPS_AUTO."
         )
+    else() # target exists
+        get_target_property(TARGET_IS_IMPORTED "${ARG_TARGET_NAME}" IMPORTED)
+        if(TARGET_IS_IMPORTED)
+            message( DEBUG "manage_dependency: target ${ARG_TARGET_NAME} is imported" )
+            set(${ARG_LIB_NAME}_INSTALL_TARGET "" PARENT_SCOPE)  # imported targets do not need to be installed
+        else()
+            message( DEBUG "manage_dependency: target ${ARG_TARGET_NAME} is not imported and must be installed" )
+            # unfortunately, ARG_TARGET_NAME can be an alias, which does not behave well with cmake install
+            # so: get the aliased target, if any
+            get_target_property(ALIASED_INSTALL_TARGET "${ARG_TARGET_NAME}" ALIASED_TARGET)
+            if(ALIASED_INSTALL_TARGET)
+                message( STATUS "manage_dependency: target ${ARG_TARGET_NAME} is an alias, resolved to ${ALIASED_INSTALL_TARGET}" )
+                set(${ARG_LIB_NAME}_INSTALL_TARGET "${ALIASED_INSTALL_TARGET}" PARENT_SCOPE)
+            else()
+                message( DEBUG "manage_dependency: target ${ARG_TARGET_NAME} is already the final target" )
+                set(${ARG_LIB_NAME}_INSTALL_TARGET "${ARG_TARGET_NAME}" PARENT_SCOPE)
+            endif()
+
+        endif()
     endif()
 
     # Restore global state

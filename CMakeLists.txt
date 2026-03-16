@@ -41,8 +41,7 @@ endif()
 # - TBD: static/shared library build on Windows 11 with clang_cl, MSVC, gcc
 
 # 2026-03-16 remaining issues:
-# - pugixml package config (.pc) file is not being installed
-# - verify logic of PUGIXML_INSTALL_TARGET
+# - pugixml and libzip package config (.pc) files are not being installed
 # - install OpenXLSX into a /usr/local/lib/OpenXLSX subfolder
 # - when OPENXLSX_MONOLITHIC_LIBRARY=ON, use target_link_interface instead of target_link_library for remaining dependencies (libzip/miniz, pugixml)
 # - TBD if OPENXLSX_MONOLITHIC_LIBRARY even makes sense - are symbols linkable when contained in a single library file?
@@ -126,31 +125,21 @@ if(OPENXLSX_NOWIDE_STANDALONE AND NOT FETCH_DEPS_AUTO)
     # TODO TBD: accept standalone local installation
 endif()
 
-# test FORCE_FETCH_ALL BEGIN
-# set(FORCE_FETCH_ALL ON)
-# test FORCE_FETCH_ALL END
-
 if(OPENXLSX_LOCAL_PACKAGES_ONLY)
     set(NOWIDE_ALIAS Boost::nowide)
 
     set(PUGIXML_TARGET pugixml) # for local packages, pugixml::shared does not seem to be defined. Just pugixml seems to always work
     set(PUGIXML_STATIC_LIBRARY "pugixml") # used for OPENXLSX_BUNDLED_STATIC_LIB at the moment
-
-    set(PUGIXML_INSTALL_TARGET "") # nothing to install
 else()
     set(NOWIDE_ALIAS nowide::nowide)
 
     if(${BUILD_SHARED_LIBS})
         set(PUGIXML_TARGET pugixml::shared) # actually, just pugixml seems to work fine for a target - but let's be explicit
         # set(PUGIXML_TARGET pugixml) # 2026-02-24 TEST
-        set(PUGIXML_INSTALL_TARGET "pugixml")
     else()
         set(PUGIXML_TARGET pugixml::static) # see above
-        set(PUGIXML_INSTALL_TARGET "pugixml-static")
     endif()
     set(PUGIXML_STATIC_LIBRARY "pugixml-static")    # used for OPENXLSX_BUNDLED_STATIC_LIB at the moment
-
-    # NOTE: PUGIXML_INSTALL_TARGET should ideally be derived from manage_dependency pugixml_PROVIDED_TARGET - but this currently reports aliases incompatible with install
 endif()
 
 #  NOTE: when building an executable against the *shared object* OpenXLSX library, /usr/local/lib will not be in the (ldconfig) default libraries search path
@@ -255,7 +244,7 @@ if(OPENXLSX_ENABLE_NOWIDE)
         URL            ${NOWIDE_URL_PARAM}
         URL_HASH       ${NOWIDE_URL_HASH_PARAM}
     )
-    message( STATUS "manage_dependency reported Nowide_PROVIDED_TARGET as ${Nowide_PROVIDED_TARGET}" )
+    message( STATUS "manage_dependency reported Nowide_PROVIDED_TARGET as ${Nowide_PROVIDED_TARGET}, Nowide_INSTALL_TARGET as ${Nowide_INSTALL_TARGET}" )
     set(NOWIDE_TARGET ${Nowide_PROVIDED_TARGET} CACHE STRING "" FORCE)
 
     # restore manage_dependency / USE_SYSTEM_LIBS configuration if it was modified
@@ -268,15 +257,7 @@ if (OPENXLSX_ENABLE_LIBZIP)
     # NOTE: libzip 1.11.4 is the newest version as of 2025-08-16 and not available on most host systems, so a lower version tag should be used.
     #        However, 1.11.4 is the first version that allows building libzip separately from the (unneeded) components zipcmp zipmerge ziptool
     #        Maybe check for available version & if 1.11.4 is available, exclude unneeded components - or does this happen automatically?
-# message( NOTICE     "LibZip_FOUND: ${LibZip_FOUND}" )
-#     find_package(LibZip 1.11.3 # was 1.7
-#         CONFIG
-#         COMPONENTS zip
-#         QUIET OPTIONAL_COMPONENTS zipcmp zipmerge ziptool # requires the following tools to be installed: zipcmp zipmerge ziptool
-#     )
-# message( NOTICE     "LibZip_FOUND: ${LibZip_FOUND}" )
 
-    set(ZIP_LIBRARY libzip) # to be identified as dependency in package config
     manage_dependency(
         LIB_NAME       libzip
         PACKAGE_NAME   LibZip
@@ -296,8 +277,10 @@ if (OPENXLSX_ENABLE_LIBZIP)
         # OPTIONS "BUILD_EXAMPLES OFF"                                # "
         # OPTIONS "BUILD_DOC OFF"                                     # "
     )
+    message( STATUS "manage_dependency reported libzip_PROVIDED_TARGET as ${libzip_PROVIDED_TARGET}, libzip_INSTALL_TARGET as ${libzip_INSTALL_TARGET}" )
 
-    set(ZIP_LIBRARY_INSTALL_TARGET libzip)
+    set(ZIP_LIBRARY libzip) # to be identified as dependency in package config - TBD if this should be only "zip"
+    set(ZIP_LIBRARY_INSTALL_TARGET "${libzip_INSTALL_TARGET}")
 else()
     if(WIN32)
         set(OPENXLSX_MINIZ_BUILD_MODE "OFF") # for miniz on windows, the shared library fails to build - so build the shared OpenXLSX library against the static miniz lib in that case
@@ -316,9 +299,10 @@ else()
         GIT_REPOSITORY  https://github.com/richgel999/miniz.git
         GIT_TAG         3.0.2
     )
+    message( STATUS "manage_dependency reported miniz_PROVIDED_TARGET as ${miniz_PROVIDED_TARGET}, miniz_INSTALL_TARGET as ${miniz_INSTALL_TARGET}" )
 
     set(ZIP_LIBRARY miniz) # to be identified as dependency in package config
-    set(ZIP_LIBRARY_INSTALL_TARGET miniz)
+    set(ZIP_LIBRARY_INSTALL_TARGET "${miniz_INSTALL_TARGET}")
 endif ()
 
 
@@ -334,9 +318,8 @@ manage_dependency(
     GIT_TAG         v1.15
     # OPTIONS         "PUGIXML_COMPACT ${OPENXLSX_COMPACT_MODE}" # TBD how to pass on PUGIXML options
 )
-message( STATUS "manage_dependency reported puxixml_PROVIDED_TARGET as ${pugixml_PROVIDED_TARGET}" )
-# set(PUGIXML_INSTALL_TARGET ${pugixml_PROVIDED_TARGET} CACHE STRING "" FORCE)
-# unfortunately, pugixml_PROVIDED_TARGET is an alias, which does not behave well with cmake install
+message( STATUS "manage_dependency reported puxixml_PROVIDED_TARGET as ${pugixml_PROVIDED_TARGET}, pugixml_INSTALL_TARGET as ${pugixml_INSTALL_TARGET}" )
+set(PUGIXML_INSTALL_TARGET "${pugixml_INSTALL_TARGET}")
 
 
 #=======================================================================================================================
