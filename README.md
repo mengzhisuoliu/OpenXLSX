@@ -8,7 +8,6 @@ Microsoft Excel® files, with the .xlsx format.
 As the heading says - the latest "Release" that is shown on https://github.com/troldal/OpenXLSX/releases is from 2021-11-06, and severely outdated - please pull / download the latest SW version directly from the repository in its current state. Link for those that do not want to use ```git```: https://github.com/troldal/OpenXLSX/archive/refs/heads/master.zip
 
 ## TBD / TODO before merge into master:
-* install OpenXLSX into a /usr/local/lib/OpenXLSX subfolder
 * when OPENXLSX_MONOLITHIC_LIBRARY=ON, use target_link_interface instead of target_link_library for remaining dependencies (libzip/miniz, pugixml)
 * TBD if OPENXLSX_MONOLITHIC_LIBRARY even makes sense - are symbols linkable when contained in a single library file?
 
@@ -31,11 +30,17 @@ For this reason, the example compilation + linking command below invokes pkg-con
 ```
 g++ `pkg-config --cflags OpenXLSX` ../Examples/Demo1.cpp `pkg-config --static --libs OpenXLSX`
 ```
-When linking against a shared library, the library runtime search path (`rpath`) should be included in the command:
+When linking against a shared library, the library runtime search path (`rpath`) should be included in the command. The OpenXLSX package config file provides the `rpath` setting via `pkg-config --libs`, so that the following, simplified line should work:
 ```
-g++ -Wl,-rpath,/usr/local/lib `pkg-config --cflags OpenXLSX` ../Examples/Demo1.cpp `pkg-config --libs OpenXLSX`
+g++ `pkg-config --cflags OpenXLSX` ../Examples/Demo1.cpp `pkg-config --libs OpenXLSX`
 ```
 
+If this new feature does not work as intended, please try providing the rpath manually:
+```
+g++ -Wl,-rpath,/usr/local/lib/OpenXLSX `pkg-config --cflags OpenXLSX` ../Examples/Demo1.cpp `pkg-config --libs OpenXLSX`
+```
+
+### Caution when both the shared and the static library are installed
 **CAUTION**: When attempting static linking while the shared library for OpenXLSX is also installed, the `-lOpenXLSX` flag returned from `pkg-config --static --libs OpenXLSX` will fail to link against the static library.
 A manual fix like so will work:
 ```
@@ -48,6 +53,12 @@ However, the recommended solution for static linking is to not install the share
 
 ### (aral-matrix) 17 March 2026 - Install package config files for libzip and pugixml if they are installed with OpenXLSX
 * when the dependencies are pulled in from source repositories, their package config files will be installed alongside OpenXLSX
+* `XLZipArchive.hpp` provides two new functions `const char *OpenXLSX::ZipLibraryName()` and `const char *OpenXLSX::ZipLibraryVersion()` for the user to obtain info about the zip library in use. *NOTE*: These do not reflect information about a custom zip implementation such as used in `Demo1A.cpp`
+* `OpenXLSX` and dependencies are installed into `/usr/local/lib/OpenXLSX` subfolder to avoid version conflicts for parallel installations of zip library (`miniz` or `libzip`), `pugixml`, `nowide`
+* `pugixml` and `libzip` package config (`.pc`) files are now part of the installation (`miniz` package config was already installed before if needed)
+* dependency package config files installed by OpenXLSX will be installed as `pugixml-OpenXLSX.pc`, `libzip-OpenXLSX.pc`, `miniz-OpenXLSX.pc` respectively to avoid conflicts
+* dependency package config files should behave well with existing versions of the dependencies (OpenXLSX package config file gives precedence to the self-installed dependencies)
+* OpenXLSX package config file now provides the runtime path for an executable linked against OpenXLSX shared libraries in `/usr/local/lib/OpenXLSX`
 
 ### (aral-matrix) 16 March 2026 - Dynamically pull in dependencies from external sources (operating system or code repository)
 * upped OpenXLSX library version to `0.5.0`

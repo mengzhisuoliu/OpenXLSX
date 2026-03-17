@@ -78,6 +78,16 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 namespace OpenXLSX
 {
     /**
+     * @brief provide the user with the name of the zip library in use
+     */
+    OPENXLSX_EXPORT const char *ZipLibraryName();
+
+    /**
+     * @brief provide the user with the version string of the zip library in use
+     */
+    OPENXLSX_EXPORT const char *ZipLibraryVersion();
+
+    /**
      * @brief
      */
     class OPENXLSX_EXPORT XLZipArchive

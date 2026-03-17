@@ -14,6 +14,18 @@
 
 namespace LibZip {
     /**
+     * @brief provide a (const) library name to the caller
+     * @details
+     */
+    constexpr const char *ZipLibraryName() { return "LibZip"; };
+
+    /**
+     * @brief get the library version from libzip
+     * @details provide a pass-through function to zip_libzip_version
+     */
+    const char *ZipLibraryVersion() { return zip_libzip_version(); }
+
+    /**
      * @brief The LibZipException class is a custom exception class derived from the std::runtime_error class.
      * @details In case of an error in the LibZip library, an LibZipException object will be thrown, with a message
      * describing the details of the error.

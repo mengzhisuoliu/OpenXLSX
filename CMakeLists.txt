@@ -38,11 +38,14 @@ endif()
 # - static library build (BUILD_SHARED_LIBS OFF)
 # - shared library build (BUILD_SHARED_LIBS ON)
 # - either setting for OPENXLSX_LOCAL_PACKAGES_ONLY (OFF = automatically fetch dependencies, ON = error out if dependency is not available locally)
-# - pugixml and libzip package config (.pc) files are now part of the installation
+# - OpenXLSX and dependencies are installed into /usr/local/lib/OpenXLSX subfolder to avoid version conflicts for parallel installations of zip library, pugixml, nowide
+# - pugixml, libzip & miniz package config (.pc) files are now part of the installation
+# - dependency package config files installed by OpenXLSX will be installed as pugixml-OpenXLSX.pc, libzip-OpenXLSX.pc, miniz-OpenXLSX.pc respectively to avoid conflicts
+# - dependency package config files should behave well with existing versions of the dependencies (OpenXLSX package config file gives precedence to the self-installed dependencies)
+# - OpenXLSX package config file now provides the runtime path for an executable linked against OpenXLSX shared libraries in /usr/local/lib/OpenXLSX
 # - TBD: static/shared library build on Windows 11 with clang_cl, MSVC, gcc
 
 # 2026-03-17 remaining issues:
-# - install OpenXLSX into a /usr/local/lib/OpenXLSX subfolder
 # - when OPENXLSX_MONOLITHIC_LIBRARY=ON, use target_link_interface instead of target_link_library for remaining dependencies (libzip/miniz, pugixml)
 # - TBD if OPENXLSX_MONOLITHIC_LIBRARY even makes sense - are symbols linkable when contained in a single library file?
 #
@@ -121,7 +124,11 @@ else()
 endif()
 
 if(OPENXLSX_NOWIDE_STANDALONE AND NOT FETCH_DEPS_AUTO)
-    message(FATAL_ERROR "OPENXLSX_NOWIDE_STANDALONE selected but FETCH_DEPS_AUTO is disabled - can not pull in standalone repository")
+    if(WIN32 OR ${OPENXLSX_FORCE_NOWIDE})
+        message(FATAL_ERROR "OPENXLSX_NOWIDE_STANDALONE selected but FETCH_DEPS_AUTO is disabled - can not pull in standalone repository")
+    else()
+        # suppress error if nowide is not going to be used
+    endif()
     # TODO TBD: accept standalone local installation
 endif()
 
