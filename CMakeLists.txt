@@ -63,16 +63,6 @@ option(OPENXLSX_MONOLITHIC_LIBRARY    "(static library only) Link library depend
 option(OPENXLSX_LOCAL_PACKAGES_ONLY   "only use dependencies already installed on the host OS, otherwise fail" OFF)
 option(OPENXLSX_COMPACT_MODE          "Build library in compact mode (slower, but uses less memory)" OFF)
 
-
-option(OPENXLSX_CREATE_DOCS           "Build library documentation (requires Doxygen and Graphviz/Dot to be installed)" ON)
-option(OPENXLSX_BUILD_SAMPLES         "Build sample programs" ON)
-option(OPENXLSX_BUILD_TESTS           "Build and run library tests - currently not functional" OFF)
-option(OPENXLSX_BUILD_BENCHMARKS      "Build and run library benchmarks - currently not functional" OFF)
-option(         BUILD_SHARED_LIBS     "Builds the shared library" OFF) # cmake option reserved for that purpose
-option(OPENXLSX_MONOLITHIC_LIBRARY    "(static library only) Link library dependencies into a bundled OpenXLSX library file" OFF)
-option(OPENXLSX_LOCAL_PACKAGES_ONLY   "only use dependencies already installed on the host OS, otherwise fail" OFF)
-option(OPENXLSX_COMPACT_MODE          "Build library in compact mode (slower, but uses less memory)" OFF)
-
 #=======================================================================================================================
 # Options for tool manage_dependency
 #=======================================================================================================================
