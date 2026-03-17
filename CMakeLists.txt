@@ -34,14 +34,14 @@ endif()
 #=======================================================================================================================
 # Build options
 #=======================================================================================================================
-# 2026-03-16 working configurations:
+# 2026-03-17 working configurations:
 # - static library build (BUILD_SHARED_LIBS OFF)
 # - shared library build (BUILD_SHARED_LIBS ON)
 # - either setting for OPENXLSX_LOCAL_PACKAGES_ONLY (OFF = automatically fetch dependencies, ON = error out if dependency is not available locally)
+# - pugixml and libzip package config (.pc) files are now part of the installation
 # - TBD: static/shared library build on Windows 11 with clang_cl, MSVC, gcc
 
-# 2026-03-16 remaining issues:
-# - pugixml and libzip package config (.pc) files are not being installed
+# 2026-03-17 remaining issues:
 # - install OpenXLSX into a /usr/local/lib/OpenXLSX subfolder
 # - when OPENXLSX_MONOLITHIC_LIBRARY=ON, use target_link_interface instead of target_link_library for remaining dependencies (libzip/miniz, pugixml)
 # - TBD if OPENXLSX_MONOLITHIC_LIBRARY even makes sense - are symbols linkable when contained in a single library file?

@@ -8,7 +8,6 @@ Microsoft Excel® files, with the .xlsx format.
 As the heading says - the latest "Release" that is shown on https://github.com/troldal/OpenXLSX/releases is from 2021-11-06, and severely outdated - please pull / download the latest SW version directly from the repository in its current state. Link for those that do not want to use ```git```: https://github.com/troldal/OpenXLSX/archive/refs/heads/master.zip
 
 ## TBD / TODO before merge into master:
-* pugixml and libzip package config (.pc) files are not being installed
 * install OpenXLSX into a /usr/local/lib/OpenXLSX subfolder
 * when OPENXLSX_MONOLITHIC_LIBRARY=ON, use target_link_interface instead of target_link_library for remaining dependencies (libzip/miniz, pugixml)
 * TBD if OPENXLSX_MONOLITHIC_LIBRARY even makes sense - are symbols linkable when contained in a single library file?
@@ -30,10 +29,25 @@ The sequence of arguments to the compiler is important:
 3) the linker flags (libs)
 For this reason, the example compilation + linking command below invokes pkg-config twice.
 ```
-g++ `pkg-config --cflags OpenXLSX` myprogram.cpp `pkg-config --static --libs OpenXLSX`
+g++ `pkg-config --cflags OpenXLSX` ../Examples/Demo1.cpp `pkg-config --static --libs OpenXLSX`
+```
+When linking against a shared library, the library runtime search path (`rpath`) should be included in the command:
+```
+g++ -Wl,-rpath,/usr/local/lib `pkg-config --cflags OpenXLSX` ../Examples/Demo1.cpp `pkg-config --libs OpenXLSX`
 ```
 
+**CAUTION**: When attempting static linking while the shared library for OpenXLSX is also installed, the `-lOpenXLSX` flag returned from `pkg-config --static --libs OpenXLSX` will fail to link against the static library.
+A manual fix like so will work:
+```
+g++ `pkg-config --cflags OpenXLSX` ../Examples/Demo1.cpp -L/usr/local/lib -l:libOpenXLSX.a -L/usr/local/lib -lpugixml -lzip
+```
+
+However, the recommended solution for static linking is to not install the shared library (for now - might support different naming in the future).
+
 ## Recent changes
+
+### (aral-matrix) 17 March 2026 - Install package config files for libzip and pugixml if they are installed with OpenXLSX
+* when the dependencies are pulled in from source repositories, their package config files will be installed alongside OpenXLSX
 
 ### (aral-matrix) 16 March 2026 - Dynamically pull in dependencies from external sources (operating system or code repository)
 * upped OpenXLSX library version to `0.5.0`

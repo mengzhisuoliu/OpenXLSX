@@ -589,9 +589,36 @@ install(
     FILES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_PROJECT_NAME}.pc
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
 )
-if(NOT OPENXLSX_ENABLE_LIBZIP)
-    install(
-        FILES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/miniz.pc
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
-)
+
+# Install the pugixml package config file
+if(TARGET ${PUGIXML_INSTALL_TARGET})
+    message( DEBUG "${PUGIXML_TARGET} is pulled in from an external source" )
+    get_target_property(PUGIXML_IS_IMPORTED "${PUGIXML_INSTALL_TARGET}" IMPORTED)
+    if(PUGIXML_IS_IMPORTED)
+        set(PUGIXML_INSTALL_TARGET "") # nothing to install for imported targets
+    else()
+        # for imported target: include the package config file into the OpenXLSX installation
+        message( DEBUG "pugixml_BINARY_DIR is ${pugixml_BINARY_DIR}" )
+        set(LIBPUGIXML_PC "${pugixml_BINARY_DIR}/pugixml.pc")
+        if(EXISTS "${LIBPUGIXML_PC}")
+        install(FILES "${LIBPUGIXML_PC}" DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+        endif()
+    endif()
+endif()
+
+# Install the zip library package config file, if any
+if(TARGET ${ZIP_LIBRARY_INSTALL_TARGET})
+    message( DEBUG "${ZIP_LIBRARY} is pulled in from an external source" )
+    if(OPENXLSX_ENABLE_LIBZIP)
+        message( DEBUG "libzip_BINARY_DIR is ${libzip_BINARY_DIR}" )
+        set(LIBZIP_PC "${libzip_BINARY_DIR}/libzip.pc")
+        if(EXISTS "${LIBZIP_PC}")
+            install(FILES "${LIBZIP_PC}" DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+        endif()
+    else()
+        install(
+            FILES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/miniz.pc
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+        )
+    endif()
 endif()
