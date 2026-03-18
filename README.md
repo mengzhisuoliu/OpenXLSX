@@ -20,7 +20,9 @@ As the heading says - the latest "Release" that is shown on https://github.com/t
 * true hyperlink support
 * generally, for features awaiting implementation, refer to the open issues in the repository
 
-## How to compile a program against an installed(!) OpenXLSX library
+## How to compile & link a program against an installed(!) OpenXLSX library
+
+### Build your program using `g++`
 With the most recent updates, the OpenXLSX `CMake` configuration will also configure (and install) a pkg-config file for `libOpenXLSX` (and `libminiz`), to simplify linking a program against OpenXLSX for systems on which `pkg-config` is available. Invoking `pkg-config --cflags` will yield the proper include flags, and `pkg-config --static --libs` will yield the linker instructions for the OpenXLSX library and its dependencies (pugixml and zip library).
 The sequence of arguments to the compiler is important:
 1) cflags (include paths)
@@ -40,7 +42,7 @@ If this new feature does not work as intended, please try providing the rpath ma
 g++ -Wl,-rpath,/usr/local/lib/OpenXLSX `pkg-config --cflags OpenXLSX` ../Examples/Demo1.cpp `pkg-config --libs OpenXLSX`
 ```
 
-### Caution when both the shared and the static library are installed
+#### Caution when both the shared and the static library are installed
 **CAUTION**: When attempting static linking while the shared library for OpenXLSX is also installed, the `-lOpenXLSX` flag returned from `pkg-config --static --libs OpenXLSX` will fail to link against the static library.
 A manual fix like so will work:
 ```
@@ -48,6 +50,60 @@ g++ `pkg-config --cflags OpenXLSX` ../Examples/Demo1.cpp -L/usr/local/lib -l:lib
 ```
 
 However, the recommended solution for static linking is to not install the shared library (for now - might support different naming in the future).
+
+### Build your program using `cmake`
+
+Below is a simple `CMakeLists.txt` template with all necessary steps to compile & link against an installed version of OpenXLSX.
+
+Steps to test this (assuming OpenXLSX has been installed):
+* create a folder `myapp`
+* save the below `CMakeLists.txt` template into `myapp/`
+* create a folder `myapp/src`
+* from the OpenXLSX/Examples folder, copy `Demo1.cpp` into `myapp/src/`
+* create a folder `myapp/build`
+* change into the folder `myapp/build`
+* `cmake ..`
+* `make all`
+* `./myapp`
+
+#### `CMakeLists.txt` template:
+```cmake
+cmake_minimum_required(VERSION 3.14)
+project(myapp
+    VERSION 1.0.0
+    LANGUAGES CXX
+)
+
+# ============================================================================
+# Example app configuration
+# ============================================================================
+add_executable(myapp src/Demo1.cpp)
+
+# Find dependency OpenXLSX
+find_package(OpenXLSX CONFIG REQUIRED)
+if(OpenXLSX_FOUND)
+    message( NOTICE "FOUND OpenXLSX" )
+    get_target_property(OpenXLSX_INCLUDES OpenXLSX::OpenXLSX INTERFACE_INCLUDE_DIRECTORIES)  # get OpenXLSX include directories
+    message( NOTICE "OpenXLSX_INCLUDES is ${OpenXLSX_INCLUDES}" )
+else()
+    message( FATAL_ERROR "MISSING DEPENDENCY OpenXLSX" )
+endif()
+
+# Configure linkage for myapp
+target_link_libraries(myapp PRIVATE OpenXLSX::OpenXLSX)
+target_include_directories(myapp PRIVATE ${OpenXLSX_INCLUDES})
+
+# Ensure configuration of install RPATH for myapp
+set_target_properties(myapp PROPERTIES
+  INSTALL_RPATH_USE_LINK_PATH TRUE
+)
+
+# Installation steps for myapp
+install(TARGETS myapp
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    COMPONENT Runtime
+)
+```
 
 ## Recent changes
 
