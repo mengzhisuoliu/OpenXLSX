@@ -159,6 +159,16 @@ endif()
 
 
 #=======================================================================================================================
+# Attempt to locate the git executable
+#=======================================================================================================================
+include( FindGit )
+if(NOT "${GIT_EXECUTABLE}" STREQUAL "")
+    message( DEBUG "GIT_EXECUTABLE is ${GIT_EXECUTABLE}" )
+else()
+    message( WARNING "could not locate GIT_EXECUTABLE - will be unable to fetch missing dependencies" )
+endif()
+
+#=======================================================================================================================
 # Include tools to manage dependencies
 #=======================================================================================================================
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/manage_dependency.cmake)
