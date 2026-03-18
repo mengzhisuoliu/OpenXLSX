@@ -204,19 +204,6 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
                 endif()
             endif()
         endif()
-
-        # ### ensure transparent include paths for the source code
-        get_target_property(NOWIDE_INCLUDES ${NOWIDE_ALIAS} INTERFACE_INCLUDE_DIRECTORIES)  # get nowide include paths
-        set(NOWIDE_EXTRA_INCLUDE) # empty initializer
-        if(USE_SYSTEM_LIBS OR NOT OPENXLSX_NOWIDE_STANDALONE) # no need to add NOWIDE_EXTRA_INCLUDE for standalone downloads
-            list( GET NOWIDE_INCLUDES 0 NOWIDE_INCLUDE )                                        # ensure that NOWIDE_INCLUDE only contains a single directory entry
-            set(NOWIDE_EXTRA_INCLUDE "${NOWIDE_INCLUDE}/boost")                                 # and add NOWIDE_EXTRA_INCLUDE with an appended ./boost subdirectory
-            target_include_directories(OpenXLSX PRIVATE ${NOWIDE_EXTRA_INCLUDE})                # should be PRIVATE for include directories that users linking against OpenXLSX shall NOT need
-            message( NOTICE "NOWIDE_EXTRA_INCLUDE is ${NOWIDE_EXTRA_INCLUDE}" )
-        endif()
-
-        # Make determined nowide include path (if any) available to OpenXLSX Examples as explicitly named variable
-        set(EXAMPLES_NOWIDE_INCLUDE ${NOWIDE_EXTRA_INCLUDE} CACHE STRING "" FORCE)
     endif ()
 
     target_compile_definitions(OpenXLSX PUBLIC OPENXLSX_STATIC_DEFINE)
@@ -338,7 +325,21 @@ endif()
 
 if (OPENXLSX_ENABLE_NOWIDE)
     target_compile_definitions(OpenXLSX PRIVATE ENABLE_NOWIDE)
+
+    # ### ensure transparent include paths for the source code
+    get_target_property(NOWIDE_INCLUDES ${NOWIDE_ALIAS} INTERFACE_INCLUDE_DIRECTORIES)  # get nowide include paths
+    set(NOWIDE_EXTRA_INCLUDE) # empty initializer
+    if(USE_SYSTEM_LIBS OR NOT OPENXLSX_NOWIDE_STANDALONE) # no need to add NOWIDE_EXTRA_INCLUDE for standalone downloads
+        list( GET NOWIDE_INCLUDES 0 NOWIDE_INCLUDE )                                        # ensure that NOWIDE_INCLUDE only contains a single directory entry
+        set(NOWIDE_EXTRA_INCLUDE "${NOWIDE_INCLUDE}/boost")                                 # and add NOWIDE_EXTRA_INCLUDE with an appended ./boost subdirectory
+        target_include_directories(OpenXLSX PRIVATE ${NOWIDE_EXTRA_INCLUDE})                # should be PRIVATE for include directories that users linking against OpenXLSX shall NOT need
+        message( NOTICE "NOWIDE_EXTRA_INCLUDE is ${NOWIDE_EXTRA_INCLUDE}" )
+    endif()
+
+    # Make determined nowide include path (if any) available to OpenXLSX Examples as explicitly named variable
+    set(EXAMPLES_NOWIDE_INCLUDE ${NOWIDE_EXTRA_INCLUDE} CACHE STRING "" FORCE)
 endif ()
+
 if (OPENXLSX_ENABLE_LIBZIP)
     target_compile_definitions(OpenXLSX PRIVATE USE_LIBZIP)
 endif ()
