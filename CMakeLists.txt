@@ -122,22 +122,6 @@ if(OPENXLSX_NOWIDE_STANDALONE AND NOT FETCH_DEPS_AUTO)
     # TODO TBD: accept standalone local installation
 endif()
 
-if(OPENXLSX_LOCAL_PACKAGES_ONLY)
-    set(NOWIDE_ALIAS Boost::nowide)
-
-    set(PUGIXML_TARGET pugixml) # for local packages, pugixml::shared does not seem to be defined. Just pugixml seems to always work
-    set(PUGIXML_STATIC_LIBRARY "pugixml") # used for OPENXLSX_BUNDLED_STATIC_LIB at the moment
-else()
-    set(NOWIDE_ALIAS nowide::nowide)
-
-    if(${BUILD_SHARED_LIBS})
-        set(PUGIXML_TARGET pugixml::shared) # actually, just pugixml seems to work fine for a target - but let's be explicit
-        # set(PUGIXML_TARGET pugixml) # 2026-02-24 TEST
-    else()
-        set(PUGIXML_TARGET pugixml::static) # see above
-    endif()
-    set(PUGIXML_STATIC_LIBRARY "pugixml-static")    # used for OPENXLSX_BUNDLED_STATIC_LIB at the moment
-endif()
 
 #  NOTE: when building an executable against the *shared object* OpenXLSX library, /usr/local/lib will not be in the (ldconfig) default libraries search path
 #        and needs to be configured, e.g. by LD_LIBRARY_PATH=/usr/local/lib ./a.out
@@ -313,6 +297,12 @@ else()
 endif ()
 
 
+if(${BUILD_SHARED_LIBS})
+    set(PUGIXML_TARGET pugixml::shared) # actually, just pugixml seems to work fine for a target - but let's be explicit
+else()
+    set(PUGIXML_TARGET pugixml::static) # see above
+endif()
+
 manage_dependency(
     LIB_NAME      pugixml
     PACKAGE_NAME  pugixml
@@ -327,6 +317,14 @@ manage_dependency(
 )
 message( STATUS "manage_dependency reported puxixml_PROVIDED_TARGET as ${pugixml_PROVIDED_TARGET}, pugixml_INSTALL_TARGET as ${pugixml_INSTALL_TARGET}" )
 set(PUGIXML_INSTALL_TARGET "${pugixml_INSTALL_TARGET}")
+if(pugixml_FETCHED)
+    set(PUGIXML_STATIC_LIBRARY "pugixml-static")    # used for OPENXLSX_BUNDLED_STATIC_LIB at the moment
+else()
+    set(PUGIXML_STATIC_LIBRARY "pugixml")            # used for OPENXLSX_BUNDLED_STATIC_LIB at the moment
+
+    set(PUGIXML_TARGET "pugixml")
+    message( STATUS "pugixml was found locally, using PUGIXML_TARGET ${PUGIXML_TARGET}" )
+endif()
 
 
 #=======================================================================================================================
