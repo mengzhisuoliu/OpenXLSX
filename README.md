@@ -322,13 +322,98 @@ bug in the implementation of std::variant, which causes compiler errors.
 Visual Studio 2017 should also work, but hasn't been tested.
 
 ## Build Instructions
-OpenXLSX uses CMake as the build system (or build system generator, to be exact). Therefore, you must install CMake first, in order to build OpenXLSX. You can find installation instructions on www.cmake.org.
+
+**NOTE: as of 2026-03-21, this section is a work in progress - use with caution**
+
+OpenXLSX uses CMake as the build system (or build system generator, to be exact) and git to pull in dependencies. Therefore, you must install CMake first, in order to build OpenXLSX. You can find (bad) installation instructions on www.cmake.org.
+
+Here is a summary to get a working configuration of cmake + git.
+
+### Install `cmake` & `git` on debian-based Linux distributions
+
+```bash
+sudo apt update
+sudo apt install build-essential cmake git
+```
+
+### Install `cmake` & `git` on Windows 10/11 (for now only tested with `MSYS Makefiles`)
+
+**Install MSYS2:**
+
+* In a Powershell (run as Administrator): run `winget install --id MSYS2.MSYS2 -e`
+
+   → After performing this step, the "MSYS2 MSYS shell" and the "MSYS2 MinGW 64-bit shell" should be accessible from the Start Menu
+
+* In MSYS2 MSYS shell: run `pacman -Syu`
+
+  The previous instruction might require a close & reopen of the MSYS2 MSYS shell
+
+* In MSYS2 MSYS shell: run `pacman -Su`
+
+**Install development toolchain:**
+
+In MSYS2 MinGW 64‑bit shell: run `pacman -S --needed base-devel mingw-w64-x86_64-toolchain`
+
+**Install `cmake` & `git` in MSYS2 environment:**
+
+* In MSYS2 MinGW 64‑bit shell: run `pacman -S --needed mingw-w64-x86_64-cmake mingw-w64-x86_64-git`
+* (optional if you want to use ninja build tool instead of make) In MSYS2 MinGW 64‑bit shell: run `pacman -S --needed mingw-w64-x86_64-ninja`
+
+**Verify installation:**
+
+In MSYS2 MinGW 64‑bit shell: verify versions of `git`, `cmake`, `gcc`, `g++`
+
+```
+git --version; cmake --version; gcc --version; g++ --version
+```
+
+### Build the OpenXLSX library
+
+In MSYS2 MinGW 64‑bit shell
+```
+git clone https://github.com/troldal/OpenXLSX <destination-folder>
+
+cd <destination-folder>
+mkdir build; cd build
+```
+
+**Then** build with MSYS Gnu make:
+```
+cmake .. -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release
+cmake --build . --parallel
+```
+Note: As of 2026-03-21, this configuration complains about miniz (if used) being incompatible with cmake versions >3.5, and requires the following command sequence:
+```
+cmake .. -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+cmake --build . --parallel
+```
+
+
+**or** build with MinGW Gnu make (should provide a working configuration that can be compiled from cmd/Powershell)
+
+```
+cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
+cmake --build . --parallel
+```
+
+**or** build with ninja
+```
+cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+ninja
+```
+
+
+#### -- outdated description --
+
+**NOTE: as of 2026-03-21, this section needs to be reviewed / moved into another section**
 
 The OpenXLSX library is located in the OpenXLSX subdirectory to this repo. The OpenXLSX subdirectory is a 
 self-contained CMake project; if you use CMake for your own project, you can add the OpenXLSX folder as a subdirectory 
 to your own project. Alternatively, you can use CMake to generate make files or project files for a toolchain of your choice. Both methods are described in the following.
 
 ### Integrating into a CMake project structure
+
+**NOTE: as of 2026-03-21, this section needs to be reviewed / rewritten**
 
 By far the easiest way to use OpenXLSX in your own project, is to use CMake yourself, and then add the OpenXLSX 
 folder as a subdirectory to the source tree of your own project. Several IDE's support CMake projects, most notably 
@@ -387,6 +472,8 @@ int main() {
 ```
 
 ### Building as a separate library
+
+**NOTE: as of 2026-03-21, this section needs to be reviewed / rewritten**
 
 If you wish to produce the OpenXLSX binaries and include them in your project yourself, it can be done using CMake and a compiler toolchain of your choice.
 
@@ -595,6 +682,9 @@ those example programs is the best way to learn how to use OpenXLSX. The example
 should be relatively easy to understand what's going on.
 
 ## Changes
+
+### New in version 0.5.x
+OpenXLSX now pulls in dependencies either from the operating system (if installed) or directly from the upstream source repositories.
 
 ### New in version 0.4.x
 OpenXLSX can now use other zip libraries than the default Zippy/miniz library. See Demo1A as an example of how it's done
