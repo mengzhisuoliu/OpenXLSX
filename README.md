@@ -363,14 +363,14 @@ In MSYS2 MinGW 64‑bit shell: run `pacman -S --needed base-devel mingw-w64-x86_
 
 In MSYS2 MinGW 64‑bit shell: verify versions of `git`, `cmake`, `gcc`, `g++`
 
-```
+```bash
 git --version; cmake --version; gcc --version; g++ --version
 ```
 
 ### Build the OpenXLSX library
 
 In MSYS2 MinGW 64‑bit shell
-```
+```bash
 git clone https://github.com/troldal/OpenXLSX <destination-folder>
 
 cd <destination-folder>
@@ -378,12 +378,12 @@ mkdir build; cd build
 ```
 
 **Then** build with MSYS Gnu make:
-```
+```bash
 cmake .. -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release
 cmake --build . --parallel
 ```
 Note: As of 2026-03-21, this configuration complains about miniz (if used) being incompatible with cmake versions >3.5, and requires the following command sequence:
-```
+```bash
 cmake .. -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5
 cmake --build . --parallel
 ```
@@ -391,33 +391,26 @@ cmake --build . --parallel
 
 **or** build with MinGW Gnu make (should provide a working configuration that can be compiled from cmd/Powershell)
 
-```
+```bash
 cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
 cmake --build . --parallel
 ```
 
 **or** build with ninja
-```
+```bash
 cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=Release
 ninja
 ```
 
-
-#### -- outdated description --
-
-**NOTE: as of 2026-03-21, this section needs to be reviewed / moved into another section**
-
-The OpenXLSX library is located in the OpenXLSX subdirectory to this repo. The OpenXLSX subdirectory is a 
-self-contained CMake project; if you use CMake for your own project, you can add the OpenXLSX folder as a subdirectory 
-to your own project. Alternatively, you can use CMake to generate make files or project files for a toolchain of your choice. Both methods are described in the following.
+The OpenXLSX library is located in the OpenXLSX subdirectory to this repo. However, the root folder `CMakeLists.txt` establishes the library configuration and dependencies.
+If you use CMake for your own project, you can add the OpenXLSX root folder as a subdirectory to your own project.
+Alternatively, you can use CMake to generate make files or project files for a toolchain of your choice. Both methods are described in the following.
 
 ### Integrating into a CMake project structure
 
-**NOTE: as of 2026-03-21, this section needs to be reviewed / rewritten**
-
-By far the easiest way to use OpenXLSX in your own project, is to use CMake yourself, and then add the OpenXLSX 
-folder as a subdirectory to the source tree of your own project. Several IDE's support CMake projects, most notably 
-Visual Studio 2019, JetBrains CLion, and Qt Creator. If using Visual Studio, you have to specifically select 'CMake project' when creating a new project.
+By far the easiest way to use OpenXLSX in your own project, is to use CMake yourself, and then add the OpenXLSX root folder
+as a subdirectory to the source tree of your own project. Several IDE's support CMake projects, most notably Visual Studio 2019,
+JetBrains CLion, and Qt Creator. If using Visual Studio, you have to specifically select 'CMake project' when creating a new project.
 
 The main benefit of including the OpenXLSX library as a source subfolder, is that there is no need to locate the 
 library and header files specifically; CMake will take care of that for you. Also, the library will be build using 
@@ -427,9 +420,39 @@ the library interface, as they are in OpenXLSX. When including the OpenXLSX sour
 
 By using the `add_subdirectory()` command in the CMakeLists.txt file for your project, you can get access to the 
 headers and library files of OpenXLSX. OpenXLSX can generate either a shared library or a static library. By default 
-it will produce a shared library, but you can change that in the OpenXLSX CMakeLists.txt file. The library is 
+it will produce a static library, but you can change that by setting `BUILD_SHARED_LIBS` to `ON`. The library is
 located in a namespace called OpenXLSX; hence the full name of the library is `OpenXLSX::OpenXLSX`.
 
+Including OpenXLSX into your project would look like this inside your project's `CMakeLists.txt`:
+
+```cmake
+# ============================================================================
+# Configure OpenXLSX
+# ============================================================================
+set(OPENXLSX_CREATE_DOCS           OFF)
+set(OPENXLSX_BUILD_SAMPLES         OFF)
+set(         BUILD_SHARED_LIBS     OFF)
+
+add_subdirectory( OpenXLSX )
+```
+
+Then you can use `target_link_libraries` and `target_include_directories` like so:
+```cmake
+# Configure linkage for myapp
+target_link_libraries(myapp PRIVATE OpenXLSX::OpenXLSX)
+target_include_directories(myapp PRIVATE ${OpenXLSX_INCLUDES})
+```
+
+For linking against a shared library, you should include the "rpath" into your final applications:
+```cmake
+# Ensure configuration of install RPATH for myapp
+set_target_properties(myapp PROPERTIES
+  INSTALL_RPATH_USE_LINK_PATH TRUE
+)
+```
+
+
+**NOTE: as of 2026-03-22, below here, from here, this section still needs to be reviewed / rewritten**
 The following snippet is a minimum CMakeLists.txt file for your own project, that includes OpenXLSX as a subdirectory. Note that the output location of the binaries are set to a common directory. On Linux and MacOS, this is not really required, but on Windows, this will make your life easier, as you would otherwise have to copy the OpenXLSX shared library file to the location of your executable in order to run.
 
 ```cmake

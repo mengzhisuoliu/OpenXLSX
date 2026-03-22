@@ -16,22 +16,28 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-# get the HEAD's commit ID
-# if you want commit id longer than 16, change the number following.
-execute_process(
-  # COMMAND git rev-parse --short=16 HEAD
-  COMMAND git rev-parse --short=8 HEAD
-  WORKING_DIRECTORY ${GIT_REPO_ROOT}
-  OUTPUT_VARIABLE GIT_COMMIT_ID
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-# parse the HEAD's time as string
-execute_process(
-  COMMAND git show -s --format=%ci ${GIT_COMMIT_ID}
-  WORKING_DIRECTORY ${GIT_REPO_ROOT}
-  OUTPUT_VARIABLE GIT_COMMIT_ID_TIME
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+# 2026-03-22 LU: added check that git / GIT_REPO_ROOT are actually available
+if(EXISTS "${GIT_REPO_ROOT}")
+    # get the HEAD's commit ID
+    # if you want commit id longer than 16, change the number following.
+    execute_process(
+    # COMMAND git rev-parse --short=16 HEAD
+    COMMAND git rev-parse --short=8 HEAD
+    WORKING_DIRECTORY ${GIT_REPO_ROOT}
+    OUTPUT_VARIABLE GIT_COMMIT_ID
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    # parse the HEAD's time as string
+    execute_process(
+    COMMAND git show -s --format=%ci ${GIT_COMMIT_ID}
+    WORKING_DIRECTORY ${GIT_REPO_ROOT}
+    OUTPUT_VARIABLE GIT_COMMIT_ID_TIME
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+else()
+    set(GIT_COMMIT_ID "(not available)")
+    set(GIT_COMMIT_ID_TIME "(not available)")
+endif()
 
 # define the commit ID and time as macros,
 # so they can be used in your executable.(aka. target in CMake)
