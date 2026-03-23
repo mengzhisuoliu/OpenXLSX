@@ -21,6 +21,18 @@
 namespace Zippy
 {
   /**
+   * @brief provide a (const) library name to the caller
+   * @details
+   */
+  constexpr const char *ZipLibraryName() { return "miniz"; };
+
+  /**
+   * @brief get the library version from miniz
+   * @details provide a pass-through function to mz_version
+   */
+  const char *ZipLibraryVersion() { return mz_version(); }
+
+  /**
    * @brief The ZipRuntimeError class is a custom exception class derived from the std::runtime_error class.
    * @details In case of an error in the Zippy library, an ZipRuntimeError object will be thrown, with a message
    * describing the details of the error.

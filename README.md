@@ -7,6 +7,10 @@ Microsoft Excel® files, with the .xlsx format.
 
 As the heading says - the latest "Release" that is shown on https://github.com/troldal/OpenXLSX/releases is from 2021-11-06, and severely outdated - please pull / download the latest SW version directly from the repository in its current state. Link for those that do not want to use ```git```: https://github.com/troldal/OpenXLSX/archive/refs/heads/master.zip
 
+## TBD / TODO before merge into master:
+* when OPENXLSX_MONOLITHIC_LIBRARY=ON, use target_link_interface instead of target_link_library for remaining dependencies (libzip/miniz, pugixml)
+* TBD if OPENXLSX_MONOLITHIC_LIBRARY even makes sense - are symbols linkable when contained in a single library file?
+
 ## TBD / TODO:
 * use of ```nowide``` stat in OpenXLSXFileSystemTools?
 * if nowide is needed: `headers/detail/Zippy.hpp` for call to `mz_zip_reader_init_file` TBD: does miniz support unicode filenames on Windows?
@@ -16,7 +20,9 @@ As the heading says - the latest "Release" that is shown on https://github.com/t
 * true hyperlink support
 * generally, for features awaiting implementation, refer to the open issues in the repository
 
-## How to compile a program against an installed(!) OpenXLSX library
+## How to compile & link a program against an installed(!) OpenXLSX library
+
+### Build your program using `g++`
 With the most recent updates, the OpenXLSX `CMake` configuration will also configure (and install) a pkg-config file for `libOpenXLSX` (and `libminiz`), to simplify linking a program against OpenXLSX for systems on which `pkg-config` is available. Invoking `pkg-config --cflags` will yield the proper include flags, and `pkg-config --static --libs` will yield the linker instructions for the OpenXLSX library and its dependencies (pugixml and zip library).
 The sequence of arguments to the compiler is important:
 1) cflags (include paths)
@@ -24,10 +30,95 @@ The sequence of arguments to the compiler is important:
 3) the linker flags (libs)
 For this reason, the example compilation + linking command below invokes pkg-config twice.
 ```
-g++ `pkg-config --cflags OpenXLSX` myprogram.cpp `pkg-config --static --libs OpenXLSX`
+g++ `pkg-config --cflags OpenXLSX` ../Examples/Demo1.cpp `pkg-config --static --libs OpenXLSX`
+```
+When linking against a shared library, the library runtime search path (`rpath`) should be included in the command. The OpenXLSX package config file provides the `rpath` setting via `pkg-config --libs`, so that the following, simplified line should work:
+```
+g++ `pkg-config --cflags OpenXLSX` ../Examples/Demo1.cpp `pkg-config --libs OpenXLSX`
+```
+
+If this new feature does not work as intended, please try providing the rpath manually:
+```
+g++ -Wl,-rpath,/usr/local/lib/OpenXLSX `pkg-config --cflags OpenXLSX` ../Examples/Demo1.cpp `pkg-config --libs OpenXLSX`
+```
+
+#### Caution when both the shared and the static library are installed
+**CAUTION**: When attempting static linking while the shared library for OpenXLSX is also installed, the `-lOpenXLSX` flag returned from `pkg-config --static --libs OpenXLSX` will fail to link against the static library.
+A manual fix like so will work:
+```
+g++ `pkg-config --cflags OpenXLSX` ../Examples/Demo1.cpp -L/usr/local/lib -l:libOpenXLSX.a -L/usr/local/lib -lpugixml -lzip
+```
+
+However, the recommended solution for static linking is to not install the shared library (for now - might support different naming in the future).
+
+### Build your program using `cmake`
+
+Below is a simple `CMakeLists.txt` template with all necessary steps to compile & link against an installed version of OpenXLSX.
+
+Steps to test this (assuming OpenXLSX has been installed):
+* create a folder `myapp`
+* save the below `CMakeLists.txt` template into `myapp/`
+* create a folder `myapp/src`
+* from the OpenXLSX/Examples folder, copy `Demo1.cpp` into `myapp/src/`
+* create a folder `myapp/build`
+* change into the folder `myapp/build`
+* `cmake ..`
+* `make all`
+* `./myapp`
+
+#### `CMakeLists.txt` template:
+```cmake
+cmake_minimum_required(VERSION 3.14)
+project(myapp
+    VERSION 1.0.0
+    LANGUAGES CXX
+)
+
+# ============================================================================
+# Example app configuration
+# ============================================================================
+add_executable(myapp src/Demo1.cpp)
+
+# Find dependency OpenXLSX
+find_package(OpenXLSX CONFIG REQUIRED)
+if(OpenXLSX_FOUND)
+    message( NOTICE "FOUND OpenXLSX" )
+    get_target_property(OpenXLSX_INCLUDES OpenXLSX::OpenXLSX INTERFACE_INCLUDE_DIRECTORIES)  # get OpenXLSX include directories
+    message( NOTICE "OpenXLSX_INCLUDES is ${OpenXLSX_INCLUDES}" )
+else()
+    message( FATAL_ERROR "MISSING DEPENDENCY OpenXLSX" )
+endif()
+
+# Configure linkage for myapp
+target_link_libraries(myapp PRIVATE OpenXLSX::OpenXLSX)
+target_include_directories(myapp PRIVATE ${OpenXLSX_INCLUDES})
+
+# Ensure configuration of install RPATH for myapp
+set_target_properties(myapp PROPERTIES
+  INSTALL_RPATH_USE_LINK_PATH TRUE
+)
+
+# Installation steps for myapp
+install(TARGETS myapp
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    COMPONENT Runtime
+)
 ```
 
 ## Recent changes
+
+### (aral-matrix) 17 March 2026 - Install package config files for libzip and pugixml if they are installed with OpenXLSX
+* when the dependencies are pulled in from source repositories, their package config files will be installed alongside OpenXLSX
+* `XLZipArchive.hpp` provides two new functions `const char *OpenXLSX::ZipLibraryName()` and `const char *OpenXLSX::ZipLibraryVersion()` for the user to obtain info about the zip library in use. *NOTE*: These do not reflect information about a custom zip implementation such as used in `Demo1A.cpp`
+* `OpenXLSX` and dependencies are installed into `/usr/local/lib/OpenXLSX` subfolder to avoid version conflicts for parallel installations of zip library (`miniz` or `libzip`), `pugixml`, `nowide`
+* `pugixml` and `libzip` package config (`.pc`) files are now part of the installation (`miniz` package config was already installed before if needed)
+* dependency package config files installed by OpenXLSX will be installed as `pugixml-OpenXLSX.pc`, `libzip-OpenXLSX.pc`, `miniz-OpenXLSX.pc` respectively to avoid conflicts
+* dependency package config files should behave well with existing versions of the dependencies (OpenXLSX package config file gives precedence to the self-installed dependencies)
+* OpenXLSX package config file now provides the runtime path for an executable linked against OpenXLSX shared libraries in `/usr/local/lib/OpenXLSX`
+
+### (aral-matrix) 16 March 2026 - Dynamically pull in dependencies from external sources (operating system or code repository)
+* upped OpenXLSX library version to `0.5.0`
+* static & dynamic build: all dependencies are now linked in dynamically depending on the project configuration from available / allowed sources, which can be the OS or code repositories
 
 ### (aral-matrix) 25 December 2025 - Fix for issue #382: XLWorksheet::range() bounds check without exception
 * added a check for an empty worksheet in `XLWorksheet::range()` to prevent an exception raised from `XLCellReference` constructor
@@ -231,17 +322,95 @@ bug in the implementation of std::variant, which causes compiler errors.
 Visual Studio 2017 should also work, but hasn't been tested.
 
 ## Build Instructions
-OpenXLSX uses CMake as the build system (or build system generator, to be exact). Therefore, you must install CMake first, in order to build OpenXLSX. You can find installation instructions on www.cmake.org.
 
-The OpenXLSX library is located in the OpenXLSX subdirectory to this repo. The OpenXLSX subdirectory is a 
-self-contained CMake project; if you use CMake for your own project, you can add the OpenXLSX folder as a subdirectory 
-to your own project. Alternatively, you can use CMake to generate make files or project files for a toolchain of your choice. Both methods are described in the following.
+**NOTE: as of 2026-03-21, this section is a work in progress - use with caution**
+
+OpenXLSX uses CMake as the build system (or build system generator, to be exact) and git to pull in dependencies. Therefore, you must install CMake first, in order to build OpenXLSX. You can find (bad) installation instructions on www.cmake.org.
+
+Here is a summary to get a working configuration of cmake + git.
+
+### Install `cmake` & `git` on debian-based Linux distributions
+
+```bash
+sudo apt update
+sudo apt install build-essential cmake git
+```
+
+### Install `cmake` & `git` on Windows 10/11 (for now only tested with `MSYS Makefiles`)
+
+**Install MSYS2:**
+
+* In a Powershell (run as Administrator): run `winget install --id MSYS2.MSYS2 -e`
+
+   → After performing this step, the "MSYS2 MSYS shell" and the "MSYS2 MinGW 64-bit shell" should be accessible from the Start Menu
+
+* In MSYS2 MSYS shell: run `pacman -Syu`
+
+  The previous instruction might require a close & reopen of the MSYS2 MSYS shell
+
+* In MSYS2 MSYS shell: run `pacman -Su`
+
+**Install development toolchain:**
+
+In MSYS2 MinGW 64‑bit shell: run `pacman -S --needed base-devel mingw-w64-x86_64-toolchain`
+
+**Install `cmake` & `git` in MSYS2 environment:**
+
+* In MSYS2 MinGW 64‑bit shell: run `pacman -S --needed mingw-w64-x86_64-cmake mingw-w64-x86_64-git`
+* (optional if you want to use ninja build tool instead of make) In MSYS2 MinGW 64‑bit shell: run `pacman -S --needed mingw-w64-x86_64-ninja`
+
+**Verify installation:**
+
+In MSYS2 MinGW 64‑bit shell: verify versions of `git`, `cmake`, `gcc`, `g++`
+
+```bash
+git --version; cmake --version; gcc --version; g++ --version
+```
+
+### Build the OpenXLSX library
+
+In MSYS2 MinGW 64‑bit shell
+```bash
+git clone https://github.com/troldal/OpenXLSX <destination-folder>
+
+cd <destination-folder>
+mkdir build; cd build
+```
+
+**Then** build with MSYS Gnu make:
+```bash
+cmake .. -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release
+cmake --build . --parallel
+```
+Note: As of 2026-03-21, this configuration complains about miniz (if used) being incompatible with cmake versions >3.5, and requires the following command sequence:
+```bash
+cmake .. -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+cmake --build . --parallel
+```
+
+
+**or** build with MinGW Gnu make (should provide a working configuration that can be compiled from cmd/Powershell)
+
+```bash
+cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
+cmake --build . --parallel
+```
+
+**or** build with ninja
+```bash
+cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+ninja
+```
+
+The OpenXLSX library is located in the OpenXLSX subdirectory to this repo. However, the root folder `CMakeLists.txt` establishes the library configuration and dependencies.
+If you use CMake for your own project, you can add the OpenXLSX root folder as a subdirectory to your own project.
+Alternatively, you can use CMake to generate make files or project files for a toolchain of your choice. Both methods are described in the following.
 
 ### Integrating into a CMake project structure
 
-By far the easiest way to use OpenXLSX in your own project, is to use CMake yourself, and then add the OpenXLSX 
-folder as a subdirectory to the source tree of your own project. Several IDE's support CMake projects, most notably 
-Visual Studio 2019, JetBrains CLion, and Qt Creator. If using Visual Studio, you have to specifically select 'CMake project' when creating a new project.
+By far the easiest way to use OpenXLSX in your own project, is to use CMake yourself, and then add the OpenXLSX root folder
+as a subdirectory to the source tree of your own project. Several IDE's support CMake projects, most notably Visual Studio 2019,
+JetBrains CLion, and Qt Creator. If using Visual Studio, you have to specifically select 'CMake project' when creating a new project.
 
 The main benefit of including the OpenXLSX library as a source subfolder, is that there is no need to locate the 
 library and header files specifically; CMake will take care of that for you. Also, the library will be build using 
@@ -251,9 +420,39 @@ the library interface, as they are in OpenXLSX. When including the OpenXLSX sour
 
 By using the `add_subdirectory()` command in the CMakeLists.txt file for your project, you can get access to the 
 headers and library files of OpenXLSX. OpenXLSX can generate either a shared library or a static library. By default 
-it will produce a shared library, but you can change that in the OpenXLSX CMakeLists.txt file. The library is 
+it will produce a static library, but you can change that by setting `BUILD_SHARED_LIBS` to `ON`. The library is
 located in a namespace called OpenXLSX; hence the full name of the library is `OpenXLSX::OpenXLSX`.
 
+Including OpenXLSX into your project would look like this inside your project's `CMakeLists.txt`:
+
+```cmake
+# ============================================================================
+# Configure OpenXLSX
+# ============================================================================
+set(OPENXLSX_CREATE_DOCS           OFF)
+set(OPENXLSX_BUILD_SAMPLES         OFF)
+set(         BUILD_SHARED_LIBS     OFF)
+
+add_subdirectory( OpenXLSX )
+```
+
+Then you can use `target_link_libraries` and `target_include_directories` like so:
+```cmake
+# Configure linkage for myapp
+target_link_libraries(myapp PRIVATE OpenXLSX::OpenXLSX)
+target_include_directories(myapp PRIVATE ${OpenXLSX_INCLUDES})
+```
+
+For linking against a shared library, you should include the "rpath" into your final applications:
+```cmake
+# Ensure configuration of install RPATH for myapp
+set_target_properties(myapp PROPERTIES
+  INSTALL_RPATH_USE_LINK_PATH TRUE
+)
+```
+
+
+**NOTE: as of 2026-03-22, below here, from here, this section still needs to be reviewed / rewritten**
 The following snippet is a minimum CMakeLists.txt file for your own project, that includes OpenXLSX as a subdirectory. Note that the output location of the binaries are set to a common directory. On Linux and MacOS, this is not really required, but on Windows, this will make your life easier, as you would otherwise have to copy the OpenXLSX shared library file to the location of your executable in order to run.
 
 ```cmake
@@ -296,6 +495,8 @@ int main() {
 ```
 
 ### Building as a separate library
+
+**NOTE: as of 2026-03-21, this section needs to be reviewed / rewritten**
 
 If you wish to produce the OpenXLSX binaries and include them in your project yourself, it can be done using CMake and a compiler toolchain of your choice.
 
@@ -504,6 +705,9 @@ those example programs is the best way to learn how to use OpenXLSX. The example
 should be relatively easy to understand what's going on.
 
 ## Changes
+
+### New in version 0.5.x
+OpenXLSX now pulls in dependencies either from the operating system (if installed) or directly from the upstream source repositories.
 
 ### New in version 0.4.x
 OpenXLSX can now use other zip libraries than the default Zippy/miniz library. See Demo1A as an example of how it's done

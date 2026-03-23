@@ -8,15 +8,11 @@
 #include <cstring>
 #include <fstream>
 #include <list>
-// #include <libzippp.h>
 #include <zip.h>
 #ifdef ENABLE_NOWIDE
-#   ifdef ENABLE_LIBBOOST_NOWIDE
-        #include <boost/nowide/cstdio.hpp>
-        using namespace boost;
-#   else
-        #include <nowide/cstdio.hpp>    // nowide::fopen, nowide::remove, nowide::rename
-#   endif
+    #include <nowide/cstdio.hpp>    // nowide::fopen, nowide::remove, nowide::rename
+    namespace boost {}        // ensure that namespace exists, even if boost doesn't define it
+    using namespace boost;    // depending on library version, nowide namespace is hidden in boost::nowide
 #else
     #include <cstdio>       // std::fopen
     #include <filesystem>   // std::filesystem::remove, std::filesystem::rename

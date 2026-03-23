@@ -44,15 +44,33 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
  */
 
 // ===== External Includes ===== //
+#include <string>   // std::string
+
 #ifdef USE_LIBZIP
 	#include "detail/LibZip.hpp"
+	#define ZipLibraryName_impl    LibZip::ZipLibraryName
+	#define ZipLibraryVersion_impl LibZip::ZipLibraryVersion
 #else
 	#include "detail/Zippy.hpp"
+	#define ZipLibraryName_impl    Zippy::ZipLibraryName
+	#define ZipLibraryVersion_impl Zippy::ZipLibraryVersion
 #endif
 
 // ===== OpenXLSX Includes ===== //
 #include "XLZipArchive.hpp"
 #include "XLException.hpp"
+
+namespace OpenXLSX {
+    /**
+     * @details
+     */
+    const char *ZipLibraryName() { return ZipLibraryName_impl(); }
+
+    /**
+     * @details
+     */
+    const char *ZipLibraryVersion() { return ZipLibraryVersion_impl(); };
+}
 
 using namespace OpenXLSX;
 

@@ -2,10 +2,7 @@
 # Preamble
 #=======================================================================================================================
 cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
-# set(OPENXLSX_MAJOR_VERSION 0)
-# set(OPENXLSX_MINOR_VERSION 4)
-# set(OPENXLSX_MICRO_VERSION 2)
-project(OpenXLSX.Library VERSION 0.4.2 LANGUAGES CXX)
+project(OpenXLSX.Library VERSION 0.5.0 LANGUAGES CXX)
 set(CMAKE_DEBUG_POSTFIX d)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN YES)
@@ -159,13 +156,16 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
     add_library(OpenXLSX STATIC "")
     add_library(OpenXLSX::OpenXLSX ALIAS OpenXLSX)
     target_sources(OpenXLSX PRIVATE ${OPENXLSX_SOURCES})
+
+# message( NOTICE "CMAKE_CURRENT_SOURCE_DIR is ${CMAKE_CURRENT_SOURCE_DIR}" )
     target_include_directories(OpenXLSX
             PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
             $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/headers>
-            ${Boost_INCLUDE_DIR}    # just in case
-            ${NOWIDE_INCLUDE_DIR}   # includes {Boost_INCLUDE_DIR}/boost
             $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)     # For export header
+    target_include_directories(OpenXLSX
+            INTERFACE
+            $<INSTALL_INTERFACE:include>)                       # get install-safe include directories
 
     target_link_libraries(OpenXLSX
             PRIVATE
@@ -179,11 +179,31 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
                 PRIVATE
                 miniz)
     endif ()
+
     if (OPENXLSX_ENABLE_NOWIDE)
-        # boost nowide is header-only, a "library" only makes sense in the context of nowide include paths
-        target_link_libraries(OpenXLSX
+        if(OPENXLSX_MONOLITHIC_LIBRARY)
+            # nominal way to link via target_link_libraries: triggers unwanted installation of dependencies
+            # accordingly, for monolithic library, use target_link_interface instead of target_link_libraries
+            #  to link only the include directories and compile definitions
+            target_link_interface(
+                LIB_NAME           OpenXLSX
                 PRIVATE
-                ${NOWIDE_TARGET})
+                INTERFACE_NAME     nowide_interface
+                DEPENDENCY_ALIAS   ${NOWIDE_ALIAS}
+                DEPENDENCY_TARGET  ${NOWIDE_TARGET}
+            )
+            set(NOWIDE_INSTALL_TARGET nowide_interface)
+        else()
+            target_link_libraries(OpenXLSX
+                    PRIVATE
+                    ${NOWIDE_ALIAS})
+            if(TARGET ${NOWIDE_TARGET})
+                get_target_property(NOWIDE_IS_IMPORTED "${NOWIDE_ALIAS}" IMPORTED)
+                if(NOT NOWIDE_IS_IMPORTED)
+                    set(NOWIDE_INSTALL_TARGET ${NOWIDE_TARGET})
+                endif()
+            endif()
+        endif()
     endif ()
 
     target_compile_definitions(OpenXLSX PUBLIC OPENXLSX_STATIC_DEFINE)
@@ -256,8 +276,6 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "SHARED")
             PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
             $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/headers>
-            ${Boost_INCLUDE_DIR}    # just in case
-            ${NOWIDE_INCLUDE_DIR}   # includes {Boost_INCLUDE_DIR}/boost
             $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)     # For export header
 
     target_link_libraries(OpenXLSX
@@ -273,10 +291,24 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "SHARED")
                 miniz)
     endif ()
     if (OPENXLSX_ENABLE_NOWIDE)
-        # boost nowide is header-only, a "library" only makes sense in the context of nowide include paths
+        # message( FATAL_ERROR "shared build currently not supported for nowide" )
         target_link_libraries(OpenXLSX
                 PRIVATE
-                ${NOWIDE_TARGET})
+                ${NOWIDE_ALIAS})
+
+        if(TARGET ${NOWIDE_TARGET})
+            get_target_property(NOWIDE_IS_IMPORTED "${NOWIDE_ALIAS}" IMPORTED)
+            if(NOT NOWIDE_IS_IMPORTED)
+                set(NOWIDE_INSTALL_TARGET ${NOWIDE_TARGET})
+            endif()
+        endif()
+
+        # # link to the built archive file so that OpenXLSX does not require NOWIDE_INSTALL_TARGET to be in the export set
+        # target_link_libraries(OpenXLSX PRIVATE $<TARGET_FILE:${NOWIDE_INSTALL_TARGET}>)
+
+        # ensure nowide is built before OpenXLSX (so that archive exists at link time)
+        add_dependencies(OpenXLSX ${NOWIDE_ALIAS})
+
     endif ()
 
     # Enable Link-Time Optimization (LTO)
@@ -293,7 +325,21 @@ endif()
 
 if (OPENXLSX_ENABLE_NOWIDE)
     target_compile_definitions(OpenXLSX PRIVATE ENABLE_NOWIDE)
+
+    # ### ensure transparent include paths for the source code
+    get_target_property(NOWIDE_INCLUDES ${NOWIDE_ALIAS} INTERFACE_INCLUDE_DIRECTORIES)  # get nowide include paths
+    set(NOWIDE_EXTRA_INCLUDE) # empty initializer
+    if(USE_SYSTEM_LIBS OR NOT OPENXLSX_NOWIDE_STANDALONE) # no need to add NOWIDE_EXTRA_INCLUDE for standalone downloads
+        list( GET NOWIDE_INCLUDES 0 NOWIDE_INCLUDE )                                        # ensure that NOWIDE_INCLUDE only contains a single directory entry
+        set(NOWIDE_EXTRA_INCLUDE "${NOWIDE_INCLUDE}/boost")                                 # and add NOWIDE_EXTRA_INCLUDE with an appended ./boost subdirectory
+        target_include_directories(OpenXLSX PRIVATE ${NOWIDE_EXTRA_INCLUDE})                # should be PRIVATE for include directories that users linking against OpenXLSX shall NOT need
+        message( NOTICE "NOWIDE_EXTRA_INCLUDE is ${NOWIDE_EXTRA_INCLUDE}" )
+    endif()
+
+    # Make determined nowide include path (if any) available to OpenXLSX Examples as explicitly named variable
+    set(EXAMPLES_NOWIDE_INCLUDE ${NOWIDE_EXTRA_INCLUDE} CACHE STRING "" FORCE)
 endif ()
+
 if (OPENXLSX_ENABLE_LIBZIP)
     target_compile_definitions(OpenXLSX PRIVATE USE_LIBZIP)
 endif ()
@@ -408,10 +454,7 @@ install(
 
 # Targets
 set(CMAKE_INSTALL_TARGETS OpenXLSX ${PUGIXML_INSTALL_TARGET})
-
-if (NOT OPENXLSX_ENABLE_LIBZIP)
-    set(CMAKE_INSTALL_TARGETS ${CMAKE_INSTALL_TARGETS} ${ZIP_LIBRARY_INSTALL_TARGET})
-endif ()
+set(CMAKE_INSTALL_TARGETS ${CMAKE_INSTALL_TARGETS} ${ZIP_LIBRARY_INSTALL_TARGET})
 
 if (OPENXLSX_ENABLE_NOWIDE)
     set(CMAKE_INSTALL_TARGETS ${CMAKE_INSTALL_TARGETS} ${NOWIDE_INSTALL_TARGET})
@@ -420,16 +463,22 @@ endif ()
 install(
         TARGETS ${CMAKE_INSTALL_TARGETS}
         EXPORT OpenXLSXTargets
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/OpenXLSX # shared objects
         COMPONENT lib
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/OpenXLSX # static libs
         COMPONENT lib
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}/OpenXLSX # executables, if any
         COMPONENT bin
         INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenXLSX
 )
 
 set_target_properties(OpenXLSX PROPERTIES FOLDER libs VERSION ${OPENXLSX_MAJOR_VERSION}.${OPENXLSX_MINOR_VERSION}.${OPENXLSX_MICRO_VERSION} SOVERSION ${OPENXLSX_MAJOR_VERSION})
+# Ensure that an installed version of OpenXLSX refers to a relative runpath
+set_target_properties(OpenXLSX PROPERTIES
+  INSTALL_RPATH "\$ORIGIN"
+  BUILD_RPATH "\$ORIGIN"
+  INSTALL_RPATH_USE_LINK_PATH TRUE
+)
 
 # Package version
 write_basic_package_version_file(
@@ -487,19 +536,28 @@ install(
 # message( NOTICE ">> CMAKE_CURRENT_LIST_DIR is ${CMAKE_CURRENT_LIST_DIR}" )
 
 # Write the template for the package config file
+set(PUGIXML_PKGCONFIG_FILE "pugixml")
+if(TARGET ${PUGIXML_INSTALL_TARGET})
+    # pugixml is installed by OpenXLSX
+    set(PUGIXML_PKGCONFIG_FILE "pugixml-OpenXLSX")
+endif()
+set(ZIP_LIBRARY_PKGCONFIG_FILE "${ZIP_LIBRARY}")
+if(TARGET ${ZIP_LIBRARY_INSTALL_TARGET})
+    set(ZIP_LIBRARY_PKGCONFIG_FILE "${ZIP_LIBRARY}-OpenXLSX")
+endif()
 file(WRITE ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_PROJECT_NAME}.pc.in.in
     "prefix=@DEFERRED@CMAKE_INSTALL_PREFIX@DEFERRED@\n"
     "exec_prefix=\${prefix}\n"
     "includedir=\${prefix}/@CMAKE_INSTALL_INCLUDEDIR@/@CMAKE_PROJECT_NAME@\n" # includedir=${prefix}/include
-    "libdir=\${exec_prefix}/lib\n"
+    "libdir=\${exec_prefix}/lib/@CMAKE_PROJECT_NAME@\n"
     "\n"
     "Name: @CMAKE_PROJECT_NAME@\n"
     "Description: @PROJECT_DESCRIPTION@\n"
     "URL: @PROJECT_HOMEPAGE_URL@\n"
     "Version: @PROJECT_VERSION@\n"
     "Cflags: -I\"\${includedir}\"\n"   # Cflags: -I${includedir}
-    "Requires.private: pugixml >= 1.15 ${ZIP_LIBRARY}\n"
-    "Libs: -L\${libdir} -lOpenXLSX\n"
+    "Requires.private: ${PUGIXML_PKGCONFIG_FILE} >= 1.15 ${ZIP_LIBRARY_PKGCONFIG_FILE}\n"
+    "Libs: -L\${libdir} -Wl,-rpath,\${libdir} -lOpenXLSX\n"
     "Libs.private: \n")
 
 if(NOT OPENXLSX_ENABLE_LIBZIP)
@@ -507,7 +565,7 @@ if(NOT OPENXLSX_ENABLE_LIBZIP)
         "prefix=@DEFERRED@CMAKE_INSTALL_PREFIX@DEFERRED@\n"
         "exec_prefix=\${prefix}\n"
         "includedir=\${prefix}/include\n"
-        "libdir=\${exec_prefix}/lib\n"
+        "libdir=\${exec_prefix}/lib/@CMAKE_PROJECT_NAME@\n"
         "\n"
         "Name: miniz\n"
         "Description: zip implementation\n"
@@ -536,20 +594,55 @@ endif()
 install(
     CODE "configure_file(\"${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_PROJECT_NAME}.pc.in\" \"${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_PROJECT_NAME}.pc\" @ONLY)"
 )
+set(ZIP_LIBRARY_PKGCONFIG_SHOULD_EXIST FALSE)
 if(NOT OPENXLSX_ENABLE_LIBZIP)
     install(
         CODE "configure_file(\"${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/miniz.pc.in\" \"${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/miniz.pc\" @ONLY)"
     )
+    set(ZIP_LIBRARY_PKGCONFIG_SHOULD_EXIST TRUE) # For a file generated at build time, EXISTS can not be trivially verified, so use this boolean as a crutch
 endif()
 
-# Finally: install the package config file
+
+# Finally: install the package config files
+set(PKGCONFIG_SUBDIR "pkgconfig")
+
 install(
-    FILES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_PROJECT_NAME}.pc
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+    FILES "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_PROJECT_NAME}.pc"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/${PKGCONFIG_SUBDIR}"
 )
-if(NOT OPENXLSX_ENABLE_LIBZIP)
-    install(
-        FILES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/miniz.pc
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
-)
+
+# Install the pugixml package config file
+if(TARGET ${PUGIXML_INSTALL_TARGET})
+    message( DEBUG "${PUGIXML_TARGET} is pulled in from an external source" )
+    get_target_property(PUGIXML_IS_IMPORTED "${PUGIXML_INSTALL_TARGET}" IMPORTED)
+    message( DEBUG "pugixml_BINARY_DIR is ${pugixml_BINARY_DIR}" )
+    set(LIBPUGIXML_PC "${pugixml_BINARY_DIR}/pugixml.pc")
+    if(EXISTS "${LIBPUGIXML_PC}")
+        install(CODE "message(NOTICE \"Installing package config file for ${PUGIXML_INSTALL_TARGET}...\")")
+        install(
+            FILES "${LIBPUGIXML_PC}"
+            DESTINATION "${CMAKE_INSTALL_LIBDIR}/${PKGCONFIG_SUBDIR}"
+            RENAME "${PUGIXML_PKGCONFIG_FILE}.pc"
+        )
+    endif()
+endif()
+
+# Install the zip library package config file, if any
+if(TARGET ${ZIP_LIBRARY_INSTALL_TARGET})
+    message( DEBUG "${ZIP_LIBRARY} is pulled in from an external source" )
+    if(OPENXLSX_ENABLE_LIBZIP)
+        message( DEBUG "libzip_BINARY_DIR is ${libzip_BINARY_DIR}" )
+        set(ZIP_LIBRARY_PKGCONFIG_SOURCE "${libzip_BINARY_DIR}/libzip.pc")
+    else()
+        set(ZIP_LIBRARY_PKGCONFIG_SOURCE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/miniz.pc")
+    endif()
+
+    if(ZIP_LIBRARY_PKGCONFIG_SHOULD_EXIST OR EXISTS "${ZIP_LIBRARY_PKGCONFIG_SOURCE}")
+        install(CODE "message(NOTICE \"Installing package config file for ${ZIP_LIBRARY_INSTALL_TARGET}...\")")
+        install(
+            FILES "${ZIP_LIBRARY_PKGCONFIG_SOURCE}"
+            DESTINATION "${CMAKE_INSTALL_LIBDIR}/${PKGCONFIG_SUBDIR}"
+            RENAME "${ZIP_LIBRARY_PKGCONFIG_FILE}.pc"
+        )
+    endif()
 endif()

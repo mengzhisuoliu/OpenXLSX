@@ -34,7 +34,8 @@ if(${OPENXLSX_ENABLE_LIBZIP_EXAMPLE})
     target_link_libraries(Demo1A PRIVATE OpenXLSX::OpenXLSX libzip::zip)
     if (${OPENXLSX_ENABLE_NOWIDE})
         target_compile_definitions(Demo1A PRIVATE ENABLE_NOWIDE)
-        target_link_libraries(Demo1A PRIVATE ${NOWIDE_TARGET})
+        target_include_directories(Demo1A PRIVATE ${EXAMPLES_NOWIDE_INCLUDE})
+        target_link_libraries(Demo1A PRIVATE ${NOWIDE_ALIAS})
     endif()
 endif()
 
@@ -57,7 +58,8 @@ add_executable(Demo4 Demo4.cpp)
 target_link_libraries(Demo4 PRIVATE OpenXLSX::OpenXLSX)
 if (${OPENXLSX_ENABLE_NOWIDE})
     target_compile_definitions(Demo4 PRIVATE ENABLE_NOWIDE)
-    target_link_libraries(Demo4 PRIVATE ${NOWIDE_TARGET})
+    target_include_directories(Demo4 PRIVATE ${EXAMPLES_NOWIDE_INCLUDE})
+    target_link_libraries(Demo4 PRIVATE ${NOWIDE_ALIAS})
 endif()
 
 #=======================================================================================================================
@@ -91,7 +93,7 @@ add_executable(Demo9 Demo9.cpp)
 target_link_libraries(Demo9 PRIVATE OpenXLSX::OpenXLSX)
 if (${OPENXLSX_ENABLE_NOWIDE})
     target_compile_definitions(Demo9 PRIVATE ENABLE_NOWIDE)
-    target_link_libraries(Demo9 PRIVATE ${NOWIDE_TARGET})
+    target_link_libraries(Demo9 PRIVATE ${NOWIDE_ALIAS})
 endif()
 
 #=======================================================================================================================
