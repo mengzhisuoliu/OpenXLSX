@@ -162,6 +162,7 @@ endfunction()
 # Parameters: (see below)
 # Returns:
 #   ${LIB_NAME}_FETCHED         (PARENT_SCOPE): TRUE if dependency was downloaded from a repository, FALSE if dependency was provided by find_package
+#   ${LIB_NAME}_TARGET_STATIC   (PARENT_SCOPE): static library target file, if any
 #   ${LIB_NAME}_PROVIDED_TARGET (PARENT_SCOPE): (potentially aliased) target provided by the dependency
 #   ${LIB_NAME}_INSTALL_TARGET  (PARENT_SCOPE): (alias resolved) install target to be used for the dependency, if any
 # Author:   This function is a friendly contribution by NLATP (openxlsx.genetics016@passinbox.com)
@@ -195,6 +196,7 @@ function(manage_dependency)
 
     # Initialize return values to defaults
     set(${ARG_LIB_NAME}_FETCHED FALSE PARENT_SCOPE)     # assume dependency will be found already installed
+    set(${ARG_LIB_NAME}_TARGET_STATIC "" PARENT_SCOPE)  # assume no static library found on system
     set(${ARG_LIB_NAME}_PROVIDED_TARGET                 # this shall should be set to the name provided by a fetched dependency
         ${ARG_TARGET_NAME} PARENT_SCOPE)                #   (to be overridden by TARGET_NAME_SYSTEM if a system library is used)
     set(${ARG_LIB_NAME}_INSTALL_TARGET "" PARENT_SCOPE) # no install target for an already installed dependency
@@ -244,7 +246,7 @@ function(manage_dependency)
             endif()
 
             if(TARGET_STATIC AND "${TARGET_STATIC}" MATCHES "\\.a$" )
-                message( NOTICE "manage_dependency: TARGET_STATIC matches \\.a$" )
+                message( NOTICE "manage_dependency: TARGET_STATIC ${TARGET_STATIC} matches \\.a$" )
             else()
                 set(TARGET_STATIC FALSE)
             endif()
@@ -264,6 +266,10 @@ function(manage_dependency)
         endif()
 
         if(${ARG_PACKAGE_NAME}_FOUND)
+            if(TARGET_STATIC)
+                set( ${ARG_LIB_NAME}_TARGET_STATIC ${TARGET_STATIC} PARENT_SCOPE )
+            endif()
+
             # get_target_property(LIBRARY_TYPE ${ARG_TARGET_NAME} TYPE)
             get_target_property(LIBRARY_TYPE ${ARG_TARGET_NAME_SYSTEM} TYPE)
 
@@ -324,7 +330,11 @@ function(manage_dependency)
             EXCLUDE_FROM_ALL
         )
 
-        set(${ARG_LIB_NAME}_FETCHED TRUE PARENT_SCOPE)
+        if(PREFER_STATIC)
+            # set return value for path to static library, if any
+            set(${ARG_LIB_NAME}_TARGET_STATIC "$<TARGET_FILE:${ARG_TARGET_NAME}>" PARENT_SCOPE)
+        endif()
+        set(${ARG_LIB_NAME}_FETCHED TRUE PARENT_SCOPE)  # set return value indicating the dependency was fetched from source repository
     endif()
 
     # Verify target exists

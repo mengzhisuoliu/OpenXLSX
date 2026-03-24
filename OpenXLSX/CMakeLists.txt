@@ -8,6 +8,7 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN YES)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# include( bundle_static_library_new.cmake )
 include( bundle_static_library.cmake )
 
 #=======================================================================================================================
@@ -35,42 +36,6 @@ if (BUILD_SHARED_LIBS)
 else()
     set(OPENXLSX_LIBRARY_TYPE "STATIC" CACHE STRING "Set the library type to STATIC")
 endif()
-
-#=======================================================================================================================
-# EXTERNAL LIBRARIES
-#   Define external libraries used by OpenXLSX. The libraries (Zippy, PugiXML, and NoWide) are header-only, so
-#   INTERFACE libraries should be defined.
-#=======================================================================================================================
-
-#if (OPENXLSX_ENABLE_NOWIDE)
-#    if (OPENXLSX_ENABLE_LIBBOOST_NOWIDE)
-#        find_package(Boost 1.74 REQUIRED COMPONENTS nowide) # on Linux at least, this requires libboost-nowide-dev to be installed
-#    else()
-#        add_library(NoWide INTERFACE IMPORTED)
-#        target_include_directories(NoWide SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/external/nowide/>)
-#    endif()
-#endif()
-
-# if (OPENXLSX_ENABLE_LIBZIP)
-#     find_package(LibZip 1.7
-#         CONFIG
-#         COMPONENTS zip
-#         QUIET OPTIONAL_COMPONENTS zipcmp zipmerge ziptool # requires the following tools to be installed: zipcmp zipmerge ziptool
-#     )
-# else()
-#     CPMFindPackage(
-#             NAME miniz
-#             GITHUB_REPOSITORY richgel999/miniz
-#             GIT_TAG 3.0.2
-#     )
-# endif ()
-
-#if (OPENXLSX_ENABLE_LIBPUGIXML)
-#    find_package(PugiXML 1.14 REQUIRED)
-#else()
-#    add_library(PugiXML INTERFACE IMPORTED)
-#    target_include_directories(PugiXML SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/external/pugixml/>)
-#endif()
 
 #if (${OPENXLSX_COMPACT_MODE})
 #    # NOTE: compact mode currently makes no sense if system library pugixml is used
@@ -170,15 +135,10 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
     target_link_libraries(OpenXLSX
             PRIVATE
             ${PUGIXML_TARGET})
-    if (OPENXLSX_ENABLE_LIBZIP)
-        target_link_libraries(OpenXLSX
-                PRIVATE
-                libzip::zip)
-    else ()
-        target_link_libraries(OpenXLSX
-                PRIVATE
-                miniz)
-    endif ()
+
+    target_link_libraries(OpenXLSX
+            PRIVATE
+            ${ZIP_LIBRARY_ALIAS})
 
     if (OPENXLSX_ENABLE_NOWIDE)
         if(OPENXLSX_MONOLITHIC_LIBRARY)
@@ -209,47 +169,28 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
     target_compile_definitions(OpenXLSX PUBLIC OPENXLSX_STATIC_DEFINE)
 
     # if static combined library shall be built:
-    if (OPENXLSX_BUNDLED_STATIC_LIB)
-        list(APPEND static_libs "OpenXLSX")
+    if (OPENXLSX_MONOLITHIC_LIBRARY)
+        list(APPEND static_libs "$<TARGET_FILE:OpenXLSX>")
         list(APPEND static_libs_system "")
 
-        if (OPENXLSX_CPM_LOCAL_PACKAGES_ONLY)
-            find_library( PUGIXML_LIB_LOCATION pugixml )
-            # message( "PUGIXML_LIB_LOCATION is ${PUGIXML_LIB_LOCATION}" )
-            list(APPEND static_libs_system "${PUGIXML_LIB_LOCATION}")
-            if (OPENXLSX_ENABLE_LIBZIP)
-                find_library( ZIP_LIB_LOCATION zip )
-                list(APPEND static_libs_system "${ZIP_LIB_LOCATION}")
-            else ()
-                find_library( MINIZ_LIB_LOCATION miniz )
-                list(APPEND static_libs_system "${MINIZ_LIB_LOCATION}")
-            endif ()
-            if (OPENXLSX_ENABLE_NOWIDE)
-                find_library( NOWIDE_LIB_LOCATION nowide )
-                list(APPEND static_libs_system "${NOWIDE_LIB_LOCATION}") # TBD / TO BE TESTED
-            endif ()
-        else()
-            list(APPEND static_libs "${PUGIXML_STATIC_LIBRARY}")
-            if (OPENXLSX_ENABLE_LIBZIP)
-                list(APPEND static_libs "zip")
-            else ()
-                list(APPEND static_libs "miniz")
-            endif ()
-            if (OPENXLSX_ENABLE_NOWIDE)
-                list(APPEND static_libs "nowide") # TBD / TO BE TESTED
-            endif ()
+        # message( NOTICE "ZIP_LIBRARY is ${ZIP_LIBRARY}" )
+        if("${ZIP_LIBRARY}" STREQUAL "libzip")
+            message( WARNING "building a monolithic OpenXLSX library with libzip is not recommended - dependencies of libzip (-lbz2 -llzma -lzstd -lssl -lcrypto -lz) will not be included. Use miniz for a truly standalone OpenXLSX library" )
+        endif()
+
+        list(APPEND static_libs "${pugixml_TARGET_STATIC}")
+        list(APPEND static_libs "${${ZIP_LIBRARY}_TARGET_STATIC}")
+        if(OPENXLSX_ENABLE_NOWIDE)
+            list(APPEND static_libs "${Nowide_TARGET_STATIC}")
         endif()
 
         # # Output the status of the various library targets:
         # foreach(lib IN LISTS static_libs)
         #     message( NOTICE "OpenXLSX static_libs entry is ${lib}" )
         # endforeach()
-        # foreach(lib IN LISTS static_libs_system)
-        #     message( NOTICE "OpenXLSX static_libs_system entry is ${lib}" )
-        # endforeach()
         bundle_static_library_simplified( OpenXLSX OpenXLSX-bundled "${static_libs}" "${static_libs_system}" )
-        # target_link_libraries(OpenXLSX-bundled INTERFACE OpenXLSX) # NOTE: this might not be needed at all - the bundled library is just an extra build target
 
+        # target_link_libraries(OpenXLSX-bundled INTERFACE OpenXLSX) # NOTE: this might not be needed at all - the bundled library is just an extra build target
         # # TBD: how to correctly define link and include directories associated with OpenXLSX-bundled? The below does not work :(
         # set_target_properties(OpenXLSX-bundled
         #   PROPERTIES
@@ -281,17 +222,12 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "SHARED")
     target_link_libraries(OpenXLSX
             PRIVATE
             ${PUGIXML_TARGET})
-    if (OPENXLSX_ENABLE_LIBZIP)
-        target_link_libraries(OpenXLSX
-                PRIVATE
-                libzip::zip)
-    else ()
-        target_link_libraries(OpenXLSX
-                PRIVATE
-                miniz)
-    endif ()
+
+    target_link_libraries(OpenXLSX
+            PRIVATE
+            ${ZIP_LIBRARY_ALIAS})
+
     if (OPENXLSX_ENABLE_NOWIDE)
-        # message( FATAL_ERROR "shared build currently not supported for nowide" )
         target_link_libraries(OpenXLSX
                 PRIVATE
                 ${NOWIDE_ALIAS})

@@ -119,6 +119,7 @@ endfunction()
 # Purpose: replace ${CMAKE_BINARY_DIR} with ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} and process a *known* list of dependencies
 #            without the need for the function to _recursively_collect_dependencies
 #          Also: better understand the function through learning by doing
+# Status: 2026-03-24 - static_libs_system is no longer in use, static_libs must contain full paths (generator expressions if needed) to static targets
 # Parameters:
 #   lib_name            original library name for which dependencies shall be statically linked
 #   lib_name_combined   output library name that includes the dependencies
@@ -135,7 +136,8 @@ function(bundle_static_library_simplified lib_name lib_name_combined static_libs
         foreach(tgt IN LISTS static_libs)
             message( NOTICE "static target is ${tgt}" )
             file(APPEND ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${lib_name_combined}.ar.in
-                    "ADDLIB $<TARGET_FILE:${tgt}>\n")
+                    "ADDLIB ${tgt}\n")
+                    # "ADDLIB $<TARGET_FILE:${tgt}>\n")
         endforeach()
         foreach(tgt IN LISTS static_libs_system)
             message( NOTICE "installed static target is ${tgt}" )
@@ -165,12 +167,13 @@ function(bundle_static_library_simplified lib_name lib_name_combined static_libs
 
         find_program(lib_tool lib)
 
-        foreach(tgt IN LISTS static_libs)
-            list(APPEND static_libs_full_names $<TARGET_FILE:${tgt}>)
-        endforeach()
+        # foreach(tgt IN LISTS static_libs)
+        #     list(APPEND static_libs_full_names $<TARGET_FILE:${tgt}>)
+        # endforeach()
 
         add_custom_command(
-            COMMAND ${lib_tool} /NOLOGO /OUT:${full_lib_name_combined} ${static_libs_full_names}
+            # COMMAND ${lib_tool} /NOLOGO /OUT:${full_lib_name_combined} ${static_libs_full_names}
+            COMMAND ${lib_tool} /NOLOGO /OUT:${full_lib_name_combined} ${static_libs}
             OUTPUT ${full_lib_name_combined}
             COMMENT "Bundling ${lib_name_combined}"
             VERBATIM)
