@@ -171,9 +171,7 @@ function(manage_dependency)
     set(oneValueArgs
         LIB_NAME        # an arbitrary library name, for which ${LIB_NAME}_FETCHED will be set to TRUE for the caller in case of success
         PACKAGE_NAME    # the system library package name
-        COMPONENTS      #     system library components name(s)
         VERSION         # local required version for find_package with PACKAGE_NAME
-        TYPICAL_NAMES   # typical names for the dependency to be used with find_library in determining whether a static library is installed
         #
         GITHUB_REPO     # use for github repositories only
         GIT_REPOSITORY  # use to provide a full repository URL
@@ -187,7 +185,12 @@ function(manage_dependency)
         # NOTE: depending on how the dependency is made available, manage_dependency will set the variable ${LIB_NAME}_PROVIDED_TARGET to
         #        either TARGET_NAME or TARGET_NAME_SYSTEM, so that ${LIB_NAME}_PROVIDED_TARGET can be used as DEPENDENCY_TARGET in target_link_interface
     )
-    set(multiValueArgs EXTRA_ARGS)
+    set(multiValueArgs
+        COMPONENTS      # system library components name(s)
+        TYPICAL_NAMES   # typical names for the dependency to be used with find_library in determining whether a static library is installed
+        EXTRA_ARGS
+    )
+
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     # Save global state
@@ -203,6 +206,12 @@ function(manage_dependency)
 
     set(should_fetch FALSE) # 2026-01-25: default initialization
 
+    # DEBUG: enable to verify configuration
+    # message( NOTICE     "   ++ Prefer static linking over shared libraries: ${PREFER_STATIC}" )
+    # message( NOTICE     "   ++ Use system-installed libraries when available: ${USE_SYSTEM_LIBS}" )
+    # message( NOTICE     "   ++ Automatically fetch missing dependencies: ${FETCH_DEPS_AUTO}" )
+    # message( NOTICE     "   ++ Ignore system libraries and fetch all deps: ${FORCE_FETCH_ALL}" )
+
     # Determine search strategy
     if(NOT USE_SYSTEM_LIBS)
         set(should_fetch TRUE)
@@ -213,10 +222,18 @@ function(manage_dependency)
             set(CMAKE_FIND_LIBRARY_SUFFIXES_SAVED ${CMAKE_FIND_LIBRARY_SUFFIXES})
             if(WIN32)
                 # set(CMAKE_FIND_LIBRARY_SUFFIXES ".lib" ".a" ${CMAKE_FIND_LIBRARY_SUFFIXES})
-                set(CMAKE_FIND_LIBRARY_SUFFIXES ".lib" ".a")
+                set(CMAKE_FIND_LIBRARY_SUFFIXES ".lib" ".a" ".dll")
             else()
                 # set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ${CMAKE_FIND_LIBRARY_SUFFIXES})
-                set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+                set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".so" ".dylib")
+            endif()
+        elseif(BUILD_SHARED_LIBS)
+            # Look for shared first
+            set(CMAKE_FIND_LIBRARY_SUFFIXES_SAVED ${CMAKE_FIND_LIBRARY_SUFFIXES})
+            if(WIN32)
+                set(CMAKE_FIND_LIBRARY_SUFFIXES ".dll" ".lib" ".a")
+            else()
+                set(CMAKE_FIND_LIBRARY_SUFFIXES ".so" ".dylib" ".a") # .dylib is an Apple format
             endif()
         endif()
 
@@ -229,10 +246,13 @@ function(manage_dependency)
             message( NOTICE "manage_dependency: attempting to find_package ${ARG_PACKAGE_NAME} ${ARG_VERSION} with ${ARG_EXTRA_ARGS} ${COMPONENTS_PARAM} QUIET" )
         endif()
 
+        set(TRY_FIND_PACKAGE TRUE CACHE BOOL "")    # initialize: setting this to FALSE will inhibit find_package
+        unset(TARGET_STATIC CACHE)  # initialize. CAUTION: setting _TARGET_STATIC to an empty string will somehow fail this
+        unset(TARGET_SHARED CACHE)  # initialize
 
         if(PREFER_STATIC)
+            # set(CMAKE_FIND_DEBUG_MODE TRUE)
             find_library(TARGET_STATIC
-                # NAMES boost_nowide libboost_nowide nowide
                 NAMES ${ARG_TYPICAL_NAMES}
                 PATHS ${CMAKE_PREFIX_PATH} /usr/lib /usr/local/lib
                 NO_DEFAULT_PATH
@@ -240,46 +260,87 @@ function(manage_dependency)
 
             if (NOT TARGET_STATIC)
                 find_library(TARGET_STATIC
-                    # NAMES boost_nowide libboost_nowide nowide
                     NAMES ${ARG_TYPICAL_NAMES}
                 )
             endif()
 
-            if(TARGET_STATIC AND "${TARGET_STATIC}" MATCHES "\\.a$" )
-                message( NOTICE "manage_dependency: TARGET_STATIC ${TARGET_STATIC} matches \\.a$" )
+            if(TARGET_STATIC AND "${TARGET_STATIC}" MATCHES "\\.(a|lib)$" )
+                message( NOTICE "manage_dependency: TARGET_STATIC ${TARGET_STATIC} matches \\.(a|lib)$" )
             else()
+                message( WARNING "manage_dependency: Found system ${ARG_LIB_NAME} as shared library, but static library is required" )
                 set(TARGET_STATIC FALSE)
+                set(TRY_FIND_PACKAGE FALSE)
+            endif()
+        elseif(BUILD_SHARED_LIBS)
+            find_library(TARGET_SHARED
+                NAMES ${ARG_TYPICAL_NAMES}
+                PATHS ${CMAKE_PREFIX_PATH} /usr/lib /usr/local/lib
+                NO_DEFAULT_PATH
+            )
+
+            if (NOT TARGET_SHARED)
+                find_library(TARGET_SHARED
+                    NAMES ${ARG_TYPICAL_NAMES}
+                )
+            endif()
+
+            if(TARGET_SHARED AND "${TARGET_SHARED}" MATCHES "\\.(so|dll|dylib)$" )
+                message( NOTICE "manage_dependency: TARGET_STATIC ${TARGET_STATIC} matches \\.(so|dll|dylib)$" )
+            else()
+                message( WARNING "manage_dependency: Found system ${ARG_LIB_NAME} as static library, but shared library is required" )
+                set(TARGET_SHARED FALSE)
+                set(TRY_FIND_PACKAGE FALSE)
             endif()
         endif()
 
-        # Only attempt to find_package if either the library type does not matter OR a static library should be locatable
-        if(TARGET_STATIC OR NOT PREFER_STATIC)
+        # Only attempt to find_package if desired library has not been determined unavailable before
+        if(TRY_FIND_PACKAGE)
             find_package(${ARG_PACKAGE_NAME} ${ARG_VERSION}
                 ${ARG_EXTRA_ARGS}
                 ${COMPONENTS_PARAM}
                 QUIET
             )
+
+            # TODO: find a better strategy to deal with a missing component (prevent polluting build configuration)
+            if(${ARG_PACKAGE_NAME}_FOUND)
+                foreach(component IN LISTS ARG_COMPONENTS)
+                    string(TOUPPER "${component}" component_upper)
+                    string(REGEX REPLACE "[^A-Z0-9]" "_" component_upper "${component_upper}")
+                    message( NOTICE " COMPONENT is ${component}, upper case is ${component_upper}" )
+                    set(foundVar "${ARG_PACKAGE_NAME}_${component_upper}_FOUND")
+                    if(NOT DEFINED ${foundVar} OR NOT ${${foundVar}})
+                        message( WARNING "Found package ${ARG_PACKAGE_NAME}, but component ${component} is not locally available" )
+                        unset(${ARG_PACKAGE_NAME}_FOUND) # force attempt to fetch
+                    endif()
+                endforeach()
+                if(NOT ${ARG_PACKAGE_NAME}_FOUND)
+                    message( WARNING "manage_dependency: after call to find_package, the cmake configuration is polluted with settings for ${ARG_PACKAGE_NAME}."
+                                     " An automatic fetch will be attempted but might fail due to that. Install necessary dependencies yourself, if needed" )
+                endif()
+            endif()
         endif()
 
-        if(PREFER_STATIC)
+        if(PREFER_STATIC OR BUILD_SHARED_LIBS)
             set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES_SAVED})
         endif()
 
-        if(${ARG_PACKAGE_NAME}_FOUND)
+        if(${ARG_PACKAGE_NAME}_FOUND AND TARGET ${ARG_TARGET_NAME_SYSTEM}) # 2026-04-04 check for both package name found and expected target
             if(TARGET_STATIC)
                 set( ${ARG_LIB_NAME}_TARGET_STATIC ${TARGET_STATIC} PARENT_SCOPE )
             endif()
 
-            # get_target_property(LIBRARY_TYPE ${ARG_TARGET_NAME} TYPE)
             get_target_property(LIBRARY_TYPE ${ARG_TARGET_NAME_SYSTEM} TYPE)
-
             message(STATUS "manage_dependency: ${ARG_TARGET_NAME_SYSTEM} target TYPE = ${LIBRARY_TYPE}")
+
             # get_target_property(LIBRARY_LOCATION ${ARG_TARGET_NAME} IMPORTED_LOCATION_RELEASE)
             # message(STATUS "${ARG_TARGET_NAME} target IMPORTED_LOCATION_RELEASE = ${LIBRARY_LOCATION}")
             # message(STATUS "${ARG_TARGET_NAME} variables: ${ARG_PACKAGE_NAME}_LIBRARIES=${${ARG_PACKAGE_NAME}_LIBRARIES}")
-            if(PREFER_STATIC AND "${LIBRARY_TYPE}" STREQUAL "SHARED_LIBRARY" )
+
+            # Final check: LIBRARY_TYPE must match expected type, if any - otherwise error out
+            if(PREFER_STATIC AND "${LIBRARY_TYPE}" STREQUAL "SHARED_LIBRARY")
                 message( FATAL_ERROR "manage_dependency: Found system ${ARG_LIB_NAME} as shared library, but static library is required" )
-                set(should_fetch ${FETCH_DEPS_AUTO})
+            elseif(BUILD_SHARED_LIBS AND "${LIBRARY_TYPE}" STREQUAL "STATIC_LIBRARY")
+                message( FATAL_ERROR "manage_dependency: Found system ${ARG_LIB_NAME} as static library, but shared library is required" )
             else()  # else: PREFER_STATIC OFF OR LIBRARY_TYPE is not SHARED
                 set(should_fetch FALSE)
                 set(${ARG_LIB_NAME}_PROVIDED_TARGET             # ${ARG_LIB_NAME}_PROVIDED_TARGET should be the name as provided by an installed library
@@ -338,7 +399,7 @@ function(manage_dependency)
     endif()
 
     # Verify target exists
-    if(NOT TARGET ${ARG_TARGET_NAME})
+    if(NOT TARGET "${ARG_TARGET_NAME}")
         message(FATAL_ERROR
             "manage_dependency: Dependency ${ARG_LIB_NAME} (target ${ARG_TARGET_NAME}) not available. "
             "Check your system installation or enable FETCH_DEPS_AUTO."

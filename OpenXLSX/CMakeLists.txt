@@ -158,7 +158,8 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
                     PRIVATE
                     ${NOWIDE_ALIAS})
             if(TARGET ${NOWIDE_TARGET})
-                get_target_property(NOWIDE_IS_IMPORTED "${NOWIDE_ALIAS}" IMPORTED)
+                # 2026-04-04 get_target_property now accesses NOWIDE_TARGET, was wrongly accessing NOWIDE_ALIAS
+                get_target_property(NOWIDE_IS_IMPORTED "${NOWIDE_TARGET}" IMPORTED)
                 if(NOT NOWIDE_IS_IMPORTED)
                     set(NOWIDE_INSTALL_TARGET ${NOWIDE_TARGET})
                 endif()
@@ -233,7 +234,8 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "SHARED")
                 ${NOWIDE_ALIAS})
 
         if(TARGET ${NOWIDE_TARGET})
-            get_target_property(NOWIDE_IS_IMPORTED "${NOWIDE_ALIAS}" IMPORTED)
+            # 2026-04-04 get_target_property now accesses NOWIDE_TARGET, was wrongly accessing NOWIDE_ALIAS
+            get_target_property(NOWIDE_IS_IMPORTED "${NOWIDE_TARGET}" IMPORTED)
             if(NOT NOWIDE_IS_IMPORTED)
                 set(NOWIDE_INSTALL_TARGET ${NOWIDE_TARGET})
             endif()
@@ -263,8 +265,10 @@ if (OPENXLSX_ENABLE_NOWIDE)
     target_compile_definitions(OpenXLSX PRIVATE ENABLE_NOWIDE)
 
     # ### ensure transparent include paths for the source code
-    get_target_property(NOWIDE_INCLUDES ${NOWIDE_ALIAS} INTERFACE_INCLUDE_DIRECTORIES)  # get nowide include paths
+    #     2026-04-04 get_target_property now accesses NOWIDE_TARGET, was wrongly accessing NOWIDE_ALIAS
+    get_target_property(NOWIDE_INCLUDES ${NOWIDE_TARGET} INTERFACE_INCLUDE_DIRECTORIES)     # get nowide include paths
     set(NOWIDE_EXTRA_INCLUDE) # empty initializer
+    # TODO: restore logic of "if OPENXLSX is imported"
     if(USE_SYSTEM_LIBS OR NOT OPENXLSX_NOWIDE_STANDALONE) # no need to add NOWIDE_EXTRA_INCLUDE for standalone downloads
         list( GET NOWIDE_INCLUDES 0 NOWIDE_INCLUDE )                                        # ensure that NOWIDE_INCLUDE only contains a single directory entry
         set(NOWIDE_EXTRA_INCLUDE "${NOWIDE_INCLUDE}/boost")                                 # and add NOWIDE_EXTRA_INCLUDE with an appended ./boost subdirectory
@@ -278,6 +282,18 @@ endif ()
 
 if (OPENXLSX_ENABLE_LIBZIP)
     target_compile_definitions(OpenXLSX PRIVATE USE_LIBZIP)
+else()
+    # ### ensure transparent include paths for the source code
+    get_target_property(MINIZ_IS_IMPORTED ${ZIP_LIBRARY_PROVIDED_TARGET} IMPORTED)
+    if(MINIZ_IS_IMPORTED)
+        get_target_property(MINIZ_INCLUDES ${ZIP_LIBRARY_PROVIDED_TARGET} INTERFACE_INCLUDE_DIRECTORIES)     # get miniz include paths
+        set(MINIZ_EXTRA_INCLUDE) # empty initializer
+        # list( GET MINIZ_INCLUDES 0 MINIZ_INCLUDE )          # ensure that MINIZ_INCLUDE only contains a single directory entry
+        # set(MINIZ_EXTRA_INCLUDE "${MINIZ_INCLUDE}/miniz")   # and add MINIZ_EXTRA_INCLUDE with an appended ./miniz subdirectory
+        set(MINIZ_EXTRA_INCLUDE "${MINIZ_INCLUDES}")
+        target_include_directories(OpenXLSX PRIVATE ${MINIZ_EXTRA_INCLUDE})     # should be PRIVATE for include directories that users linking against OpenXLSX shall NOT need
+        message( NOTICE "MINIZ_EXTRA_INCLUDE is ${MINIZ_EXTRA_INCLUDE}" )
+    endif()
 endif ()
 
 # Generate export header

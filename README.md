@@ -9,7 +9,7 @@ As the heading says - the latest "Release" that is shown on https://github.com/t
 
 ## TBD / TODO before merge into master:
 * when OPENXLSX_MONOLITHIC_LIBRARY=ON, use target_link_interface instead of target_link_library for remaining dependencies (libzip/miniz, pugixml)
-* TBD if OPENXLSX_MONOLITHIC_LIBRARY even makes sense - are symbols linkable when contained in a single library file?
+* re-verify different build configurations w.r.t. `NOWIDE_EXTRA_INCLUDE` in OpenXLSX/CMakeLists.txt
 
 ## TBD / TODO:
 * use of ```nowide``` stat in OpenXLSXFileSystemTools?

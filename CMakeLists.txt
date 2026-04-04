@@ -46,8 +46,7 @@ endif()
 # - TBD: static/shared library build on Windows 11 with clang_cl, MSVC, gcc
 
 # 2026-03-17 remaining issues:
-# - when OPENXLSX_MONOLITHIC_LIBRARY=ON, use target_link_interface instead of target_link_library for remaining dependencies (libzip/miniz, pugixml)
-# - TBD if OPENXLSX_MONOLITHIC_LIBRARY even makes sense - are symbols linkable when contained in a single library file?
+# - for OPENXLSX_MONOLITHIC_LIBRARY=ON, use target_link_interface instead of target_link_library for remaining dependencies (libzip/miniz, pugixml) and modify installation files
 #
 option(OPENXLSX_CREATE_DOCS           "Build library documentation (requires Doxygen and Graphviz/Dot to be installed)" ON)
 option(OPENXLSX_BUILD_SAMPLES         "Build sample programs" ON)
@@ -115,7 +114,8 @@ endif()
 
 if(OPENXLSX_NOWIDE_STANDALONE AND NOT FETCH_DEPS_AUTO)
     if(WIN32 OR ${OPENXLSX_FORCE_NOWIDE})
-        message(FATAL_ERROR "OPENXLSX_NOWIDE_STANDALONE selected but FETCH_DEPS_AUTO is disabled - can not pull in standalone repository")
+        # message(FATAL_ERROR "OPENXLSX_NOWIDE_STANDALONE selected but FETCH_DEPS_AUTO is disabled - can not pull in standalone repository")
+        message(WARNING "OPENXLSX_NOWIDE_STANDALONE selected but FETCH_DEPS_AUTO is disabled - if the installed version of nowide is *not* the standalone version, this will result in errors")
     else()
         # suppress error if nowide is not going to be used
     endif()
@@ -184,27 +184,27 @@ if(OPENXLSX_ENABLE_NOWIDE)
     list( APPEND NOWIDE_TYPICAL_NAMES "boost_nowide" )                # CAUTION: NOWIDE_TYPICAL_NAMES *must* be a list (semicolon-separated)
     list( APPEND NOWIDE_TYPICAL_NAMES "libboost_nowide" )             #
     list( APPEND NOWIDE_TYPICAL_NAMES "nowide" )                      #
-    set( NOWIDE_TARGET_SYSTEM "Boost::nowide" )                       # this is the target expected from find_package
 
     if(OPENXLSX_NOWIDE_STANDALONE)
+        set( NOWIDE_PACKAGE_NAME "nowide" )
+        set( NOWIDE_COMPONENTS "" )
+        #
         set( NOWIDE_ALIAS "nowide::nowide" )
         set( NOWIDE_TARGET "nowide" )
+        set( NOWIDE_TARGET_SYSTEM "nowide::nowide" )    # this is the target expected from find_package
         # set( NOWIDE_GIT_REPO_PARAM "https://codeberg.org/lars_uffmann/nowide_standalone.git" )
         # set( NOWIDE_GIT_TAG_PARAM  "v11.3.1-fixed" )
         set( NOWIDE_URL_PARAM "https://github.com/boostorg/nowide/releases/download/v11.3.1/nowide_standalone_v11.3.1.tar.gz" )
         set( NOWIDE_URL_HASH_PARAM "SHA256=eaec4d331e3961f5eeb10c46a11691d62047900a7a40765b0f23cdd3181e6ca6" )
     else()
+        set( NOWIDE_PACKAGE_NAME "Boost" )
+        set( NOWIDE_COMPONENTS "COMPONENTS;nowide" )
+        #
         set( NOWIDE_ALIAS "Boost::nowide" )
         set( NOWIDE_TARGET "boost_nowide" )
+        set( NOWIDE_TARGET_SYSTEM "Boost::nowide" )     # this is the target expected from find_package
         set( NOWIDE_GIT_REPO_PARAM "https://github.com/boostorg/nowide.git" )
         set( NOWIDE_GIT_TAG_PARAM  "v11.3.1" )
-    endif()
-
-    # reconfigure manage_dependency / USE_SYSTEM_LIBS if needed
-    if(OPENXLSX_NOWIDE_STANDALONE)
-        # for standalone library: temporarily turn off USE_SYSTEM_LIBS so that local package is not searched for
-        set(SAVE_USE_SYSTEM_LIBS ${USE_SYSTEM_LIBS})
-        set(USE_SYSTEM_LIBS OFF CACHE BOOL "" FORCE)
     endif()
 
     if(PREFER_STATIC)
@@ -221,8 +221,8 @@ if(OPENXLSX_ENABLE_NOWIDE)
 
     manage_dependency(
         LIB_NAME       Nowide
-        PACKAGE_NAME   Boost
-        COMPONENTS     nowide
+        PACKAGE_NAME   ${NOWIDE_PACKAGE_NAME}
+        COMPONENTS     ${NOWIDE_COMPONENTS}
         TYPICAL_NAMES  ${NOWIDE_TYPICAL_NAMES}
 
         TARGET_NAME        ${NOWIDE_TARGET}
@@ -237,11 +237,6 @@ if(OPENXLSX_ENABLE_NOWIDE)
     )
     message( STATUS "manage_dependency reported Nowide_PROVIDED_TARGET as ${Nowide_PROVIDED_TARGET}, Nowide_INSTALL_TARGET as ${Nowide_INSTALL_TARGET}" )
     set(NOWIDE_TARGET ${Nowide_PROVIDED_TARGET} CACHE STRING "" FORCE)
-
-    # restore manage_dependency / USE_SYSTEM_LIBS configuration if it was modified
-    if(OPENXLSX_NOWIDE_STANDALONE)
-        set(USE_SYSTEM_LIBS ${SAVE_USE_SYSTEM_LIBS} CACHE BOOL "" FORCE)
-    endif()
 endif()
 
 if (OPENXLSX_ENABLE_LIBZIP)
@@ -250,16 +245,17 @@ if (OPENXLSX_ENABLE_LIBZIP)
     #        Maybe check for available version & if 1.11.4 is available, exclude unneeded components - or does this happen automatically?
 
     set(ZIP_LIBRARY libzip) # becomes a dependency in package config
-    set(ZIP_LIBRARY_ALIAS "libzip::zip")
+    set(ZIP_LIBRARY_ALIAS           "libzip::zip")
+    set(ZIP_LIBRARY_TARGET_SYSTEM   "libzip::zip")
     manage_dependency(
         LIB_NAME       libzip
         PACKAGE_NAME   LibZip
-        COMPONENTS     zip
+        # COMPONENTS     zip    # 2026-04-04: it appears libzip does not actually expose COMPONENTS for find_package
         VERSION        1.11.3   # TBD what version is needed
         TYPICAL_NAMES  "libzip" # TBD what these can be
 
         TARGET_NAME         ${ZIP_LIBRARY_ALIAS}
-        TARGET_NAME_SYSTEM  ${ZIP_LIBRARY_ALIAS}
+        TARGET_NAME_SYSTEM  ${ZIP_LIBRARY_TARGET_SYSTEM}
 
         GIT_REPOSITORY  https://github.com/nih-at/libzip.git
         GIT_TAG         v1.11.3
@@ -271,6 +267,7 @@ if (OPENXLSX_ENABLE_LIBZIP)
         # OPTIONS "BUILD_DOC OFF"                                     # "
     )
     message( STATUS "manage_dependency reported libzip_PROVIDED_TARGET as ${libzip_PROVIDED_TARGET}, libzip_INSTALL_TARGET as ${libzip_INSTALL_TARGET}" )
+    set(ZIP_LIBRARY_PROVIDED_TARGET "${libzip_PROVIDED_TARGET}")
     set(ZIP_LIBRARY_INSTALL_TARGET "${libzip_INSTALL_TARGET}")
 else()
     if(WIN32)
@@ -281,6 +278,7 @@ else()
 
     set(ZIP_LIBRARY miniz) # becomes a dependency in package config
     set(ZIP_LIBRARY_ALIAS miniz)
+    set(ZIP_LIBRARY_TARGET_SYSTEM miniz::miniz)
     manage_dependency(
         LIB_NAME      miniz
         PACKAGE_NAME  miniz
@@ -288,11 +286,12 @@ else()
         TYPICAL_NAMES "miniz"
 
         TARGET_NAME         ${ZIP_LIBRARY_ALIAS}
-        TARGET_NAME_SYSTEM  ${ZIP_LIBRARY_ALIAS}
+        TARGET_NAME_SYSTEM  ${ZIP_LIBRARY_TARGET_SYSTEM}
         GIT_REPOSITORY  https://github.com/richgel999/miniz.git
         GIT_TAG         3.0.2
     )
     message( STATUS "manage_dependency reported miniz_PROVIDED_TARGET as ${miniz_PROVIDED_TARGET}, miniz_INSTALL_TARGET as ${miniz_INSTALL_TARGET}" )
+    set(ZIP_LIBRARY_PROVIDED_TARGET "${miniz_PROVIDED_TARGET}")
     set(ZIP_LIBRARY_INSTALL_TARGET "${miniz_INSTALL_TARGET}")
 endif ()
 
