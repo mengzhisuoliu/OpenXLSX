@@ -92,8 +92,9 @@
 # exclude everything *in* OpenXLSX folder
 /OpenXLSX/*
 # re-include specifically what is desired from OpenXLSX folder
-!/OpenXLSX/bundle_static_library.cmake
 !/OpenXLSX/CMakeLists.txt
+!/OpenXLSX/cmake
+!/OpenXLSX/cmake/*
 !/OpenXLSX/headers
 !/OpenXLSX/headers/*
 !/OpenXLSX/OpenXLSXConfig.cmake

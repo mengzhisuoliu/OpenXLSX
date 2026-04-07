@@ -246,6 +246,7 @@ if (OPENXLSX_ENABLE_LIBZIP)
 
     set(ZIP_LIBRARY libzip) # becomes a dependency in package config
     set(ZIP_LIBRARY_ALIAS           "libzip::zip")
+    set(ZIP_LIBRARY_TARGET          "libzip::zip")
     set(ZIP_LIBRARY_TARGET_SYSTEM   "libzip::zip")
     manage_dependency(
         LIB_NAME       libzip
@@ -254,7 +255,7 @@ if (OPENXLSX_ENABLE_LIBZIP)
         VERSION        1.11.3   # TBD what version is needed
         TYPICAL_NAMES  "libzip" # TBD what these can be
 
-        TARGET_NAME         ${ZIP_LIBRARY_ALIAS}
+        TARGET_NAME         ${ZIP_LIBRARY_TARGET}
         TARGET_NAME_SYSTEM  ${ZIP_LIBRARY_TARGET_SYSTEM}
 
         GIT_REPOSITORY  https://github.com/nih-at/libzip.git
@@ -277,7 +278,8 @@ else()
     endif()
 
     set(ZIP_LIBRARY miniz) # becomes a dependency in package config
-    set(ZIP_LIBRARY_ALIAS miniz)
+    set(ZIP_LIBRARY_ALIAS miniz::miniz)
+    set(ZIP_LIBRARY_TARGET miniz)
     set(ZIP_LIBRARY_TARGET_SYSTEM miniz::miniz)
     manage_dependency(
         LIB_NAME      miniz
@@ -285,7 +287,7 @@ else()
         VERSION       3.0.2
         TYPICAL_NAMES "miniz"
 
-        TARGET_NAME         ${ZIP_LIBRARY_ALIAS}
+        TARGET_NAME         ${ZIP_LIBRARY_TARGET}
         TARGET_NAME_SYSTEM  ${ZIP_LIBRARY_TARGET_SYSTEM}
         GIT_REPOSITORY  https://github.com/richgel999/miniz.git
         GIT_TAG         3.0.2

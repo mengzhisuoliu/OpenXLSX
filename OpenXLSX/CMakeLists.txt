@@ -8,8 +8,9 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN YES)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# include( bundle_static_library_new.cmake )
-include( bundle_static_library.cmake )
+# Include utility functions
+include( ${CMAKE_CURRENT_LIST_DIR}/cmake/bundle_static_library.cmake )
+include( ${CMAKE_CURRENT_LIST_DIR}/cmake/patch_pkg_config.cmake )
 
 #=======================================================================================================================
 # Set project metadata
@@ -138,7 +139,7 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
 
     target_link_libraries(OpenXLSX
             PRIVATE
-            ${ZIP_LIBRARY_ALIAS})
+            ${ZIP_LIBRARY_PROVIDED_TARGET})
 
     if (OPENXLSX_ENABLE_NOWIDE)
         if(OPENXLSX_MONOLITHIC_LIBRARY)
@@ -226,7 +227,7 @@ if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "SHARED")
 
     target_link_libraries(OpenXLSX
             PRIVATE
-            ${ZIP_LIBRARY_ALIAS})
+            ${ZIP_LIBRARY_PROVIDED_TARGET})
 
     if (OPENXLSX_ENABLE_NOWIDE)
         target_link_libraries(OpenXLSX
@@ -392,10 +393,12 @@ install(
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenXLSX/headers
 )
 
-file(GLOB OPENXLSX_HEADER_LIST ${CMAKE_CURRENT_LIST_DIR}/headers/*.hpp)
-install(
-        FILES ${OPENXLSX_HEADER_LIST}
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenXLSX/headers
+# Install OpenXLSX header files
+install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/headers/
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenXLSX/headers
+  FILES_MATCHING
+    PATTERN "headers/*.hpp"
+    PATTERN "headers/detail" EXCLUDE
 )
 
 install(
@@ -404,30 +407,51 @@ install(
 )
 
 
-# Targets
-set(CMAKE_INSTALL_TARGETS OpenXLSX ${PUGIXML_INSTALL_TARGET})
-set(CMAKE_INSTALL_TARGETS ${CMAKE_INSTALL_TARGETS} ${ZIP_LIBRARY_INSTALL_TARGET})
+# Determine OpenXLSX dependency targets, if any
+set(CMAKE_INSTALL_TARGETS_DEPS "")
+if(NOT "${PUGIXML_INSTALL_TARGET}" STREQUAL "")
+    set(CMAKE_INSTALL_TARGETS_DEPS ${CMAKE_INSTALL_TARGETS_DEPS} ${PUGIXML_INSTALL_TARGET})
+endif()
+if(NOT "${ZIP_LIBRARY_INSTALL_TARGET}" STREQUAL "")
+    set(CMAKE_INSTALL_TARGETS_DEPS ${CMAKE_INSTALL_TARGETS_DEPS} ${ZIP_LIBRARY_INSTALL_TARGET})
+endif()
+if(OPENXLSX_ENABLE_NOWIDE AND NOT "${NOWIDE_INSTALL_TARGET}" STREQUAL "")
+    set(CMAKE_INSTALL_TARGETS_DEPS ${CMAKE_INSTALL_TARGETS_DEPS} ${NOWIDE_INSTALL_TARGET})
+endif()
+string(STRIP "${CMAKE_INSTALL_TARGETS_DEPS}" CMAKE_INSTALL_TARGETS_DEPS)
 
-if (OPENXLSX_ENABLE_NOWIDE)
-    set(CMAKE_INSTALL_TARGETS ${CMAKE_INSTALL_TARGETS} ${NOWIDE_INSTALL_TARGET})
-endif ()
-
-install(
-        TARGETS ${CMAKE_INSTALL_TARGETS}
+# Install OpenXLSX dependencies, if any
+if(NOT "${CMAKE_INSTALL_TARGETS_DEPS}" STREQUAL "") # TODO: test when all dependencies are available locally
+    install(
+        TARGETS ${CMAKE_INSTALL_TARGETS_DEPS}
         EXPORT OpenXLSXTargets
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/OpenXLSX # shared objects
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/OpenXLSX    # shared objects
         COMPONENT lib
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/OpenXLSX # static libs
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/OpenXLSX    # static libs
         COMPONENT lib
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}/OpenXLSX # executables, if any
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}/OpenXLSX    # executables, if any
         COMPONENT bin
-        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenXLSX
+        # INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenXLSX   # not needed due to use of target_include_directories with BUILD_INTERFACE for dependencies
+    )
+endif()
+
+# OpenXLSX install targets
+install(
+        TARGETS OpenXLSX
+        EXPORT OpenXLSXTargets
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}             # shared objects
+        COMPONENT lib
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}             # static libs
+        COMPONENT lib
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}             # executables, if any
+        COMPONENT bin
+        # INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}            # not needed due to use of target_include_directories with BUILD_INTERFACE and INSTALL_INTERFACE
 )
 
 set_target_properties(OpenXLSX PROPERTIES FOLDER libs VERSION ${OPENXLSX_MAJOR_VERSION}.${OPENXLSX_MINOR_VERSION}.${OPENXLSX_MICRO_VERSION} SOVERSION ${OPENXLSX_MAJOR_VERSION})
 # Ensure that an installed version of OpenXLSX refers to a relative runpath
 set_target_properties(OpenXLSX PROPERTIES
-  INSTALL_RPATH "\$ORIGIN"
+  INSTALL_RPATH "\$ORIGIN:\$ORIGIN/OpenXLSX"
   BUILD_RPATH "\$ORIGIN"
   INSTALL_RPATH_USE_LINK_PATH TRUE
 )
@@ -501,7 +525,7 @@ file(WRITE ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_PROJECT_NAME}.pc.in.in
     "prefix=@DEFERRED@CMAKE_INSTALL_PREFIX@DEFERRED@\n"
     "exec_prefix=\${prefix}\n"
     "includedir=\${prefix}/@CMAKE_INSTALL_INCLUDEDIR@/@CMAKE_PROJECT_NAME@\n" # includedir=${prefix}/include
-    "libdir=\${exec_prefix}/lib/@CMAKE_PROJECT_NAME@\n"
+    "libdir=\${exec_prefix}/lib\n"
     "\n"
     "Name: @CMAKE_PROJECT_NAME@\n"
     "Description: @PROJECT_DESCRIPTION@\n"
@@ -563,16 +587,19 @@ install(
     DESTINATION "${CMAKE_INSTALL_LIBDIR}/${PKGCONFIG_SUBDIR}"
 )
 
+
 # Install the pugixml package config file
 if(TARGET ${PUGIXML_INSTALL_TARGET})
     message( DEBUG "${PUGIXML_TARGET} is pulled in from an external source" )
-    get_target_property(PUGIXML_IS_IMPORTED "${PUGIXML_INSTALL_TARGET}" IMPORTED)
+    # get_target_property(PUGIXML_IS_IMPORTED "${PUGIXML_INSTALL_TARGET}" IMPORTED)
     message( DEBUG "pugixml_BINARY_DIR is ${pugixml_BINARY_DIR}" )
     set(LIBPUGIXML_PC "${pugixml_BINARY_DIR}/pugixml.pc")
     if(EXISTS "${LIBPUGIXML_PC}")
         install(CODE "message(NOTICE \"Installing package config file for ${PUGIXML_INSTALL_TARGET}...\")")
+        set(PUGIXML_PKGCONFIG_PATCHED "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/pugixml-patched.pc")
+        pkg_config_add_library_subdir("${LIBPUGIXML_PC}" "${PUGIXML_PKGCONFIG_PATCHED}" OpenXLSX) # prefix "Libs:" config with add -L{exec_prefix}/lib/OpenXLSX
         install(
-            FILES "${LIBPUGIXML_PC}"
+            FILES "${PUGIXML_PKGCONFIG_PATCHED}"
             DESTINATION "${CMAKE_INSTALL_LIBDIR}/${PKGCONFIG_SUBDIR}"
             RENAME "${PUGIXML_PKGCONFIG_FILE}.pc"
         )
@@ -585,14 +612,16 @@ if(TARGET ${ZIP_LIBRARY_INSTALL_TARGET})
     if(OPENXLSX_ENABLE_LIBZIP)
         message( DEBUG "libzip_BINARY_DIR is ${libzip_BINARY_DIR}" )
         set(ZIP_LIBRARY_PKGCONFIG_SOURCE "${libzip_BINARY_DIR}/libzip.pc")
+        set(ZIP_LIBRARY_PKGCONFIG_PATCHED "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libzip-patched.pc")
+        pkg_config_add_library_subdir("${ZIP_LIBRARY_PKGCONFIG_SOURCE}" "${ZIP_LIBRARY_PKGCONFIG_PATCHED}" OpenXLSX) # prefix "Libs:" config with add -L{exec_prefix}/lib/OpenXLSX
     else()
-        set(ZIP_LIBRARY_PKGCONFIG_SOURCE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/miniz.pc")
+        set(ZIP_LIBRARY_PKGCONFIG_PATCHED "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/miniz.pc")
     endif()
 
     if(ZIP_LIBRARY_PKGCONFIG_SHOULD_EXIST OR EXISTS "${ZIP_LIBRARY_PKGCONFIG_SOURCE}")
         install(CODE "message(NOTICE \"Installing package config file for ${ZIP_LIBRARY_INSTALL_TARGET}...\")")
         install(
-            FILES "${ZIP_LIBRARY_PKGCONFIG_SOURCE}"
+            FILES "${ZIP_LIBRARY_PKGCONFIG_PATCHED}"
             DESTINATION "${CMAKE_INSTALL_LIBDIR}/${PKGCONFIG_SUBDIR}"
             RENAME "${ZIP_LIBRARY_PKGCONFIG_FILE}.pc"
         )

@@ -246,11 +246,11 @@ function(manage_dependency)
             message( NOTICE "manage_dependency: attempting to find_package ${ARG_PACKAGE_NAME} ${ARG_VERSION} with ${ARG_EXTRA_ARGS} ${COMPONENTS_PARAM} QUIET" )
         endif()
 
-        set(TRY_FIND_PACKAGE TRUE CACHE BOOL "")    # initialize: setting this to FALSE will inhibit find_package
+        set(TRY_FIND_PACKAGE FALSE CACHE BOOL "")   # initialize: setting this to TRUE will trigger find_package
         unset(TARGET_STATIC CACHE)  # initialize. CAUTION: setting _TARGET_STATIC to an empty string will somehow fail this
         unset(TARGET_SHARED CACHE)  # initialize
 
-        if(PREFER_STATIC)
+        if(PREFER_STATIC) # only trigger find_package if static library is available on system
             # set(CMAKE_FIND_DEBUG_MODE TRUE)
             find_library(TARGET_STATIC
                 NAMES ${ARG_TYPICAL_NAMES}
@@ -264,14 +264,16 @@ function(manage_dependency)
                 )
             endif()
 
-            if(TARGET_STATIC AND "${TARGET_STATIC}" MATCHES "\\.(a|lib)$" )
-                message( NOTICE "manage_dependency: TARGET_STATIC ${TARGET_STATIC} matches \\.(a|lib)$" )
-            else()
-                message( WARNING "manage_dependency: Found system ${ARG_LIB_NAME} as shared library, but static library is required" )
-                set(TARGET_STATIC FALSE)
-                set(TRY_FIND_PACKAGE FALSE)
+            if(TARGET_STATIC)
+                if("${TARGET_STATIC}" MATCHES "\\.(a|lib)$")
+                    message( NOTICE "manage_dependency: TARGET_STATIC ${TARGET_STATIC} matches \\.(a|lib)$" )
+                    set(TRY_FIND_PACKAGE TRUE)
+                else()
+                    message( WARNING "manage_dependency: Found system ${ARG_LIB_NAME} as shared library, but static library is required" )
+                    set(TARGET_STATIC FALSE)
+                endif()
             endif()
-        elseif(BUILD_SHARED_LIBS)
+        elseif(BUILD_SHARED_LIBS) # only trigger find_package if shared library is available on system
             find_library(TARGET_SHARED
                 NAMES ${ARG_TYPICAL_NAMES}
                 PATHS ${CMAKE_PREFIX_PATH} /usr/lib /usr/local/lib
@@ -284,13 +286,17 @@ function(manage_dependency)
                 )
             endif()
 
-            if(TARGET_SHARED AND "${TARGET_SHARED}" MATCHES "\\.(so|dll|dylib)$" )
-                message( NOTICE "manage_dependency: TARGET_STATIC ${TARGET_STATIC} matches \\.(so|dll|dylib)$" )
-            else()
-                message( WARNING "manage_dependency: Found system ${ARG_LIB_NAME} as static library, but shared library is required" )
-                set(TARGET_SHARED FALSE)
-                set(TRY_FIND_PACKAGE FALSE)
+            if(TARGET_SHARED)
+                if("${TARGET_SHARED}" MATCHES "\\.(so|dll|dylib)$")
+                    message( NOTICE "manage_dependency: TARGET_SHARED ${TARGET_STATIC} matches \\.(so|dll|dylib)$" )
+                    set(TRY_FIND_PACKAGE TRUE)
+                else()
+                    message( WARNING "manage_dependency: Found system ${ARG_LIB_NAME} as static library, but shared library is required" )
+                    set(TARGET_SHARED FALSE)
+                endif()
             endif()
+        else() # for static library build, but without PREFER_STATIC, always trigger find_package (shared library can be accepted)
+            set(TRY_FIND_PACKAGE TRUE)
         endif()
 
         # Only attempt to find_package if desired library has not been determined unavailable before

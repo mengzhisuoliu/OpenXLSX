@@ -39,15 +39,21 @@ g++ `pkg-config --cflags OpenXLSX` ../Examples/Demo1.cpp `pkg-config --libs Open
 
 If this new feature does not work as intended, please try providing the rpath manually:
 ```
-g++ -Wl,-rpath,/usr/local/lib/OpenXLSX `pkg-config --cflags OpenXLSX` ../Examples/Demo1.cpp `pkg-config --libs OpenXLSX`
+g++ -Wl,-rpath,/usr/local/lib `pkg-config --cflags OpenXLSX` ../Examples/Demo1.cpp `pkg-config --libs OpenXLSX`
 ```
 
 #### Caution when both the shared and the static library are installed
 **CAUTION**: When attempting static linking while the shared library for OpenXLSX is also installed, the `-lOpenXLSX` flag returned from `pkg-config --static --libs OpenXLSX` will fail to link against the static library.
-A manual fix like so will work:
+A manual fix like so should work (this is only an example, for libzip configuration, without nowide; see below):
 ```
-g++ `pkg-config --cflags OpenXLSX` ../Examples/Demo1.cpp -L/usr/local/lib -l:libOpenXLSX.a -L/usr/local/lib -lpugixml -lzip
+g++ `pkg-config --cflags OpenXLSX` ../Examples/Demo1.cpp -L/usr/local/lib -l:libOpenXLSX.a -L/usr/local/lib/OpenXLSX -l:libpugixml.a -l:libzip.a -lpugixml -lbz2 -llzma -lzstd -lssl -lcrypto -lz
 ```
+
+**Note** that you will have to adjust the linker flags according to your configuration:
+`-l:libpugixml.a`
+`-l:libminiz.a`
+`-l:libzip.a` (which requires `-lbz2 -llzma -lzstd -lssl -lcrypto -lz`)
+`-l:libnowide.a`
 
 However, the recommended solution for static linking is to not install the shared library (for now - might support different naming in the future).
 
