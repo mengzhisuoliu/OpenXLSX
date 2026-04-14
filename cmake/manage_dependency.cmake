@@ -193,6 +193,10 @@ function(manage_dependency)
 
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
+    if(USE_SYSTEM_LIBS AND FORCE_FETCH_ALL)
+        message( FATAL_ERROR "manage_dependency: USE_SYSTEM_LIBS and FORCE_FETCH_ALL are mutually exclusive - choose one!" )
+    endif()
+
     # Save global state
     set(SAVED_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
     set(SAVED_CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH})
@@ -296,6 +300,13 @@ function(manage_dependency)
                 endif()
             endif()
         else() # for static library build, but without PREFER_STATIC, always trigger find_package (shared library can be accepted)
+            set(TRY_FIND_PACKAGE TRUE)
+        endif()
+
+        if(NOT TRY_FIND_PACKAGE AND NOT FETCH_DEPS_AUTO)
+            # Since this branch only enters with USE_SYSTEM_LIBS=ON, this implies FORCE_FETCH_ALL=OFF
+            message( WARNING "manage_dependency: Enabling find_package despite find_library failure, because due to FETCH_DEPS_AUTO=OFF, build would fail regardless."
+                            " find_package may succeed, but if it finds the wrong library version, the build will fail in the next step." )
             set(TRY_FIND_PACKAGE TRUE)
         endif()
 
