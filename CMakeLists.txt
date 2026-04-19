@@ -34,7 +34,7 @@ endif()
 #=======================================================================================================================
 # Build options
 #=======================================================================================================================
-# 2026-03-17 working configurations:
+# 2026-04-19 working configurations:
 # - static library build (BUILD_SHARED_LIBS OFF)
 # - shared library build (BUILD_SHARED_LIBS ON)
 # - either setting for OPENXLSX_LOCAL_PACKAGES_ONLY (OFF = automatically fetch dependencies, ON = error out if dependency is not available locally)
@@ -43,10 +43,13 @@ endif()
 # - dependency package config files installed by OpenXLSX will be installed as pugixml-OpenXLSX.pc, libzip-OpenXLSX.pc, miniz-OpenXLSX.pc respectively to avoid conflicts
 # - dependency package config files should behave well with existing versions of the dependencies (OpenXLSX package config file gives precedence to the self-installed dependencies)
 # - OpenXLSX package config file now provides the runtime path for an executable linked against OpenXLSX shared libraries in /usr/local/lib/OpenXLSX
+# - vcpkg configuration / install via vcpkg
 # - TBD: static/shared library build on Windows 11 with clang_cl, MSVC, gcc
 
-# 2026-03-17 remaining issues:
-# - for OPENXLSX_MONOLITHIC_LIBRARY=ON, use target_link_interface instead of target_link_library for remaining dependencies (libzip/miniz, pugixml) and modify installation files
+# 2026-04-19 remaining issues:
+# - TBD for OPENXLSX_MONOLITHIC_LIBRARY=ON, use target_link_interface instead of target_link_library for remaining dependencies (libzip/miniz, pugixml) and modify installation files
+#   NOTE: the workaround of target_link_interface is currently unable to link in subdependencies and accordingly fails for libzip::zip. Accordingly, use of
+#          target_link_interface (for anything but nowide) is descoped now. The only downside (which isn't a problem) is that dependencies are also install targets
 #
 option(OPENXLSX_CREATE_DOCS           "Build library documentation (requires Doxygen and Graphviz/Dot to be installed)" ON)
 option(OPENXLSX_BUILD_SAMPLES         "Build sample programs" ON)
@@ -319,7 +322,7 @@ manage_dependency(
 message( STATUS "manage_dependency reported puxixml_PROVIDED_TARGET as ${pugixml_PROVIDED_TARGET}, pugixml_INSTALL_TARGET as ${pugixml_INSTALL_TARGET}" )
 set(PUGIXML_INSTALL_TARGET "${pugixml_INSTALL_TARGET}")
 if(pugixml_FETCHED)
-    set(PUGIXML_STATIC_LIBRARY "pugixml-static")    # used for OPENXLSX_BUNDLED_STATIC_LIB at the moment
+    set(PUGIXML_STATIC_LIBRARY "pugixml-static")     # used for OPENXLSX_BUNDLED_STATIC_LIB at the moment
 else()
     set(PUGIXML_STATIC_LIBRARY "pugixml")            # used for OPENXLSX_BUNDLED_STATIC_LIB at the moment
 

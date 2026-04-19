@@ -7,18 +7,14 @@ Microsoft Excel® files, with the .xlsx format.
 
 As the heading says - the latest "Release" that is shown on https://github.com/troldal/OpenXLSX/releases is from 2021-11-06, and severely outdated - please pull / download the latest SW version directly from the repository in its current state. Link for those that do not want to use ```git```: https://github.com/troldal/OpenXLSX/archive/refs/heads/master.zip
 
-## TBD / TODO before merge into master:
-* when OPENXLSX_MONOLITHIC_LIBRARY=ON, use target_link_interface instead of target_link_library for remaining dependencies (libzip/miniz, pugixml)
-* re-verify different build configurations w.r.t. `NOWIDE_EXTRA_INCLUDE` in OpenXLSX/CMakeLists.txt
-
 ## TBD / TODO:
-* use of ```nowide``` stat in OpenXLSXFileSystemTools?
-* if nowide is needed: `headers/detail/Zippy.hpp` for call to `mz_zip_reader_init_file` TBD: does miniz support unicode filenames on Windows?
+**NOTE:** generally, for features awaiting implementation, refer to the open issues in the repository
+
 * check if `Makefile.GNU` functionality can be provided for dependencies that need to be fetched from external sources
 * TBD: implement `BUILD_SHARED_LIBS` functionality in `Makefile.GNU`
 * tables/filters
 * true hyperlink support
-* generally, for features awaiting implementation, refer to the open issues in the repository
+* postponed (may not be done at all): when OPENXLSX_MONOLITHIC_LIBRARY=ON, use target_link_interface instead of target_link_library for remaining dependencies (libzip/miniz, pugixml) to allow installing only monolithic library (currently the monolithic file is built, but not installed)
 
 ## How to compile & link a program against an installed(!) OpenXLSX library
 
@@ -112,6 +108,12 @@ install(TARGETS myapp
 ```
 
 ## Recent changes
+
+### (aral-matrix) 19 April 2026 - vcpkg compatibility maximized, some improvements/bugfixes in cmake configuration
+* vcpkg support should now be as good as it gets: Big thank you to [@bansan85](https://github.com/bansan85) for maintaining the vcpkg package patches, and supporting the bugfixes / improvements of the cmake configuration so that it behaves well with vcpkg :)
+* monolithic library is now available via cmake option `-DOPENXLSX_MONOLITHIC_LIBRARY=ON` - this requires static dependencies and only works with miniz, fails with libzip (or rather: the libzip (sub-)dependencies will not be linked into the resulting bundled library)
+* for testing if a destination file exists (`OpenXLSXFileSystemTools.hpp` `pathExists`), `nowide::stat` is now used when nowide is in use. This should make calls to `XLDocument::create` and `XLDocument::saveAs` behave well with filenames containing unicode characters
+* added function `OpenXLSXFileSystemTools fileSize` to wrap call to `stat` with nowide compatibility - this is used in `LibZip.hpp loadArchiveData`
 
 ### (aral-matrix) 17 March 2026 - Install package config files for libzip and pugixml if they are installed with OpenXLSX
 * when the dependencies are pulled in from source repositories, their package config files will be installed alongside OpenXLSX

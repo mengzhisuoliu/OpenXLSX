@@ -2,27 +2,37 @@
 #define OPENXLSX_TOOLS_H
 
 #ifdef ENABLE_NOWIDE
-    // TODO: use boost nowide stat!
-    // #include <nowide/stat.hpp>
     #include <nowide/cstdio.hpp>    // nowide::fopen, nowide::remove, nowide::rename
+    #include <nowide/stat.hpp>
     namespace boost {}              // ensure that namespace exists, even if boost doesn't define it
     using namespace boost;          // depending on library version, nowide namespace is hidden in boost::nowide
 #else
     #include <cstdio>       // std::fopen
     #include <filesystem>   // std::filesystem::remove, std::filesystem::rename
+    #include <sys/stat.h>   // for stat, to test if a file exists and whether a file is a directory
 #endif
 #include <random>       // std::random_device, std::mt19937, std::uniform_int_distribution
 #include <string>       // std::string
-#include <sys/stat.h>   // for stat, to test if a file exists and whether a file is a directory
+#include <sys/types.h>  // off_t
 
-// don't use "stat" directly because windows has compatibility-breaking defines
-#if defined(_WIN32)    // moved below includes to make it absolutely clear that this is module-local
-#    define STAT _stat                 // _stat should be available in standard environment on Windows
-#    define STATSTRUCT struct _stat    // struct _stat also exists - split the two names in case the struct _stat must not be used on windows
+// stat shenanigans configured *below* includes to make it absolutely clear that this is module-local
+#ifdef ENABLE_NOWIDE
+    #define STAT nowide::stat               // use nowide version of stat
+    #define STATSTRUCT struct nowide::stat  //  ..
+    constexpr const bool using_nowide_stat = true;
 #else
-#    define STAT stat
-#    define STATSTRUCT struct stat
+    // don't use "stat" directly because windows has compatibility-breaking defines
+    #if defined(_WIN32)
+        // NOTE: this branch should never be triggered, because on _WIN32, ENABLE_NOWIDE should be always true
+        #define STAT _stat                  // _stat should be available in standard environment on Windows
+        #define STATSTRUCT struct _stat     // struct _stat also exists - split the two names in case the struct _stat must not be used on windows
+    #else
+        #define STAT stat
+        #define STATSTRUCT struct stat
+    #endif
+    constexpr const bool using_nowide_stat = false;
 #endif
+
 
 namespace OpenXLSX
 {
@@ -76,6 +86,19 @@ namespace OpenXLSX
 #ifdef __GNUC__    // conditionally enable GCC specific pragmas to suppress unused function warning
 #   pragma GCC diagnostic pop
 #endif // __GNUC__
+
+    /**
+     * @brief determine the size of a file if it exists
+     * @param fileName file to obtain info about
+     * @return size of the file in Bytes (as returned by struct stat field st_size, or -1 if file info could not be obtained
+     */
+    inline off_t fileSize(const std::string& fileName)
+    {
+        STATSTRUCT info;
+        if (STAT(fileName.c_str(), &info ) == 0)    // if file info could be obtained
+            return info.st_size;                       // then return the file size
+        return -1;  // default: return -1 to indicate failure
+    }
 
     /**
      * @brief opens a file with support for unicode filenames on Windows

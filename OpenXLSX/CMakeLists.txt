@@ -269,7 +269,6 @@ if (OPENXLSX_ENABLE_NOWIDE)
     #     2026-04-04 get_target_property now accesses NOWIDE_TARGET, was wrongly accessing NOWIDE_ALIAS
     get_target_property(NOWIDE_INCLUDES ${NOWIDE_TARGET} INTERFACE_INCLUDE_DIRECTORIES)     # get nowide include paths
     set(NOWIDE_EXTRA_INCLUDE) # empty initializer
-    # TODO: restore logic of "if OPENXLSX is imported"
     if(USE_SYSTEM_LIBS OR NOT OPENXLSX_NOWIDE_STANDALONE) # no need to add NOWIDE_EXTRA_INCLUDE for standalone downloads
         list( GET NOWIDE_INCLUDES 0 NOWIDE_INCLUDE )                                        # ensure that NOWIDE_INCLUDE only contains a single directory entry
         set(NOWIDE_EXTRA_INCLUDE "${NOWIDE_INCLUDE}/boost")                                 # and add NOWIDE_EXTRA_INCLUDE with an appended ./boost subdirectory

@@ -6,7 +6,6 @@
 #include <stdexcept>    // std::runtime_error
 #include <string>       // std::string
 #include <string.h>     // strerror
-#include <sys/stat.h>   // stat, struct stat
 
 #include <zip.h>        // libzip
 
@@ -102,18 +101,14 @@ namespace LibZip {
         {
             m_zipSize = 0; // init in case of failure
 
-            struct stat st;
-            if (stat(filename.c_str(), &st) < 0) {
-                if (errno != ENOENT) {
-                    fprintf(stderr, "ZipArchive::loadArchiveData: can't obtain info about %s: %s\n", filename.c_str(), strerror(errno));
-                    return -1;
-                }
-
+            off_t archiveSizeCompressed = OpenXLSX::fileSize( filename );
+            if (archiveSizeCompressed < 0) {
+                fprintf(stderr, "ZipArchive::loadArchiveData: can't obtain info about %s (errno %d: %s)\n", filename.c_str(), errno, strerror(errno));
                 m_zipData = nullptr;
                 return -1;
             }
 
-            if ((m_zipData = malloc(static_cast<size_t>(st.st_size))) == nullptr) {
+            if ((m_zipData = malloc(static_cast<size_t>(archiveSizeCompressed))) == nullptr) {
                 fprintf(stderr, "ZipArchive::loadArchiveData: can't allocate buffer\n");
                 return -1;
             }
@@ -126,7 +121,7 @@ namespace LibZip {
                 return -1;
             }
 
-            if (fread(m_zipData, 1, static_cast<size_t>(st.st_size), fp) < static_cast<size_t>(st.st_size)) {
+            if (fread(m_zipData, 1, static_cast<size_t>(archiveSizeCompressed), fp) < static_cast<size_t>(archiveSizeCompressed)) {
                 free(m_zipData);
                 m_zipData = nullptr;
                 fprintf(stderr, "ZipArchive::loadArchiveData: can't read %s: %s\n", filename.c_str(), strerror(errno));
@@ -136,7 +131,7 @@ namespace LibZip {
 
             fclose(fp);
 
-            m_zipSize = static_cast<size_t>(st.st_size);
+            m_zipSize = static_cast<size_t>(archiveSizeCompressed);
             return 0;
         }
 

@@ -634,7 +634,7 @@ void XLDocument::open(const std::string& fileName)
 void XLDocument::create(const std::string& fileName, bool forceOverwrite)
 {
     // 2024-07-26: prevent silent overwriting of existing files
-    if (!forceOverwrite && pathExists(fileName)) { // 2025-05-04 TODO TBD: does pathExists even work with windows / unicode filenames?
+    if (!forceOverwrite && pathExists(fileName)) { // 2026-04-19 pathExists now uses nowide::stat on Windows and should be safe with unicode characters
         using namespace std::literals::string_literals;
         throw XLException("XLDocument::create: refusing to overwrite existing file "s + fileName);
     }
