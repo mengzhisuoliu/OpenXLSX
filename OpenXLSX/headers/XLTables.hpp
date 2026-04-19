@@ -84,33 +84,33 @@ namespace OpenXLSX
          * @param other The object to be copied.
          * @note The default copy constructor is used, i.e. only shallow copying of pointer data members.
          */
-        XLTables(const XLTables& other) = default;
+        XLTables(const XLTables& other);
 
         /**
-         * @brief
+         * @brief The move constructor
          * @param other
          */
-        XLTables(XLTables&& other) noexcept = default;
+        XLTables(XLTables&& other) noexcept;
 
         /**
          * @brief The destructor
          * @note The default destructor is used, since cleanup of pointer data members is not required.
          */
-        ~XLTables() = default;
+        ~XLTables();
 
         /**
-         * @brief Assignment operator
+         * @brief Copy assignment operator
          * @return A reference to the new object.
          * @note The default assignment operator is used, i.e. only shallow copying of pointer data members.
          */
-        XLTables& operator=(const XLTables&) = default;
+        XLTables& operator=(const XLTables&);
 
         /**
-         * @brief
+         * @brief Move assignment operator
          * @param other
          * @return
          */
-        XLTables& operator=(XLTables&& other) noexcept = default;
+        XLTables& operator=(XLTables&& other) noexcept;
 
         // /**
         //  * @brief getters

@@ -46,13 +46,13 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 // ===== External Includes ===== //
 #include <algorithm>
 #include <iostream>
-#include <pugixml.hpp>
 
 // ===== OpenXLSX Includes ===== //
 #include "XLMergeCells.hpp"
 #include "XLCellReference.hpp"
 #include "XLException.hpp"
-#include "utilities/XLUtilities.hpp" // appendAndGetNode
+#include "XLXmlParser.hpp"              // pugixml wrapper
+#include "utilities/XLUtilities.hpp"    // appendAndGetNode
 
 using namespace OpenXLSX;
 
@@ -122,7 +122,7 @@ XLMergeCells::XLMergeCells(const XMLNode& rootNode, std::vector< std::string_vie
 XLMergeCells::~XLMergeCells() = default;
 
 /**
- * @details
+ * @details Copy constructor
  */
 XLMergeCells::XLMergeCells(const XLMergeCells& other)
 {
@@ -133,7 +133,7 @@ XLMergeCells::XLMergeCells(const XLMergeCells& other)
 }
 
 /**
- * @details
+ * @details Move constructor
  */
 XLMergeCells::XLMergeCells(XLMergeCells&& other)
 {
@@ -144,19 +144,19 @@ XLMergeCells::XLMergeCells(XLMergeCells&& other)
 }
 
 /**
- * @details
+ * @details Copy assignment operator
  */
 XLMergeCells& XLMergeCells::operator=(const XLMergeCells& other)
 {
-    m_rootNode = other.m_rootNode ? std::make_unique<XMLNode>( *other.m_rootNode ) : std::unique_ptr<XMLNode> {};
-    m_nodeOrder = other.m_nodeOrder;
-    m_mergeCellsNode = other.m_mergeCellsNode ? std::make_unique<XMLNode>( *other.m_mergeCellsNode ) : std::unique_ptr<XMLNode> {};
-    m_referenceCache = other.m_referenceCache;
+    if (&other != this) {
+        XLMergeCells temp = other;  // copy-construct
+        *this = std::move(temp);    // move-assign & invalidate temp
+    }
     return *this;
 }
 
 /**
- * @details
+ * @details Move assignment operator
  */
 XLMergeCells& XLMergeCells::operator=(XLMergeCells&& other)
 {

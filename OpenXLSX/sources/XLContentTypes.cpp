@@ -45,13 +45,12 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 
 // ===== External Includes ===== //
 #include <cstring>
-#include <pugixml.hpp>
 
 // ===== OpenXLSX Includes ===== //
 #include "XLContentTypes.hpp"
 #include "XLDocument.hpp"
-
 #include "XLException.hpp"
+#include "XLXmlParser.hpp"              // pugixml wrapper
 
 using namespace OpenXLSX;
 
@@ -236,12 +235,12 @@ XLContentTypes::XLContentTypes() = default;
 XLContentTypes::XLContentTypes(XLXmlData* xmlData) : XLXmlFile(xmlData) {}
 
 /**
- * @details
+ * @details explicit default destructor
  */
 XLContentTypes::~XLContentTypes() = default;
 
 /**
- * @details
+ * @details explicit default copy constructor - invokes base class copy constructor
  */
 XLContentTypes::XLContentTypes(const XLContentTypes& other) = default;
 
@@ -251,12 +250,12 @@ XLContentTypes::XLContentTypes(const XLContentTypes& other) = default;
 XLContentTypes::XLContentTypes(XLContentTypes&& other) noexcept = default;
 
 /**
- * @details
+ * @details explicit default copy assignment operator - invokes base class copy assignment
  */
 XLContentTypes& XLContentTypes::operator=(const XLContentTypes& other) = default;
 
 /**
- * @details
+ * @details explicit default move assignment operator - invokes base class move assignment
  */
 XLContentTypes& XLContentTypes::operator=(XLContentTypes&& other) noexcept = default;
 

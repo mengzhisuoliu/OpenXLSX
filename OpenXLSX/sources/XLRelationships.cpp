@@ -47,7 +47,6 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #include <cstdint>      // uint32_t
 #include <cstring>      // strlen
 #include <memory>       // std::make_unique
-#include <pugixml.hpp>
 #include <random>       // std::mt19937, std::random_device
 #include <stdexcept>    // std::invalid_argument
 #include <string>       // std::stoi, std::literals::string_literals
@@ -56,6 +55,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 // ===== OpenXLSX Includes ===== //
 #include "XLDocument.hpp"
 #include "XLRelationships.hpp"
+#include "XLXmlParser.hpp"              // pugixml wrapper
 
 #include "XLException.hpp"
 
@@ -269,17 +269,39 @@ XLRelationshipItem::XLRelationshipItem() : m_relationshipNode(std::make_unique<X
  */
 XLRelationshipItem::XLRelationshipItem(const XMLNode& node) : m_relationshipNode(std::make_unique<XMLNode>(node)) {}
 
-XLRelationshipItem::~XLRelationshipItem() = default;
-
+/**
+ * @details copy constructor
+ */
 XLRelationshipItem::XLRelationshipItem(const XLRelationshipItem& other)
     : m_relationshipNode(std::make_unique<XMLNode>(*other.m_relationshipNode))
 {}
 
+/**
+ * @details explicit default move constructor
+ */
+XLRelationshipItem::XLRelationshipItem(XLRelationshipItem&& other) noexcept = default;
+
+/**
+ * @details explicit default destructor
+ */
+XLRelationshipItem::~XLRelationshipItem() = default;
+
+/**
+ * @details copy assignment operator
+ */
 XLRelationshipItem& XLRelationshipItem::operator=(const XLRelationshipItem& other)
 {
-    if (&other != this) *m_relationshipNode = *other.m_relationshipNode;
+    if (&other != this) {
+        XLRelationshipItem temp = other;  // copy-construct
+        *this = std::move(temp);          // move-assign & invalidate temp
+    }
     return *this;
 }
+
+/**
+ * @details explicit default move assignment operator
+ */
+XLRelationshipItem& XLRelationshipItem::operator=(XLRelationshipItem&& other) noexcept = default;
 
 /**
  * @details Returns the m_relationshipType member variable by getValue.
@@ -308,12 +330,18 @@ bool XLRelationshipItem::empty() const { return m_relationshipNode->empty(); }
 
 
 /**
+* @details Default constructor
+*/
+XLRelationships::XLRelationships() = default;
+
+/**
  * @details Creates a XLRelationships object, which will read the XML file with the given path
  *  The pathTo the relationships XML file will be verified & stored in m_path, which is subsequently
  *   used to return all relationship targets as absolute paths within the XLSX archive
  */
 XLRelationships::XLRelationships(XLXmlData* xmlData, std::string pathTo)
- : XLXmlFile(xmlData)
+ : XLXmlFile(xmlData),
+   m_path("")
 {
     constexpr const char *relFolder = "_rels/";    // all relationships are stored in a (sub-)folder named "_rels/"
     static const size_t relFolderLen = strlen(relFolder); // 2024-08-23: strlen seems to not be accepted in a constexpr in VS2019 with c++17
@@ -338,7 +366,40 @@ XLRelationships::XLRelationships(XLXmlData* xmlData, std::string pathTo)
         );
 }
 
+/**
+ * @details copy constructor
+ */
+XLRelationships::XLRelationships(const XLRelationships& other)
+ : XLXmlFile(other),
+   m_path(other.m_path)
+{}
+
+/**
+* @details explicit default move constructor
+*/
+XLRelationships::XLRelationships(XLRelationships&& other) noexcept = default;
+
+/**
+ * @details explicit default destructor
+ */
 XLRelationships::~XLRelationships() = default;
+
+/**
+ * @details copy assignment operator
+ */
+XLRelationships& XLRelationships::operator=(const XLRelationships& other)
+{
+    if (&other != this) {
+        XLRelationships temp = other;  // copy-construct
+        *this = std::move(temp);       // move-assign & invalidate temp
+    }
+    return *this;
+}
+
+/**
+ * @details explicit default move assignment operator
+ */
+XLRelationships& XLRelationships::operator=(XLRelationships&& other) noexcept = default;
 
 /**
  * @details Returns the XLRelationshipItem with the given ID, by looking it up in the m_relationships map.

@@ -85,32 +85,32 @@ namespace OpenXLSX
          * @brief Copy Constructor.
          * @param other Object to be copied.
          */
-        XLComment(const XLComment& other) = default;
+        XLComment(const XLComment& other);
 
         /**
          * @brief Move Constructor.
          * @param other Object to be moved.
          */
-        XLComment(XLComment&& other) noexcept = default;
+        XLComment(XLComment&& other) noexcept;
 
         /**
          * @brief
          */
-        ~XLComment() = default;
+        ~XLComment();
 
         /**
          * @brief Copy assignment operator.
          * @param other Right hand side of assignment operation.
          * @return A reference to the lhs object.
          */
-        XLComment& operator=(const XLComment& other) = default;
+        XLComment& operator=(const XLComment& other);
 
         /**
          * @brief Move assignment operator.
          * @param other Right hand side of assignment operation.
          * @return A reference to lhs object.
          */
-        XLComment& operator=(XLComment&& other) noexcept = default;
+        XLComment& operator=(XLComment&& other) noexcept;
 
         /**
          * @brief Test if XLComment is linked to valid XML
@@ -173,9 +173,8 @@ namespace OpenXLSX
 
         /**
          * @brief The destructor
-         * @note The default destructor is used, since cleanup of pointer data members is not required.
          */
-        ~XLComments() = default;
+        ~XLComments();
 
         /**
          * @brief
@@ -256,11 +255,11 @@ namespace OpenXLSX
         void print(std::basic_ostream<char>& ostr) const;
 
     private:
-        XMLNode m_authors{};
-        XMLNode m_commentList{};
+        std::unique_ptr<XMLNode> m_authors;
+        std::unique_ptr<XMLNode> m_commentList;
         std::unique_ptr<XLVmlDrawing> m_vmlDrawing;
-        mutable XMLNode m_hintNode{};                 // the last comment XML Node accessed by index is stored here, if any - will be reset when comments are inserted or deleted
-        mutable size_t m_hintIndex{0};                // this has the index at which m_hintNode was accessed, only valid if not m_hintNode.empty()
+        mutable std::unique_ptr<XMLNode> m_hintNode;  // the last comment XML Node accessed by index is stored here, if any - will be reset when comments are inserted or deleted
+        mutable size_t m_hintIndex;                   // this has the index at which m_hintNode was accessed, only valid if not m_hintNode.empty()
         inline static const std::vector< std::string_view > m_nodeOrder = {      // comments XML node required child sequence
             "authors",
             "commentList"

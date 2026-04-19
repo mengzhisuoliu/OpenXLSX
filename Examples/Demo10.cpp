@@ -3,7 +3,6 @@
 #include <string>
 
 #include <OpenXLSX.hpp>
-#include <external/pugixml/pugixml.hpp>
 
 bool nowide_status()
 {
@@ -79,7 +78,12 @@ int main()
 
 	//                                                                      // change the new font style:
 	fonts[ newFontIndex ].setFontName("Arial");
+	// fonts[ newFontIndex ].setFontFamily(4);                                 // info for font substitution on a system where a font with that name is not available
+	// fonts[ newFontIndex ].setFontCharset(0xa1);                             // set Greek character set (example)
 	fonts[ newFontIndex ].setFontSize(14);
+	fonts[ newFontIndex ].setScheme( XLFontSchemeNone );                    // unset any potential font scheme - this is important to prevent application of a different
+	/**/                                                                    //  font formatting which might override the new setting - not yet fully understood where the scheme formatting is coming from
+	/**/                                                                    //  NOTE: not yet fully understood where the scheme formatting would be coming from
 	XLColor red   ( "ffff0000" );
 	XLColor green ( "ff00ff00" );
 	XLColor blue  ( "ff0000ff" );

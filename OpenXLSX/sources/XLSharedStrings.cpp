@@ -45,11 +45,11 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 
 // ===== External Includes ===== //
 #include <algorithm>
-#include <pugixml.hpp>
 
 // ===== OpenXLSX Includes ===== //
 #include "XLDocument.hpp"
 #include "XLSharedStrings.hpp"
+#include "XLXmlParser.hpp"              // pugixml wrapper
 
 #include "XLException.hpp"
 
@@ -58,6 +58,12 @@ namespace OpenXLSX {
 }    // namespace OpenXLSX
 
 using namespace OpenXLSX;
+
+/**
+ * @details Default constructor
+ */
+XLSharedStrings::XLSharedStrings() = default;
+
 
 /**
  * @details Constructs a new XLSharedStrings object. Only one (common) object is allowed per XLDocument instance.
@@ -82,10 +88,31 @@ XLSharedStrings::XLSharedStrings(XLXmlData* xmlData, std::deque<std::string>* st
         );
 }
 
+
+/**
+ * @details Copy constructor
+ */
+XLSharedStrings::XLSharedStrings(const XLSharedStrings& other) = default;
+
+/**
+ * @details Move constructor
+ */
+XLSharedStrings::XLSharedStrings(XLSharedStrings&& other) noexcept = default;
+
 /**
  * @details
  */
 XLSharedStrings::~XLSharedStrings() = default;
+
+/**
+ * @details Copy assignment operator
+ */
+XLSharedStrings& XLSharedStrings::operator=(const XLSharedStrings& other) = default;
+
+/**
+ * @details Move assignment operator
+ */
+XLSharedStrings& XLSharedStrings::operator=(XLSharedStrings&& other) noexcept = default;
 
 /**
  * @details Look up a string index by the string content. If the string does not exist, the returned index is -1.

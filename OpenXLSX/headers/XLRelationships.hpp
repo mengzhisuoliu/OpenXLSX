@@ -60,7 +60,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
 #include "XLXmlFile.hpp"
-#include "XLXmlParser.hpp"
+#include "XLXmlParserForwardDeclarations.hpp"
 
 namespace OpenXLSX
 {
@@ -167,7 +167,7 @@ namespace OpenXLSX {
          * @brief Move Constructor.
          * @param other Object to be moved.
          */
-        XLRelationshipItem(XLRelationshipItem&& other) noexcept = default;
+        XLRelationshipItem(XLRelationshipItem&& other) noexcept;
 
         /**
          * @brief
@@ -186,7 +186,7 @@ namespace OpenXLSX {
          * @param other Right hand side of assignment operation.
          * @return A reference to lhs object.
          */
-        XLRelationshipItem& operator=(XLRelationshipItem&& other) noexcept = default;
+        XLRelationshipItem& operator=(XLRelationshipItem&& other) noexcept;
 
         /**
          * @brief Get the type of the current relationship item.
@@ -227,12 +227,12 @@ namespace OpenXLSX {
     {
     public:    // ---------- Public Member Functions ---------- //
         /**
-         * @brief
+         * @brief Default constructor
          */
-        XLRelationships() = default;
+        XLRelationships();
 
         /**
-         * @brief
+         * @brief Nominal constructor
          * @param xmlData
          * @param pathTo Initialize m_path from this: the path to the relationships file origin of xmlData
          * @note m_path is used to resolve relative relationship target paths to an absolute
@@ -245,30 +245,30 @@ namespace OpenXLSX {
         ~XLRelationships();
 
         /**
-         * @brief
+         * @brief copy constructor
          * @param other
          */
-        XLRelationships(const XLRelationships& other) = default;
+        XLRelationships(const XLRelationships& other);
 
         /**
-         * @brief
+         * @brief move constructor
          * @param other
          */
-        XLRelationships(XLRelationships&& other) noexcept = default;
+        XLRelationships(XLRelationships&& other) noexcept;
 
         /**
-         * @brief
+         * @brief copy assignment operator
          * @param other
          * @return
          */
-        XLRelationships& operator=(const XLRelationships& other) = default;
+        XLRelationships& operator=(const XLRelationships& other);
 
         /**
-         * @brief
+         * @brief move assignment operator
          * @param other
          * @return
          */
-        XLRelationships& operator=(XLRelationships&& other) noexcept = default;
+        XLRelationships& operator=(XLRelationships&& other) noexcept;
 
         /**
          * @brief Look up a relationship item by ID.

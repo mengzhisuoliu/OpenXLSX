@@ -5,49 +5,55 @@
 // ===== External Includes ===== //
 #include <cassert>
 #include <cstring>
-#include <pugixml.hpp>
 
 // ===== OpenXLSX Includes ===== //
 #include "XLCell.hpp"
 #include "XLCellValue.hpp"
 #include "XLException.hpp"
+#include "XLXmlParser.hpp"              // pugixml wrapper
 
 using namespace OpenXLSX;
 
 /**
  * @details Constructor. Default implementation has been used.
- * @pre
- * @post
  */
 XLCellValue::XLCellValue() = default;
 
 /**
- * @details Copy constructor. The default implementation will be used.
+ * @details explicit copy constructor.
  * @pre The object to be copied must be valid.
  * @post A valid copy is constructed.
  */
-XLCellValue::XLCellValue(const OpenXLSX::XLCellValue& other) = default;
+XLCellValue::XLCellValue(const OpenXLSX::XLCellValue& other)
+ : m_value(other.m_value),
+   m_type(other.m_type)
+{}
 
 /**
  * @details Move constructor. The default implementation will be used.
- * @pre The object to be copied must be valid.
- * @post A valid copy is constructed.
  */
 XLCellValue::XLCellValue(OpenXLSX::XLCellValue&& other) noexcept = default;
 
 /**
  * @details Destructor. The default implementation will be used
  * @pre None.
- * @post The object is destructed.
+ * @post The object is destroyed.
  */
 XLCellValue::~XLCellValue() = default;
 
 /**
- * @details Copy assignment operator. The default implementation will be used.
+ * @details explicit copy assignment operator
  * @pre The object to be copied must be a valid object.
  * @post A the copied-to object is valid.
  */
-XLCellValue& OpenXLSX::XLCellValue::operator=(const OpenXLSX::XLCellValue& other) = default;
+XLCellValue& OpenXLSX::XLCellValue::operator=(const OpenXLSX::XLCellValue& other)
+{
+    if (&other != this) {
+        XLCellValue temp = other;  // copy-construct
+        *this = std::move(temp);   // move-assign & invalidate temp
+    }
+    return *this;
+}
 
 /**
  * @details Move assignment operator. The default implementation will be used.
@@ -119,7 +125,9 @@ std::string XLCellValue::typeAsString() const
  * @pre The cell and cellNode pointers must not be nullptr and must point to valid objects.
  * @post A valid XLCellValueProxy has been created.
  */
-XLCellValueProxy::XLCellValueProxy(XLCell* cell, XMLNode* cellNode) : m_cell(cell), m_cellNode(cellNode)
+XLCellValueProxy::XLCellValueProxy(XLCell* cell, XMLNode* cellNode)
+ : m_cell(cell),
+   m_cellNode(cellNode)
 {
     assert(cell != nullptr);         // NOLINT
 //    assert(cellNode);                 // NOLINT
@@ -134,11 +142,14 @@ XLCellValueProxy::XLCellValueProxy(XLCell* cell, XMLNode* cellNode) : m_cell(cel
 XLCellValueProxy::~XLCellValueProxy() = default;
 
 /**
- * @details Copy constructor. Default implementation has been used.
+ * @details explicit copy constructor
  * @pre
  * @post
  */
-XLCellValueProxy::XLCellValueProxy(const XLCellValueProxy& other) = default;
+XLCellValueProxy::XLCellValueProxy(const XLCellValueProxy& other)
+ : m_cell(other.m_cell),
+   m_cellNode(other.m_cellNode)
+{}
 
 /**
  * @details Move constructor. Default implementation has been used.
@@ -157,7 +168,7 @@ XLCellValueProxy::XLCellValueProxy(XLCellValueProxy&& other) noexcept = default;
 XLCellValueProxy& XLCellValueProxy::operator=(const XLCellValueProxy& other)
 {
     if (&other != this) {
-        *this = other.getValue();
+        *this = other.getValue(); // NOTE to avoid confusion: this invokes the templated operator= with a parameter of type XLCellValue
     }
 
     return *this;

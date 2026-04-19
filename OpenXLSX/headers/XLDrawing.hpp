@@ -56,7 +56,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #include "XLException.hpp"
 #include "XLXmlData.hpp"
 #include "XLXmlFile.hpp"
-
+#include "XLXmlParserForwardDeclarations.hpp"
 
 namespace OpenXLSX
 {
@@ -110,32 +110,32 @@ namespace OpenXLSX
          * @brief Copy Constructor.
          * @param other Object to be copied.
          */
-        XLShapeClientData(const XLShapeClientData& other) = default;
+        XLShapeClientData(const XLShapeClientData& other);
 
         /**
          * @brief Move Constructor.
          * @param other Object to be moved.
          */
-        XLShapeClientData(XLShapeClientData&& other) noexcept = default;
+        XLShapeClientData(XLShapeClientData&& other) noexcept;
 
         /**
          * @brief
          */
-        ~XLShapeClientData() = default;
+        ~XLShapeClientData();
 
         /**
          * @brief Copy assignment operator.
          * @param other Right hand side of assignment operation.
          * @return A reference to the lhs object.
          */
-        XLShapeClientData& operator=(const XLShapeClientData& other) = default;
+        XLShapeClientData& operator=(const XLShapeClientData& other);
 
         /**
          * @brief Move assignment operator.
          * @param other Right hand side of assignment operation.
          * @return A reference to lhs object.
          */
-        XLShapeClientData& operator=(XLShapeClientData&& other) noexcept = default;
+        XLShapeClientData& operator=(XLShapeClientData&& other) noexcept;
 
         /**
          * @brief Getter functions
@@ -207,6 +207,11 @@ namespace OpenXLSX
          * @param styleAttribute an XMLAttribute constructed with the style attribute of a v:shape element
          */
         explicit XLShapeStyle(const XMLAttribute& styleAttribute);
+
+        /**
+         * @brief
+         */
+        ~XLShapeStyle();
 
     private:
         /**
@@ -287,18 +292,18 @@ namespace OpenXLSX
          * @brief Copy Constructor.
          * @param other Object to be copied.
          */
-        XLShape(const XLShape& other) = default;
+        XLShape(const XLShape& other);
 
         /**
          * @brief Move Constructor.
          * @param other Object to be moved.
          */
-        XLShape(XLShape&& other) noexcept = default;
+        XLShape(XLShape&& other) noexcept;
 
         /**
          * @brief
          */
-        ~XLShape() = default;
+        ~XLShape();
 
         /**
          * @brief Copy assignment operator.
@@ -312,7 +317,7 @@ namespace OpenXLSX
          * @param other Right hand side of assignment operation.
          * @return A reference to lhs object.
          */
-        XLShape& operator=(XLShape&& other) noexcept = default;
+        XLShape& operator=(XLShape&& other) noexcept;
 
         /**
          * @brief Getter functions
@@ -376,37 +381,38 @@ namespace OpenXLSX
         XLVmlDrawing(XLXmlData* xmlData);
 
         /**
-         * @brief The copy constructor.
+         * @brief Copy constructor
          * @param other The object to be copied.
-         * @note The default copy constructor is used, i.e. only shallow copying of pointer data members.
+         * @warning XLXmlDrawing object manages shape IDs and should not be copied, but deleting this would complicate XLWorksheet copies
          */
-        XLVmlDrawing(const XLVmlDrawing& other) = default;
+        XLVmlDrawing(const XLVmlDrawing& other);
 
         /**
-         * @brief
+         * @brief Move constructor
          * @param other
          */
-        XLVmlDrawing(XLVmlDrawing&& other) noexcept = default;
+        XLVmlDrawing(XLVmlDrawing&& other) noexcept;
 
         /**
          * @brief The destructor
          * @note The default destructor is used, since cleanup of pointer data members is not required.
          */
-        ~XLVmlDrawing() = default;
+        ~XLVmlDrawing();
 
         /**
-         * @brief Assignment operator
-         * @return A reference to the new object.
-         * @note The default assignment operator is used, i.e. only shallow copying of pointer data members.
+         * @brief Copy assignment operator
+         * @param other
+         * @return
+         * @warning XLXmlDrawing object manages shape IDs and should not be copied, but deleting this would complicate XLWorksheet copies
          */
-        XLVmlDrawing& operator=(const XLVmlDrawing&) = default;
+        XLVmlDrawing& operator=(const XLVmlDrawing& other);
 
         /**
-         * @brief
+         * @brief Move assignment operator
          * @param other
          * @return
          */
-        XLVmlDrawing& operator=(XLVmlDrawing&& other) noexcept = default;
+        XLVmlDrawing& operator=(XLVmlDrawing&& other) noexcept;
 
     private: // helper functions with repeating code
         XMLNode firstShapeNode() const;

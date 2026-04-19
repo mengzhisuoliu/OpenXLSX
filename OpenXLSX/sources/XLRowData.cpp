@@ -51,6 +51,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #include "XLCell.hpp"
 #include "XLRow.hpp"
 #include "XLRowData.hpp"
+#include "XLXmlParser.hpp"
 #include "utilities/XLUtilities.hpp"
 
 // ========== XLRowDataIterator  ============================================ //
@@ -71,16 +72,7 @@ namespace OpenXLSX
     {}
 
     /**
-     * @details Destructor. Default implementation.
-     * @pre
-     * @post
-     */
-    XLRowDataIterator::~XLRowDataIterator() = default;
-
-    /**
      * @details Copy constructor. Trivial implementation with deep copy of pointer members.
-     * @pre
-     * @post
      */
     XLRowDataIterator::XLRowDataIterator(const XLRowDataIterator& other)
         : m_dataRange(std::make_unique<XLRowDataRange>(*other.m_dataRange)),
@@ -89,16 +81,17 @@ namespace OpenXLSX
     {}
 
     /**
-     * @details Move constructor. Default implementation.
-     * @pre
-     * @post
+     * @details explicit default move constructor
      */
-    XLRowDataIterator::XLRowDataIterator(XLRowDataIterator&& other) noexcept = default;    // NOLINT
+    XLRowDataIterator::XLRowDataIterator(XLRowDataIterator&& other) noexcept = default;
+
+    /**
+     * @details explicit default destructor
+     */
+    XLRowDataIterator::~XLRowDataIterator() = default;
 
     /**
      * @details Copy assignment operator. Implemented using copy-and-swap idiom.
-     * @pre
-     * @post
      */
     XLRowDataIterator& XLRowDataIterator::operator=(const XLRowDataIterator& other)
     {
@@ -106,14 +99,11 @@ namespace OpenXLSX
             XLRowDataIterator temp = other;
             std::swap(temp, *this);
         }
-
         return *this;
     }
 
     /**
-     * @details Move assignment operator. Default implementation.
-     * @pre
-     * @post
+     * @details explicit default move assignment operator
      */
     XLRowDataIterator& XLRowDataIterator::operator=(XLRowDataIterator&& other) noexcept = default;
 
@@ -210,10 +200,20 @@ namespace OpenXLSX
 namespace OpenXLSX
 {
     /**
-     * @details Constructor. Trivial implementation.
-     * @throws If firstColumn > than lastColumn, an XLOverflowError will be thrown.
-     * @pre
-     * @post
+     * @details [private] constructor. Constructs an empty XLDataRange, whose size() will return 0. To be used as return value in functions that shall fail without
+     * exception.
+     */
+    XLRowDataRange::XLRowDataRange()
+        : m_rowNode(nullptr),
+          m_firstCol(1),    // first col of 1
+          m_lastCol(0),     // and last col of 0 will ensure that size returns 0
+          m_sharedStrings(XLSharedStringsDefaulted)
+    {
+        // nothing to do
+    }
+
+    /**
+     * @details [private] constructor. Trivial implementation.
      */
     XLRowDataRange::XLRowDataRange(const XMLNode& rowNode, uint16_t firstColumn, uint16_t lastColumn, const XLSharedStrings& sharedStrings)
         : m_rowNode(std::make_unique<XMLNode>(rowNode)),
@@ -229,49 +229,27 @@ namespace OpenXLSX
     }
 
     /**
-     * @details Constructs an empty XLDataRange, whose size() will return 0. To be used as return value in functions that shall fail without
-     * exception.
-     */
-    XLRowDataRange::XLRowDataRange()
-        : m_rowNode(nullptr),
-          m_firstCol(1),    // first col of 1
-          m_lastCol(0),     // and last col of 0 will ensure that size returns 0
-          m_sharedStrings(XLSharedStringsDefaulted)
-    {
-        // nothing to do
-    }
-
-    /**
-     * @details Copy constructor. Trivial implementation.
-     * @pre
-     * @post
+     * @details copy constructor. Trivial implementation.
      */
     XLRowDataRange::XLRowDataRange(const XLRowDataRange& other)
         : m_rowNode((other.m_rowNode != nullptr) ? std::make_unique<XMLNode>(*other.m_rowNode) : nullptr),    // 2024-05-28: support for copy-construction from an empty XLDataRange
           m_firstCol(other.m_firstCol),
           m_lastCol(other.m_lastCol),
           m_sharedStrings(other.m_sharedStrings)
-
     {}
 
     /**
-     * @details Move constructor. Default implementation.
-     * @pre
-     * @post
+     * @details explicit default move constructor
      */
     XLRowDataRange::XLRowDataRange(XLRowDataRange&& other) noexcept = default;
 
     /**
-     * @details Destructor. Default implementation.
-     * @pre
-     * @post
+     * @details explicit default destructor
      */
     XLRowDataRange::~XLRowDataRange() = default;
 
     /**
-     * @details Copy assignment operator. Implemented in terms of copy-and-swap.
-     * @pre
-     * @post
+     * @details copy assignment operator. Implemented in terms of copy-and-swap.
      */
     XLRowDataRange& XLRowDataRange::operator=(const XLRowDataRange& other)
     {
@@ -279,14 +257,11 @@ namespace OpenXLSX
             XLRowDataRange temp(other);
             std::swap(temp, *this);
         }
-
         return *this;
     }
 
     /**
-     * @details Move assignment operator. Default implementation.
-     * @pre
-     * @post
+     * @details explicit default move assignment operator
      */
     XLRowDataRange& XLRowDataRange::operator=(XLRowDataRange&& other) noexcept = default;
 
@@ -318,52 +293,45 @@ namespace OpenXLSX
 namespace OpenXLSX
 {
     /**
-     * @details Destructor. Default implementation.
-     * @pre
-     * @post
+     * @details [private] constructor
+     */
+    XLRowDataProxy::XLRowDataProxy(XLRow* row, XMLNode* rowNode)
+     : m_row(row),
+       m_rowNode(rowNode)
+    {}
+
+    /**
+     * @details [private] copy constructor
+     */
+    XLRowDataProxy::XLRowDataProxy(const XLRowDataProxy& other)
+     : m_row(other.m_row),
+       m_rowNode(other.m_rowNode)
+    {}
+
+    /**
+     * @details [private] explicit default move constructor
+     */
+    XLRowDataProxy::XLRowDataProxy(XLRowDataProxy&& other) noexcept = default;
+
+    /**
+     * @details explicit default destructor
      */
     XLRowDataProxy::~XLRowDataProxy() = default;
 
     /**
-     * @details Copy constructor. This is not a 'true' copy constructor, as it is the row values that will
+     * @details copy assignment operator. This is not a 'true' copy assignment, as it is the row values that will
      * be copied, not the XLRowDataProxy member variables (pointers to the XLRow and row node objects).
-     * @pre
-     * @post
      */
     XLRowDataProxy& XLRowDataProxy::operator=(const XLRowDataProxy& other)
     {
         if (&other != this) {
             *this = other.getValues();
         }
-
         return *this;
     }
 
     /**
-     * @details Constructor
-     * @pre
-     * @post
-     */
-    XLRowDataProxy::XLRowDataProxy(XLRow* row, XMLNode* rowNode) : m_row(row), m_rowNode(rowNode) {}
-
-    /**
-     * @details Copy constructor. Default implementation.
-     * @pre
-     * @post
-     */
-    XLRowDataProxy::XLRowDataProxy(const XLRowDataProxy& other) = default;
-
-    /**
-     * @details Move constructor. Default implementation.
-     * @pre
-     * @post
-     */
-    XLRowDataProxy::XLRowDataProxy(XLRowDataProxy&& other) noexcept = default;
-
-    /**
-     * @details Move assignment operator. Default implementation.
-     * @pre
-     * @post
+     * @details [private] explicit default move assignment operator
      */
     XLRowDataProxy& XLRowDataProxy::operator=(XLRowDataProxy&& other) noexcept = default;
 

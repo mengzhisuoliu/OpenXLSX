@@ -45,12 +45,12 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 
 // ===== External Includes ===== //
 // #include <algorithm>
-#include <pugixml.hpp>
 
 // ===== OpenXLSX Includes ===== //
 // #include "XLCellRange.hpp"
 // #include "XLDocument.hpp"
 #include "XLTables.hpp"
+#include "XLXmlParser.hpp"              // pugixml wrapper
 #include "utilities/XLUtilities.hpp"    // OpenXLSX::ignore
 
 using namespace OpenXLSX;
@@ -71,6 +71,31 @@ XLTables::XLTables(XLXmlData* xmlData) : XLXmlFile(xmlData)
     if (xmlData->getXmlType() != XLContentType::Table)
         throw XLInternalError("XLTables constructor: Invalid XML data.");
 }
+
+/**
+ * @details Copy constructor.
+ */
+XLTables::XLTables(const XLTables& other) = default;
+
+/**
+ * @details Move constructor
+ */
+XLTables::XLTables(XLTables&& other) noexcept = default;
+
+/**
+ * @details
+ */
+XLTables::~XLTables() = default;
+
+/**
+ * @brief Copy assignment operator
+ */
+XLTables& XLTables::operator=(const XLTables&) = default;
+
+/**
+ * @brief Move assignment operator
+ */
+XLTables& XLTables::operator=(XLTables&& other) noexcept = default;
 
 /**
  * @details getters

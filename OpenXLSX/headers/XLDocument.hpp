@@ -75,10 +75,10 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 
 namespace OpenXLSX
 {
-    constexpr const unsigned int pugi_parse_settings = pugi::parse_default | pugi::parse_ws_pcdata; // TBD: | pugi::parse_comments
+    extern const unsigned int pugi_parse_settings;    // defined in XLDocument.cpp
 
-    constexpr const bool XLForceOverwrite = true;    // readability constant for 2nd parameter of XLDocument::saveAs
-    constexpr const bool XLDoNotOverwrite = false;   //  "
+    constexpr const bool XLForceOverwrite = true;     // readability constant for 2nd parameter of XLDocument::saveAs
+    constexpr const bool XLDoNotOverwrite = false;    //  "
 
     /**
      * @brief The XLDocumentProperties class is an enumeration of the possible properties (metadata) that can be set
@@ -137,16 +137,16 @@ namespace OpenXLSX
 
         /**
          * @brief Copy constructor
-         * @param other The object to copy
+         * @param other XLDocument to copy
          * @note Copy constructor explicitly deleted.
          */
         XLDocument(const XLDocument& other) = delete;
 
         /**
-         * @brief
-         * @param other
+         * @brief Move constructor
+         * @param other XLDocument to construct from
          */
-        XLDocument(XLDocument&& other) noexcept = default;
+        XLDocument(XLDocument&& other) noexcept;
 
         /**
          * @brief Destructor
@@ -161,11 +161,11 @@ namespace OpenXLSX
         XLDocument& operator=(const XLDocument& other) = delete;
 
         /**
-         * @brief
+         * @brief move assignment operator
          * @param other
          * @return
          */
-        XLDocument& operator=(XLDocument&& other) noexcept = default;
+        XLDocument& operator=(XLDocument&& other) noexcept;
 
         /**
          * @brief ensure that warnings are shown (default setting)

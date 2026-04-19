@@ -63,7 +63,7 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
 #include "XLCellReference.hpp"
-#include "XLXmlParser.hpp" // XMLNode, pugi node types
+#include "XLXmlParserForwardDeclarations.hpp"
 
 namespace OpenXLSX
 {
@@ -104,26 +104,26 @@ namespace OpenXLSX
         ~XLMergeCells();
 
         /**
-         * @brief
+         * @brief Copy constructor
          * @param other
          */
         XLMergeCells(const XLMergeCells& other);
 
         /**
-         * @brief
+         * @brief Move constructor
          * @param other
          */
         XLMergeCells(XLMergeCells&& other);
 
         /**
-         * @brief
+         * @brief Copy assignment operator
          * @param other
          * @return
          */
         XLMergeCells& operator=(const XLMergeCells& other);
 
         /**
-         * @brief
+         * @brief Move assignment operator
          * @param other
          * @return
          */

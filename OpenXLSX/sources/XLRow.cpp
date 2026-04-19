@@ -44,15 +44,14 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
  */
 
 // ===== External Includes ===== //
-#include <pugixml.hpp>
 
 // ===== OpenXLSX Includes ===== //
 #include "XLCell.hpp"
 #include "XLCellIterator.hpp"
 #include "XLCellReference.hpp"
 #include "XLRow.hpp"
-#include "XLStyles.hpp"          // XLDefaultCellFormat
-
+#include "XLStyles.hpp"                 // XLDefaultCellFormat
+#include "XLXmlParser.hpp"              // pugixml wrapper
 #include "utilities/XLUtilities.hpp"
 
 // ========== XLRow  ======================================================== //
@@ -119,7 +118,7 @@ namespace OpenXLSX
     XLRow& XLRow::operator=(const XLRow& other)
     {
         if (&other != this) {
-            auto temp = XLRow(other);
+            XLRow temp = XLRow(other);
             std::swap(*this, temp);
         }
         return *this;
@@ -376,9 +375,10 @@ namespace OpenXLSX
 
 }    // namespace OpenXLSX
 
-// ========== XLRowIterator  ================================================ //
+// ========== XLRowIterator and XLRowReverseIterator ======================== //
 namespace OpenXLSX
 {
+    // ===== XLRowIterator
     /**
      * @details
      * @pre
@@ -391,7 +391,7 @@ namespace OpenXLSX
           m_currentRow(),
           m_sharedStrings(rowRange.m_sharedStrings),
           m_endReached(false),
-          m_hintRow(),
+          m_hintRow(std::make_unique<XMLNode>()),
           m_hintRowNumber(0),
           m_currentRowStatus(XLNotLoaded),
           m_currentRowNumber(0)
@@ -404,16 +404,12 @@ namespace OpenXLSX
     }
 
     /**
-     * @details
-     * @pre
-     * @post
+     * @details explicit default destructor
      */
     XLRowIterator::~XLRowIterator() = default;
 
     /**
-     * @details
-     * @pre
-     * @post
+     * @details copy constructor
      */
     XLRowIterator::XLRowIterator(const XLRowIterator& other)
         : m_dataNode(std::make_unique<XMLNode>(*other.m_dataNode)),
@@ -422,38 +418,31 @@ namespace OpenXLSX
           m_currentRow(other.m_currentRow),
           m_sharedStrings(other.m_sharedStrings),
           m_endReached(other.m_endReached),
-          m_hintRow(other.m_hintRow),
+          m_hintRow(std::make_unique<XMLNode>(*other.m_hintRow)),
           m_hintRowNumber(other.m_hintRowNumber),
           m_currentRowStatus(other.m_currentRowStatus),
           m_currentRowNumber(other.m_currentRowNumber)
     {}
 
     /**
-     * @details
-     * @pre
-     * @post
+     * @details explicit default move constructor
      */
     XLRowIterator::XLRowIterator(XLRowIterator&& other) noexcept = default;
 
     /**
-     * @details
-     * @pre
-     * @post
+     * @details copy assignment operator
      */
     XLRowIterator& XLRowIterator::operator=(const XLRowIterator& other)
     {
         if (&other != this) {
-            auto temp = XLRowIterator(other);
+            XLRowIterator temp = XLRowIterator(other);
             std::swap(*this, temp);
         }
-
         return *this;
     }
 
     /**
-     * @details
-     * @pre
-     * @post
+     * @details explicit default move assignment operator
      */
     XLRowIterator& XLRowIterator::operator=(XLRowIterator&& other) noexcept = default;
 
@@ -473,7 +462,7 @@ namespace OpenXLSX
 
         // ===== Row needs to be updated
 
-        if (m_hintRow.empty()) {  // no hint has been established: fetch first row node the "tedious" way
+        if (m_hintRow->empty()) {  // no hint has been established: fetch first row node the "tedious" way
             if (createIfMissing)     // getRowNode creates missing rows
                 m_currentRow = XLRow(getRowNode(*m_dataNode, m_currentRowNumber), m_sharedStrings.get());
             else                    // findRowNode returns an empty row for missing rows
@@ -483,7 +472,7 @@ namespace OpenXLSX
             // ===== Find or create, and fetch an XLRow at m_currentRowNumber
             if (m_currentRowNumber > m_hintRowNumber) {
                 // ===== Start from m_hintRow and search forwards...
-                XMLNode rowNode = m_hintRow.next_sibling_of_type(pugi::node_element);
+                XMLNode rowNode = m_hintRow->next_sibling_of_type(pugi::node_element);
                 uint32_t rowNo = 0;
                 while (not rowNode.empty()) {
                     rowNo = rowNode.attribute("r").as_ullong();
@@ -494,7 +483,7 @@ namespace OpenXLSX
 
                 // ===== Create missing row node if createIfMissing == true
                 if (createIfMissing && rowNode.empty()) {
-                    rowNode = m_dataNode->insert_child_after("row", m_hintRow);
+                    rowNode = m_dataNode->insert_child_after("row", *m_hintRow);
                     rowNode.append_attribute("r").set_value(m_currentRowNumber);
                 }
                 if (rowNode.empty())    // if row could not be found / created
@@ -510,7 +499,7 @@ namespace OpenXLSX
             m_currentRowStatus = XLNoSuchRow;   // mark this status for further calls to updateCurrentRow()
         else {
             // ===== If the current row exists, update the hints
-            m_hintRow          = *m_currentRow.m_rowNode;   // don't store a full XLRow, just the XMLNode, for better performance
+            m_hintRow          = std::make_unique<XMLNode>(*m_currentRow.m_rowNode);   // don't store a full XLRow, just the XMLNode, for better performance
             m_hintRowNumber    = m_currentRowNumber;
             m_currentRowStatus = XLLoaded;                  // mark row status for further calls to updateCurrentRow()
         }
@@ -618,6 +607,234 @@ namespace OpenXLSX
         return not m_currentRow.empty();
     }
 
+    // ===== XLRowReverseIterator
+    /**
+     * @details
+     * @pre
+     * @post
+     */
+    XLRowReverseIterator::XLRowReverseIterator(const XLRowRange& rowRange, XLIteratorLocation loc)
+        : m_dataNode(std::make_unique<XMLNode>(*rowRange.m_dataNode)),
+          m_firstRow(rowRange.m_firstRow),
+          m_lastRow(rowRange.m_lastRow),
+          m_currentRow(),
+          m_sharedStrings(rowRange.m_sharedStrings),
+          m_endReached(false),
+          m_hintRow(std::make_unique<XMLNode>()),
+          m_hintRowNumber(0),
+          m_currentRowStatus(XLNotLoaded),
+          m_currentRowNumber(0)
+    {
+        if (loc == XLIteratorLocation::End)
+            m_endReached = true;
+        else {
+            m_currentRowNumber = m_lastRow;
+        }
+    }
+
+    /**
+     * @details explicit default destructor
+     */
+    XLRowReverseIterator::~XLRowReverseIterator() = default;
+
+    /**
+     * @details copy constructor
+     */
+    XLRowReverseIterator::XLRowReverseIterator(const XLRowReverseIterator& other)
+        : m_dataNode(std::make_unique<XMLNode>(*other.m_dataNode)),
+          m_firstRow(other.m_firstRow),
+          m_lastRow(other.m_lastRow),
+          m_currentRow(other.m_currentRow),
+          m_sharedStrings(other.m_sharedStrings),
+          m_endReached(other.m_endReached),
+          m_hintRow(std::make_unique<XMLNode>(*other.m_hintRow)),
+          m_hintRowNumber(other.m_hintRowNumber),
+          m_currentRowStatus(other.m_currentRowStatus),
+          m_currentRowNumber(other.m_currentRowNumber)
+    {}
+
+    /**
+     * @details explicit default move constructor
+     */
+    XLRowReverseIterator::XLRowReverseIterator(XLRowReverseIterator&& other) noexcept = default;
+
+    /**
+     * @details copy assignment operator
+     */
+    XLRowReverseIterator& XLRowReverseIterator::operator=(const XLRowReverseIterator& other)
+    {
+        if (&other != this) {
+            XLRowReverseIterator temp = XLRowReverseIterator(other);
+            std::swap(*this, temp);
+        }
+        return *this;
+    }
+
+    /**
+     * @details explicit default move assignment operator
+     */
+    XLRowReverseIterator& XLRowReverseIterator::operator=(XLRowReverseIterator&& other) noexcept = default;
+
+    /**
+     * @brief update m_currentRow by fetching (or inserting) a row at m_currentRowNumber
+     */
+    void XLRowReverseIterator::updateCurrentRow(bool createIfMissing)
+    {
+        // ===== Quick exit checks - can't be true when m_endReached
+        if (m_currentRowStatus == XLLoaded) return;                           // nothing to do, row is already loaded
+        if (!createIfMissing && m_currentRowStatus == XLNoSuchRow) return;    // nothing to do, row has already been determined as missing
+
+        // ===== At this stage, m_currentRowStatus is XLUnloaded or XLNoSuchRow and createIfMissing == true
+
+        if (m_endReached)
+            throw XLInputError("XLRowReverseIterator updateCurrentRow: iterator should not be dereferenced when endReached() == true");
+
+        // ===== Row needs to be updated
+
+        if (m_hintRow->empty()) {  // no hint has been established: fetch first row node the "tedious" way
+            if (createIfMissing)     // getRowNode creates missing rows
+                m_currentRow = XLRow(getRowNode(*m_dataNode, m_currentRowNumber), m_sharedStrings.get());
+            else                    // findRowNode returns an empty row for missing rows
+                m_currentRow = XLRow(findRowNode(*m_dataNode, m_currentRowNumber), m_sharedStrings.get());
+        }
+        else {
+            // ===== Find or create, and fetch an XLRow at m_currentRowNumber
+            if (m_currentRowNumber < m_hintRowNumber) {
+                // ===== Start from m_hintRow and search backwards...
+                XMLNode rowNode = m_hintRow->previous_sibling_of_type(pugi::node_element);
+                uint32_t rowNo = 0;
+                while (not rowNode.empty()) {
+                    rowNo = rowNode.attribute("r").as_ullong();
+                    if (rowNo <= m_currentRowNumber) break; // if desired row was reached / passed, break before decrementing rowNode
+                    rowNode = rowNode.previous_sibling_of_type(pugi::node_element);
+                }
+                if (rowNo != m_currentRowNumber) rowNode = XMLNode{}; // if a lower row number was found, set empty node (means: "missing")
+
+                // ===== Create missing row node if createIfMissing == true
+                if (createIfMissing && rowNode.empty()) {
+                    rowNode = m_dataNode->insert_child_before("row", *m_hintRow);
+                    rowNode.append_attribute("r").set_value(m_currentRowNumber);
+                }
+                if (rowNode.empty())    // if row could not be found / created
+                    m_currentRow = XLRow{}; // make sure m_currentRow is set to an empty cell
+                else
+                    m_currentRow = XLRow(rowNode, m_sharedStrings.get());
+            }
+            else
+                throw XLInternalError("XLRowReverseIterator::updateCurrentRow: an internal error occured (m_currentRowNumber >= m_hintRowNumber)");
+        }
+
+        if (m_currentRow.empty())   // if row is confirmed missing
+            m_currentRowStatus = XLNoSuchRow;   // mark this status for further calls to updateCurrentRow()
+        else {
+            // ===== If the current row exists, update the hints
+            m_hintRow          = std::make_unique<XMLNode>(*m_currentRow.m_rowNode);   // don't store a full XLRow, just the XMLNode, for better performance
+            m_hintRowNumber    = m_currentRowNumber;
+            m_currentRowStatus = XLLoaded;                  // mark row status for further calls to updateCurrentRow()
+        }
+    }
+
+    /**
+     * @details
+     * @pre
+     * @post
+     */
+    XLRowReverseIterator& XLRowReverseIterator::operator++()
+    {
+        if (m_endReached)
+            throw XLInputError("XLRowReverseIterator: tried to increment beyond end operator");
+
+        if(m_currentRowNumber > m_firstRow)
+            --m_currentRowNumber;
+        else
+            m_endReached = true;
+
+        m_currentRowStatus = XLNotLoaded; // trigger a new attempt to locate / create the row via updateRowCell
+
+        return *this;
+    }
+
+    /**
+     * @details
+     * @pre
+     * @post
+     */
+    XLRowReverseIterator XLRowReverseIterator::operator++(int)
+    {
+        auto oldIter(*this);
+        ++(*this);
+        return oldIter;
+    }
+
+    /**
+     * @details
+     * @pre
+     * @post
+     */
+    XLRow& XLRowReverseIterator::operator*()
+    {
+        updateCurrentRow(XLCreateIfMissing);
+        return m_currentRow;
+    }
+
+    /**
+     * @details
+     * @pre
+     * @post
+     */
+    XLRowReverseIterator::pointer XLRowReverseIterator::operator->()
+    {
+        updateCurrentRow(XLCreateIfMissing);
+        return &m_currentRow;
+    }
+
+    /**
+     * @details
+     * @pre
+     * @post
+     */
+    bool XLRowReverseIterator::operator==(const XLRowReverseIterator& rhs) const
+    {
+        if (m_endReached && rhs.m_endReached) return true;    // If both iterators are end iterators
+
+        if (m_currentRowNumber != rhs.m_currentRowNumber)     // If iterators point to a different row
+            return false;                                         // that means no match
+
+        // CAUTION: for performance reasons, disabled all checks whether this and rhs are iterators on the same worksheet & row range
+        return true;
+
+        // if (*m_dataNode != *rhs.m_dataNode) return false;     // TBD: iterators over different worksheets may never match
+        // TBD if iterators shall be considered not equal if they were created on different XLRowRanges
+        // this would require checking the m_firstRow and m_lastRow, potentially costing CPU time
+
+        // return m_currentRow == rhs.m_currentRow;   // match only if row nodes are equal
+        // CAUTION: in the current code, that means iterators that point to the same row in different worksheets,
+        // and rows that do not exist in both sheets, will be considered equal
+    }
+
+    /**
+     * @details
+     * @pre
+     * @post
+     */
+    bool XLRowReverseIterator::operator!=(const XLRowReverseIterator& rhs) const { return !(*this == rhs); }
+
+    /**
+     * @details
+     * @pre
+     * @post
+     */
+    XLRowReverseIterator::operator bool() const { return false; }
+
+    /**
+     * @details
+     */
+    bool XLRowReverseIterator::rowExists()
+    {
+        // ===== Update m_currentRow once so that rowExists will always test the correct cell (an empty row if current row doesn't exist)
+        updateCurrentRow(XLDoNotCreateIfMissing);
+        return not m_currentRow.empty();
+    }
 }    // namespace OpenXLSX
 
 // ========== XLRowRange  =================================================== //
@@ -636,9 +853,7 @@ namespace OpenXLSX
     {}
 
     /**
-     * @details
-     * @pre
-     * @post
+     * @details copy constructor
      */
     XLRowRange::XLRowRange(const XLRowRange& other)
         : m_dataNode(std::make_unique<XMLNode>(*other.m_dataNode)),
@@ -648,28 +863,22 @@ namespace OpenXLSX
     {}
 
     /**
-     * @details
-     * @pre
-     * @post
+     * @details explicit default move constructor
      */
     XLRowRange::XLRowRange(XLRowRange&& other) noexcept = default;
 
     /**
-     * @details
-     * @pre
-     * @post
+     * @details explicit default destructor
      */
     XLRowRange::~XLRowRange() = default;
 
     /**
-     * @details
-     * @pre
-     * @post
+     * @details copy assignment operator
      */
     XLRowRange& XLRowRange::operator=(const XLRowRange& other)
     {
         if (&other != this) {
-            auto temp = XLRowRange(other);
+            XLRowRange temp = XLRowRange(other);
             std::swap(*this, temp);
         }
 
@@ -677,31 +886,33 @@ namespace OpenXLSX
     }
 
     /**
-     * @details
-     * @pre
-     * @post
+     * @details explicit default move assignment operator
      */
     XLRowRange& XLRowRange::operator=(XLRowRange&& other) noexcept = default;
 
     /**
      * @details
-     * @pre
-     * @post
      */
     uint32_t XLRowRange::rowCount() const { return m_lastRow - m_firstRow + 1; }
 
     /**
      * @details
-     * @pre
-     * @post
      */
     XLRowIterator XLRowRange::begin() { return XLRowIterator(*this, XLIteratorLocation::Begin); }
 
     /**
      * @details
-     * @pre
-     * @post
      */
     XLRowIterator XLRowRange::end() { return XLRowIterator(*this, XLIteratorLocation::End); }
+
+    /**
+     * @details
+     */
+    XLRowReverseIterator XLRowRange::rbegin() { return XLRowReverseIterator(*this, XLIteratorLocation::Begin); }
+
+    /**
+     * @details
+     */
+    XLRowReverseIterator XLRowRange::rend() { return XLRowReverseIterator(*this, XLIteratorLocation::End); }
 
 }    // namespace OpenXLSX

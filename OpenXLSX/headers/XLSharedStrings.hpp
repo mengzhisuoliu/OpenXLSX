@@ -87,9 +87,9 @@ namespace OpenXLSX
 
     public:
         /**
-         * @brief
+         * @brief Default constructor
          */
-        XLSharedStrings() = default;
+        XLSharedStrings();
 
         /**
          * @brief
@@ -99,35 +99,35 @@ namespace OpenXLSX
         explicit XLSharedStrings(XLXmlData* xmlData, std::deque<std::string>* stringCache);
 
         /**
+         * @brief Copy constructor
+         * @param other
+         */
+        XLSharedStrings(const XLSharedStrings& other);
+
+        /**
+         * @brief Move constructor
+         * @param other
+         */
+        XLSharedStrings(XLSharedStrings&& other) noexcept;
+
+        /**
          * @brief Destructor
          */
         ~XLSharedStrings();
 
         /**
-         * @brief
-         * @param other
-         */
-        XLSharedStrings(const XLSharedStrings& other) = default;
-
-        /**
-         * @brief
-         * @param other
-         */
-        XLSharedStrings(XLSharedStrings&& other) noexcept = default;
-
-        /**
-         * @brief
+         * @brief Copy assignment operator
          * @param other
          * @return
          */
-        XLSharedStrings& operator=(const XLSharedStrings& other) = default;
+        XLSharedStrings& operator=(const XLSharedStrings& other);
 
         /**
-         * @brief
+         * @brief Move assignment operator
          * @param other
          * @return
          */
-        XLSharedStrings& operator=(XLSharedStrings&& other) noexcept = default;
+        XLSharedStrings& operator=(XLSharedStrings&& other) noexcept;
 
         /**
          * @brief return the amount of shared string entries currently in the cache

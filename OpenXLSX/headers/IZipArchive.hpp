@@ -115,16 +115,17 @@ namespace OpenXLSX
         }
 
         /**
-         * @brief
+         * @brief copy assignment shall be disabled until a use case is found
          * @param other
          * @return
          */
-        inline IZipArchive& operator=(const IZipArchive& other)
-        {
-            IZipArchive copy(other);
-            *this = std::move(copy);
-            return *this;
-        }
+        inline IZipArchive& operator=(const IZipArchive& other) = delete;
+        // inline IZipArchive& operator=(const IZipArchive& other)
+        // {
+        //     IZipArchive copy(other);
+        //     *this = std::move(copy);
+        //     return *this;
+        // }
 
         /**
          * @brief
@@ -165,6 +166,10 @@ namespace OpenXLSX
 
         inline void addEntry(const std::string& name, const std::string& data) {
             m_zipArchive->addEntry(name, data);
+        }
+
+        inline void addEntryAndCommit(const std::string& name, const std::string& data) {
+            m_zipArchive->addEntryAndCommit(name, data);
         }
 
         inline void deleteEntry(const std::string& entryName) {
@@ -235,6 +240,8 @@ namespace OpenXLSX
             inline virtual void save (const std::string& path) = 0;
 
             inline virtual void addEntry(const std::string& name, const std::string& data) = 0;
+
+            inline virtual void addEntryAndCommit(const std::string& name, const std::string& data) = 0;
 
             inline virtual void deleteEntry(const std::string& entryName) = 0;
 
@@ -320,6 +327,10 @@ namespace OpenXLSX
 
             inline void addEntry(const std::string& name, const std::string& data) override {
                 ZipType.addEntry(name, data);
+            }
+
+            inline void addEntryAndCommit(const std::string& name, const std::string& data) override {
+                ZipType.addEntryAndCommit(name, data);
             }
 
             inline void deleteEntry(const std::string& entryName) override {
