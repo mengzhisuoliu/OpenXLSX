@@ -523,13 +523,14 @@ set(ZIP_LIBRARY_PKGCONFIG_FILE "${ZIP_LIBRARY}")
 if(TARGET ${ZIP_LIBRARY_INSTALL_TARGET})
     set(ZIP_LIBRARY_PKGCONFIG_FILE "${ZIP_LIBRARY}-OpenXLSX")
 endif()
-file(WRITE ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_PROJECT_NAME}.pc.in.in
+
+file(WRITE ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${OPENXLSX_LIBRARY_NAME}.pc.in.in
     "prefix=@DEFERRED@CMAKE_INSTALL_PREFIX@DEFERRED@\n"
     "exec_prefix=\${prefix}\n"
-    "includedir=\${prefix}/@CMAKE_INSTALL_INCLUDEDIR@/@CMAKE_PROJECT_NAME@\n" # includedir=${prefix}/include
+    "includedir=\${prefix}/@CMAKE_INSTALL_INCLUDEDIR@/@OPENXLSX_LIBRARY_NAME@\n" # includedir=${prefix}/include
     "libdir=\${exec_prefix}/lib\n"
     "\n"
-    "Name: @CMAKE_PROJECT_NAME@\n"
+    "Name: @OPENXLSX_LIBRARY_NAME@\n"
     "Description: @PROJECT_DESCRIPTION@\n"
     "URL: @PROJECT_HOMEPAGE_URL@\n"
     "Version: @PROJECT_VERSION@\n"
@@ -543,7 +544,7 @@ if(NOT OPENXLSX_ENABLE_LIBZIP)
         "prefix=@DEFERRED@CMAKE_INSTALL_PREFIX@DEFERRED@\n"
         "exec_prefix=\${prefix}\n"
         "includedir=\${prefix}/include\n"
-        "libdir=\${exec_prefix}/lib/@CMAKE_PROJECT_NAME@\n"
+        "libdir=\${exec_prefix}/lib/@OPENXLSX_LIBRARY_NAME@\n"
         "\n"
         "Name: miniz\n"
         "Description: zip implementation\n"
@@ -556,8 +557,8 @@ endif()
 # Let CMake fill in the variables in the package config template
 set( DEFERRED "@" )
 configure_file(
-    ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_PROJECT_NAME}.pc.in.in
-    ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_PROJECT_NAME}.pc.in
+    ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${OPENXLSX_LIBRARY_NAME}.pc.in.in
+    ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${OPENXLSX_LIBRARY_NAME}.pc.in
     @ONLY
 )
 if(NOT OPENXLSX_ENABLE_LIBZIP)
@@ -570,7 +571,7 @@ endif()
 
 # Fix @DEFERRED@ variables that are not known until install time (CMAKE_INSTALL_PREFIX)
 install(
-    CODE "configure_file(\"${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_PROJECT_NAME}.pc.in\" \"${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_PROJECT_NAME}.pc\" @ONLY)"
+    CODE "configure_file(\"${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${OPENXLSX_LIBRARY_NAME}.pc.in\" \"${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${OPENXLSX_LIBRARY_NAME}.pc\" @ONLY)"
 )
 set(ZIP_LIBRARY_PKGCONFIG_SHOULD_EXIST FALSE)
 if(NOT OPENXLSX_ENABLE_LIBZIP)
@@ -585,7 +586,7 @@ endif()
 set(PKGCONFIG_SUBDIR "pkgconfig")
 
 install(
-    FILES "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_PROJECT_NAME}.pc"
+    FILES "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${OPENXLSX_LIBRARY_NAME}.pc"
     DESTINATION "${CMAKE_INSTALL_LIBDIR}/${PKGCONFIG_SUBDIR}"
 )
 

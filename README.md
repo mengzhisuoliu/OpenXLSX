@@ -3,20 +3,381 @@
 OpenXLSX is a C++ library for reading, writing, creating and modifying
 Microsoft Excel® files, with the .xlsx format.
 
-## NOTE: "Releases" are severely outdated - do not use them
+## Library Version 0.5.0
 
-As the heading says - the latest "Release" that is shown on https://github.com/troldal/OpenXLSX/releases is from 2021-11-06, and severely outdated - please pull / download the latest SW version directly from the repository in its current state. Link for those that do not want to use ```git```: https://github.com/troldal/OpenXLSX/archive/refs/heads/master.zip
+**Note:** "Releases" are severely outdated - do not use them. The latest "Release" that is shown on https://github.com/troldal/OpenXLSX/releases is from 2021-11-06, and severely outdated - please pull / download the latest SW version directly from the repository in its current state. Link for those that do not want to use ```git```: https://github.com/troldal/OpenXLSX/archive/refs/heads/master.zip
 
-## TBD / TODO:
-**NOTE:** generally, for features awaiting implementation, refer to the open issues in the repository
+## Table of Contents
 
-* check if `Makefile.GNU` functionality can be provided for dependencies that need to be fetched from external sources
-* TBD: implement `BUILD_SHARED_LIBS` functionality in `Makefile.GNU`
+- [To-Do list](#to-do-list)
+- [Most recent changes](#most-recent-changes)
+- [Motivation](#motivation)
+- [Ambition](#ambition)
+- [Compatibility](#compatibility)
+- [Build Instructions](#build-instructions)
+  - [Install `cmake` & `git` on debian-based Linux distributions](#install-cmake-git-on-debian-based-linux-distributions)
+  - [Install `cmake` & `git` on Windows 10/11 (for now only tested with `MSYS Makefiles`)](#install-cmake-git-on-windows-10-11-for-now-only-tested-with-msys-makefiles)
+  - [Build the OpenXLSX library](#build-the-openxlsx-library)
+  - [Integrating into a CMake project structure](#integrating-into-a-cmake-project-structure)
+  - [Building as a separate library](#building-as-a-separate-library)
+- [How to compile and link a program against an installed OpenXLSX library](#how-to-compile-and-link-a-program-against-an-installed-openxlsx-library)
+  - [Build your program using g++](#build-your-program-using-g)
+  - [Build your program using cmake](#build-your-program-using-cmake)
+- [Current Status](#current-status)
+- [Performance](#performance)
+- [Caveats](#caveats)
+  - [File Size](#file-size)
+  - [Memory Usage](#memory-usage)
+  - [Unicode](#unicode)
+- [Reference Guide (to be written)](#reference-guide)
+- [Example Programs](#example-programs)
+- [Changes](#changes)
+
+## To-Do list
+
+**Note:** generally, for features awaiting implementation, refer to the open issues in the repository
+
 * tables/filters
 * true hyperlink support
 * postponed (may not be done at all): when OPENXLSX_MONOLITHIC_LIBRARY=ON, use target_link_interface instead of target_link_library for remaining dependencies (libzip/miniz, pugixml) to allow installing only monolithic library (currently the monolithic file is built, but not installed)
+* XLStyles: support predefined number formats with constants that have meaningful names
+* XLWorksheet: support for XML comments
+* XLWorksheet: support for Rich Text elements in cell strings
+* TBD: implement `BUILD_SHARED_LIBS` functionality in `Makefile.GNU`
+* TBD: in `Makefile.GNU`, check for available dependencies and error out if any are missing
 
-## How to compile & link a program against an installed(!) OpenXLSX library
+## Most recent changes
+
+For the latest functionality updates, please refer to the development branch. Feel free to [have a look](https://github.com/troldal/OpenXLSX/tree/development-aral). This way you don't have to wait until the main repository is updated.
+
+### (aral-matrix) 19 April 2026 - vcpkg compatibility maximized, some improvements/bugfixes in cmake configuration
+* vcpkg support should now be as good as it gets: Big thank you to [@bansan85](https://github.com/bansan85) for maintaining the vcpkg package patches, and supporting the bugfixes / improvements of the cmake configuration so that it behaves well with vcpkg :)
+* monolithic library is now available via cmake option `-DOPENXLSX_MONOLITHIC_LIBRARY=ON` - this requires static dependencies and only works with miniz, fails with libzip (or rather: the libzip (sub-)dependencies will not be linked into the resulting bundled library)
+* for testing if a destination file exists (`OpenXLSXFileSystemTools.hpp` `pathExists`), `nowide::stat` is now used when nowide is in use. This should make calls to `XLDocument::create` and `XLDocument::saveAs` behave well with filenames containing unicode characters
+* added function `OpenXLSXFileSystemTools fileSize` to wrap call to `stat` with nowide compatibility - this is used in `LibZip.hpp loadArchiveData`
+
+### (aral-matrix) 17 March 2026 - Install package config files for libzip and pugixml if they are installed with OpenXLSX
+* when the dependencies are pulled in from source repositories, their package config files will be installed alongside OpenXLSX
+* `XLZipArchive.hpp` provides two new functions `const char *OpenXLSX::ZipLibraryName()` and `const char *OpenXLSX::ZipLibraryVersion()` for the user to obtain info about the zip library in use. *NOTE*: These do not reflect information about a custom zip implementation such as used in `Demo1A.cpp`
+* `OpenXLSX` and dependencies are installed into `/usr/local/lib/OpenXLSX` subfolder to avoid version conflicts for parallel installations of zip library (`miniz` or `libzip`), `pugixml`, `nowide`
+* `pugixml` and `libzip` package config (`.pc`) files are now part of the installation (`miniz` package config was already installed before if needed)
+* dependency package config files installed by OpenXLSX will be installed as `pugixml-OpenXLSX.pc`, `libzip-OpenXLSX.pc`, `miniz-OpenXLSX.pc` respectively to avoid conflicts
+* dependency package config files should behave well with existing versions of the dependencies (OpenXLSX package config file gives precedence to the self-installed dependencies)
+* OpenXLSX package config file now provides the runtime path for an executable linked against OpenXLSX shared libraries in `/usr/local/lib/OpenXLSX`
+
+### (aral-matrix) 16 March 2026 - Dynamically pull in dependencies from external sources (operating system or code repository)
+* upped OpenXLSX library version to `0.5.0`
+* static & dynamic build: all dependencies are now linked in dynamically depending on the project configuration from available / allowed sources, which can be the OS or code repositories
+
+## Change history
+
+Change history is found in the [detailed change log](#detailed-change-log).
+
+## May 2024 Update
+
+After a long period of inactivity, I have decided to resume development of OpenXLSX. The code has been cleaned up and a significant number of bugs have been fixed. The library has been tested on Windows, macOS and Linux, and should work on all platforms. 
+
+I would like to extend my sincere thanks to all the people who have contributed to the project, either by reporting bugs, suggesting features or by submitting pull requests. I would also like to thank all the people who have starred the project, and who have shown interest in the project.
+
+In particular, I would like to thank Lars Uffmann (https://codeberg.org/lars_uffmann/) for his contributions to the project. Lars has spent significant time and effort in cleaning up the code, fixing bugs and implementing new features. Without his help, the project would not have been in the state it is today.
+
+### 20/05/2024
+* Google Benchmark is no longer included in the repository. To run the benchmarks, Google Benchmark have to be installed on the system. If you use vcpkg, it will be downloaded automatically.
+* Minor performance improvements to XLCellReference.
+
+### 06/08/2024
+* Housekeeping updates to the code.
+* Added Makefile.GNU for building on Linux. The project will continue to be based on CMake, and the makefile may not always be kept up-to-date.
+
+
+## Motivation
+
+Many programming languages have the ability to modify Excel files,
+either natively or in the form of open source libraries. This includes
+Python, Java and C#. For C++, however, things are more scattered. While
+there are some libraries, they are generally less mature and have a
+smaller feature set than for other languages.
+
+Because there are no open source library that fully fitted my needs, I
+decided to develop the OpenXLSX library.
+
+## Ambition
+
+The ambition is that OpenXLSX should be able to read, write, create and
+modify Excel files (data as well as formatting), and do so with as few
+dependencies as possible. Currently, OpenXLSX depends on the following
+3rd party libraries:
+
+- PugiXML
+- Zippy (C++ wrapper around miniz) - an alternative wrapper for libzip can be configured with cmake option `-DOPENXLSX_ENABLE_LIBZIP=ON`
+- (Windows only) Boost.Nowide (for opening files with non-ASCII names on Windows)
+
+As of version 0.5.0, these libraries are no longer included in the repository, and there are three ways to build OpenXLSX against them:
+1) pre-install the libraries on your operating system - the OpenXLSX cmake configuration should find them via `find_package`
+2) auto-fetch the missing dependencies from upstream repositories, build & install them together with OpenXLSX. For this, cmake must be able to find `git`
+3) (Windows only) install OpenXLSX via the [vcpkg package manager](https://vcpkg.io/en/package/openxlsx), which handles dependencies for you:
+
+Also, focus has been put on **speed**, not memory usage (although there are options for reducing the memory usage, 
+at the cost of speed; more on that later).
+
+## Compatibility
+
+OpenXLSX has been tested on the following platforms/compilers. Note that
+a '-' doesn't mean that OpenXLSX doesn't work; it just means that it
+hasn't been tested:
+
+|         | GCC   | Clang | MSVC |
+|:--------|:------|:------|:-----|
+| Windows | MinGW | MinGW | +    |
+| Cygwin  | -     | -     | N/A  |
+| MacOS   | +     | +     | N/A  |
+| Linux   | +     | +     | N/A  |
+
+The following compiler versions should be able to compile OpenXLSX
+without errors:
+
+- GCC: Version 7
+- Clang: Version 8
+- MSVC: Visual Studio 2019
+
+Clang 7 should be able to compile OpenXLSX, but apparently there is a
+bug in the implementation of std::variant, which causes compiler errors.
+
+Visual Studio 2017 should also work, but hasn't been tested.
+
+## Build Instructions
+
+OpenXLSX uses CMake as the build system (or build system generator, to be exact) and git to pull in dependencies. Therefore, you must install CMake first, in order to build OpenXLSX. You can find (bad) installation instructions on www.cmake.org. If you wish the cmake to automatically fetch missing dependencies, you also need to install git.
+
+Here is a summary to get a working configuration of cmake + git.
+
+### Install `cmake` & `git` on debian-based Linux distributions
+
+```bash
+sudo apt update
+sudo apt install build-essential cmake git
+```
+
+### Install `cmake` & `git` on Windows 10/11 (for now only tested with `MSYS Makefiles`)
+
+**Install MSYS2:**
+
+* In a Powershell (run as Administrator): run `winget install --id MSYS2.MSYS2 -e`
+
+   → After performing this step, the "MSYS2 MSYS shell" and the "MSYS2 MinGW 64-bit shell" should be accessible from the Start Menu
+
+* In MSYS2 MSYS shell: run `pacman -Syu`
+
+  The previous instruction might require a close & reopen of the MSYS2 MSYS shell
+
+* In MSYS2 MSYS shell: run `pacman -Su`
+
+**Install development toolchain:**
+
+In MSYS2 MinGW 64‑bit shell: run `pacman -S --needed base-devel mingw-w64-x86_64-toolchain`
+
+**Install `cmake` & `git` in MSYS2 environment:**
+
+* In MSYS2 MinGW 64‑bit shell: run `pacman -S --needed mingw-w64-x86_64-cmake mingw-w64-x86_64-git`
+* (optional if you want to use ninja build tool instead of make) In MSYS2 MinGW 64‑bit shell: run `pacman -S --needed mingw-w64-x86_64-ninja`
+
+**Verify installation:**
+
+In MSYS2 MinGW 64‑bit shell: verify versions of `git`, `cmake`, `gcc`, `g++`
+
+```bash
+git --version; cmake --version; gcc --version; g++ --version
+```
+
+### Build the OpenXLSX library
+
+In MSYS2 MinGW 64‑bit shell
+```bash
+git clone https://github.com/troldal/OpenXLSX <destination-folder>
+
+cd <destination-folder>
+mkdir build; cd build
+```
+
+**Then** build with MSYS Gnu make:
+```bash
+cmake .. -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release
+cmake --build . --parallel
+```
+*Note*: As of 2026-03-21, this configuration complains about miniz (if used) being incompatible with cmake versions >3.5; the following command sequence can be used to get rid of the warning:
+```bash
+cmake .. -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+cmake --build . --parallel
+```
+
+
+**or** build with MinGW Gnu make (untested - should provide a working configuration that can be compiled from cmd/Powershell)
+
+```bash
+cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
+cmake --build . --parallel
+```
+
+**or** build with ninja (untested)
+```bash
+cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+ninja
+```
+
+The OpenXLSX library is located in the OpenXLSX subdirectory to this repo. However, the root folder `CMakeLists.txt` establishes the library configuration and dependencies.
+If you use CMake for your own project, you can add the OpenXLSX root folder as a subdirectory to your own project.
+Alternatively, you can use CMake to generate make files or project files for a toolchain of your choice. Both methods are described in the following.
+
+### Integrating into a CMake project structure
+
+By far the easiest way to use OpenXLSX in your own project, is to use CMake yourself, and then add the OpenXLSX root folder
+as a subdirectory to the source tree of your own project. Several IDE's support CMake projects, most notably Visual Studio 2019,
+JetBrains CLion, and Qt Creator. If using Visual Studio, you have to specifically select 'CMake project' when creating a new project.
+
+The main benefit of including the OpenXLSX library as a source subfolder, is that there is no need to locate the 
+library and header files specifically; CMake will take care of that for you. Also, the library will be built using 
+the same configuration (Debug, Release etc.) as your project. In particular, this a benefit on Windows, where is it 
+not possible to use Release libraries in a Debug project (and vice versa) when STL objects are being passed through 
+the library interface, as they are in OpenXLSX. When including the OpenXLSX source, this will not be a problem.
+
+By using the `add_subdirectory()` command in the CMakeLists.txt file for your project, you can get access to the 
+headers and library files of OpenXLSX. OpenXLSX can generate either a shared library or a static library. By default 
+it will produce a static library, but you can change that by setting `BUILD_SHARED_LIBS` to `ON`. The library is
+located in a namespace called OpenXLSX; hence the full name of the library is `OpenXLSX::OpenXLSX`.
+
+Including OpenXLSX into your project would look like this inside your project's `CMakeLists.txt`:
+
+```cmake
+# ============================================================================
+# Configure OpenXLSX
+# ============================================================================
+set(OPENXLSX_CREATE_DOCS           OFF)
+set(OPENXLSX_BUILD_SAMPLES         OFF)
+set(         BUILD_SHARED_LIBS     OFF)
+
+add_subdirectory( OpenXLSX )
+```
+
+Then you can use `target_link_libraries` and `target_include_directories` like so:
+```cmake
+# Configure linkage for myapp
+target_link_libraries(myapp PRIVATE OpenXLSX::OpenXLSX)
+target_include_directories(myapp PRIVATE ${OpenXLSX_INCLUDES})
+```
+
+For linking against a shared library, you should include the "rpath" into your final applications:
+```cmake
+# Ensure configuration of install RPATH for myapp
+set_target_properties(myapp PROPERTIES
+  INSTALL_RPATH_USE_LINK_PATH TRUE
+)
+```
+
+#### Example CMakeLists.txt and Hello World
+
+The following snippet is a minimum CMakeLists.txt file for your own project, that includes OpenXLSX as a subdirectory. Note that the output location of the binaries are set to a common directory. On Linux and MacOS, this is not really required, but on Windows, this will make your life easier, as you would otherwise have to copy the OpenXLSX shared library file to the location of your executable in order to run.
+
+```cmake
+cmake_minimum_required(VERSION 3.14)
+project(myapp
+    VERSION 1.0.0
+    LANGUAGES CXX
+)
+
+# ============================================================================
+# Example app configuration
+# ============================================================================
+add_executable(myapp myapp.cpp)
+
+# ============================================================================
+# Configure OpenXLSX
+# ============================================================================
+option(BUILD_SHARED_LIBS              OFF "can be used to build shared library version of OpenXLSX")
+set(   OPENXLSX_CREATE_DOCS           OFF)
+set(   OPENXLSX_BUILD_SAMPLES         OFF)
+
+add_subdirectory( OpenXLSX )
+
+# Configure linkage for myapp
+target_link_libraries(myapp PRIVATE OpenXLSX::OpenXLSX)
+target_include_directories(myapp PRIVATE ${OpenXLSX_INCLUDES})
+
+# Ensure configuration of install RPATH for myapp
+set_target_properties(myapp PROPERTIES
+  INSTALL_RPATH_USE_LINK_PATH TRUE
+)
+
+# Installation steps for myapp
+install(TARGETS myapp
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    COMPONENT Runtime
+)
+```
+
+Using the above, you should be able to compile and run the following code, which will generate a new Excel file 
+named 'Spreadsheet.xlsx':
+
+```cpp
+#include <OpenXLSX.hpp>
+
+using namespace OpenXLSX;
+
+int main() {
+
+    XLDocument doc;
+    doc.create("Spreadsheet.xlsx", XLForceOverwrite);
+    auto wks = doc.workbook().worksheet("Sheet1");
+
+    wks.cell("A1").value() = "Hello, OpenXLSX!";
+
+    doc.save();
+
+    return 0;
+}
+```
+
+### Building as a separate library
+
+If you wish to produce the OpenXLSX binaries and include them in your project yourself, it can be done using CMake and a compiler toolchain of your choice.
+
+From the command line, navigate the OpenXLSX subdirectory of the project root, and execute the following 
+commands:
+
+```
+mkdir build
+cd build
+cmake ..
+```
+
+The last command will configure the project. This will configure the project using the default toolchain. If you 
+want to specify the toolchain, type `cmake -G "<toolchain>" ..` with `<toolchain>` being the toolchain you wish to 
+use, for example "Unix Makefiles", "Ninja", "Xcode", or "Visual Studio 16 2019". See the CMake documentation for 
+details.
+
+Finally, you can build the library using the command:
+
+```
+cmake --build . --target OpenXLSX --config Release
+```
+
+You can change the `--target` and `--config` arguments to whatever you wish to use.
+
+When built, you can install it using the following command (as superuser / `sudo`):
+
+```
+cmake --install .
+```
+
+This command will install the library and header files to the default location on your platform (usually /usr/local/ 
+on Linux and MacOS, and C:\Program Files on Windows). You can set a different location using the --prefix argument. 
+
+Note that depending on the platform, it may not be possible to install both debug and release libraries. On Linux 
+and MacOS, this is not a big issue, as release libraries can be used for both debug and release executables. Not so 
+for Windows, where the configuration of the library must be the same as for the executable linking to it. For that 
+reason, on Windows, it is much easier to just include the OpenXLSX source folder as a subdirectory to your CMake 
+project; it will save you a lot of headaches.
+
+## How to compile and link a program against an installed OpenXLSX library
 
 ### Build your program using `g++`
 With the most recent updates, the OpenXLSX `CMake` configuration will also configure (and install) a pkg-config file for `libOpenXLSX` (and `libminiz`), to simplify linking a program against OpenXLSX for systems on which `pkg-config` is available. Invoking `pkg-config --cflags` will yield the proper include flags, and `pkg-config --static --libs` will yield the linker instructions for the OpenXLSX library and its dependencies (pugixml and zip library).
@@ -107,444 +468,6 @@ install(TARGETS myapp
 )
 ```
 
-## Recent changes
-
-### (aral-matrix) 19 April 2026 - vcpkg compatibility maximized, some improvements/bugfixes in cmake configuration
-* vcpkg support should now be as good as it gets: Big thank you to [@bansan85](https://github.com/bansan85) for maintaining the vcpkg package patches, and supporting the bugfixes / improvements of the cmake configuration so that it behaves well with vcpkg :)
-* monolithic library is now available via cmake option `-DOPENXLSX_MONOLITHIC_LIBRARY=ON` - this requires static dependencies and only works with miniz, fails with libzip (or rather: the libzip (sub-)dependencies will not be linked into the resulting bundled library)
-* for testing if a destination file exists (`OpenXLSXFileSystemTools.hpp` `pathExists`), `nowide::stat` is now used when nowide is in use. This should make calls to `XLDocument::create` and `XLDocument::saveAs` behave well with filenames containing unicode characters
-* added function `OpenXLSXFileSystemTools fileSize` to wrap call to `stat` with nowide compatibility - this is used in `LibZip.hpp loadArchiveData`
-
-### (aral-matrix) 17 March 2026 - Install package config files for libzip and pugixml if they are installed with OpenXLSX
-* when the dependencies are pulled in from source repositories, their package config files will be installed alongside OpenXLSX
-* `XLZipArchive.hpp` provides two new functions `const char *OpenXLSX::ZipLibraryName()` and `const char *OpenXLSX::ZipLibraryVersion()` for the user to obtain info about the zip library in use. *NOTE*: These do not reflect information about a custom zip implementation such as used in `Demo1A.cpp`
-* `OpenXLSX` and dependencies are installed into `/usr/local/lib/OpenXLSX` subfolder to avoid version conflicts for parallel installations of zip library (`miniz` or `libzip`), `pugixml`, `nowide`
-* `pugixml` and `libzip` package config (`.pc`) files are now part of the installation (`miniz` package config was already installed before if needed)
-* dependency package config files installed by OpenXLSX will be installed as `pugixml-OpenXLSX.pc`, `libzip-OpenXLSX.pc`, `miniz-OpenXLSX.pc` respectively to avoid conflicts
-* dependency package config files should behave well with existing versions of the dependencies (OpenXLSX package config file gives precedence to the self-installed dependencies)
-* OpenXLSX package config file now provides the runtime path for an executable linked against OpenXLSX shared libraries in `/usr/local/lib/OpenXLSX`
-
-### (aral-matrix) 16 March 2026 - Dynamically pull in dependencies from external sources (operating system or code repository)
-* upped OpenXLSX library version to `0.5.0`
-* static & dynamic build: all dependencies are now linked in dynamically depending on the project configuration from available / allowed sources, which can be the OS or code repositories
-
-### (aral-matrix) 25 December 2025 - Fix for issue #382: XLWorksheet::range() bounds check without exception
-* added a check for an empty worksheet in `XLWorksheet::range()` to prevent an exception raised from `XLCellReference` constructor
-
-### (aral-matrix) 09 October 2025 - Work in progress: CPack configuration for a debian package
-* added `cmake/get-git-HEAD-ID.cmake` and `cmake/libopenxlsxCPackOptions.cmake.in`
-* `CMakeLists.txt`: `CPack` configuration is generated and can be invoked with `cpack -G DEB` - *CAUTION*: the debian package will most likely not function at this stage due to missing dependencies
-* TBD how to invoke package generation directly from CMake
-* TODO: correctly identify the dependencies (pugixml, libzip, nowide) for CPack
-
-### (aral-matrix) 10 September 2025 - implemented support for libzip installation from github repo (to be tested on Windows)
-* `OPENXLSX_ENABLE_LIBZIP=ON` now works with `OPENXLSX_CPM_LOCAL_PACKAGES_ONLY=OFF` - pending confirmation of a test on Windows
-
-### (aral-matrix) 28 August 2025 - implemented reverse iteration over row ranges
-* new class `XLRowReverseIterator` (XLRow.hpp)
-* implemented `XLRowRange::rbegin()` and `XLRowRange::rend()` to reverse-iterate over a row range
-* new templated class `XLReverseRange` (XLIterator.hpp) to reverse a range of class T that exposes ```T::rbegin()``` and ```T::rend()``` and typedef ```T::reverse_iterator```
-* using `XLReverseRange`, range-based reverse iteration is demonstrated in `Examples/Demo6.cpp`, Example usage: `for (auto& row : XLReverseRange(wks.rows(firstRow, lastRow)))`
-* currently, only XLRowRange supports reverse iteration
-
-### (aral-matrix) 27 August 2025 - finalized code review after hiding `pugixml` headers from the library interface
-* finished removing default constructors, destructors and assignment operators from XLStyles header files
-
-### (aral-matrix) 26 August 2025 - added a library pkg-config (.pc) file, also added option for building a static bundled library file
-* CMake build configuration now also creates & installs `pkg-config` files that can be used as demonstrated in the new `Scripts/compile.sh`
-* build option `OPENXLSX_BUNDLED_STATIC_LIB` will now create `libOpenXLSX-bundled.a` library file that is not installed, but can be linked against while including all dependencies (only works with `BUILD_SHARED_LIBS=OFF`, and `OPENXLSX_CPM_LOCAL_PACKAGES_ONLY=OFF` or all dependencies available as static libraries on the build system). This uses the newly added `OpenXLSX/bundle_static_library.cmake` (under MIT License, Copyright (c) 2019 Cristian Adam).
-* re-enabled the `Makefile.GNU`, but until full support for options is back, this Makefile is overriding some options to the only supported configurations
-* removed some obsolete (and commented-out) code from the various CMakeFiles.txt
-
-### (aral-matrix) 16 August 2025 - dropped `external` source code from repository, refined cmake configuration
-* implemented changes from @troldal to drop external source code
-* as a result, `Makefile.GNU` is currently non-functional!
-* cmake build options are now (some renamed, some removed, new `OPENXLSX_CPM_LOCAL_PACKAGES_ONLY`):
-  * option(OPENXLSX_CREATE_DOCS           "Build library documentation (requires Doxygen and Graphviz/Dot to be installed)" ON)
-  * option(OPENXLSX_BUILD_SAMPLES         "Build sample programs" ON)
-  * option(OPENXLSX_BUILD_TESTS           "Build and run library tests" ON) # TBD: are these still functional?
-  * option(OPENXLSX_BUILD_BENCHMARKS      "Build and run library benchmarks" OFF)
-  * option(OPENXLSX_ENABLE_LIBZIP         "Enable using libzip" OFF) # when OFF, default zip library is miniz. NOTE: libzip currently does NOT support CPM_DOWNLOAD_ALL
-  * option(OPENXLSX_FORCE_NOWIDE          "Force use of boost nowide, even on non-Windows systems (testing)" OFF)
-  * option(OPENXLSX_ENABLE_LIBZIP_EXAMPLE "Build Demo1A example using libzip - requires libbz2-dev" OFF)
-  * option(         BUILD_SHARED_LIBS     "Builds the shared library" OFF) # replaced OPENXLSX_SHARED_LIBRARY with cmake option reserved for that purpose
-  * option(OPENXLSX_COMPACT_MODE          "Build library in compact mode (slower, but uses less memory)" OFF)
-  * option(OPENXLSX_CPM_LOCAL_PACKAGES_ONLY "CPM shall only use packages already installed on the host OS, otherwise fail" OFF)
-* minor code refactoring to work with different library interfaces depending on package source (different include paths, different namespaces)
-
-### (aral-matrix) 31 July 2025 - added use of cmake `find_package` for `LibZip` and `PugiXML`
-* `OpenXLSX/CMakeLists.txt`: added `find_package` for `LibZip` and `PugiXML`. Unfortunately, for `LibZip`, this generates an error unless the unneeded components `zipcmp`, `zipmerge` & `ziptool` are also installed on the system. TBD how to ignore those missing.
-
-### (aral-matrix) 30 July 2025 - enabled compilation against ```nowide``` installed on the operating system
-* added to cmake and GNU make: option `OPENXLSX_FORCE_NOWIDE` - set to `ON` to use force the use of `nowide` even on non-Windows systems (this flag is for testing purposes)
-* added to cmake and GNU make: option `OPENXLSX_ENABLE_LIBBOOST_NOWIDE` - set to `ON` to use `nowide` from an installed `libboost`
-* adjustments to accommodate system library `boost nowide` (include path starts with `boost/` and namespace is `boost::nowide` vs. `nowide`)
-* minor bugfixes: missing `#include <memory>` in `XLZipArchive.hpp`, `#include <stdexcept>` in `detail/LibZip.hpp`
-* added `Demo1A` to `Makefile.GNU`
-* added output of `nowide` status to `Demo4`
-
-### (aral-matrix) 21 July 2025 - included nowide support in ```OpenXLSXFileSystemTools```, cleaned up cmake and GNU make options
-* BUGFIX ```Examples/CMakeLists.txt``` for Demo4 (to be tested): correctly add ```external/nowide``` to the include path
-* BUGFIX ```Examples/CMakeLists.txt``` for Demo1A (to be tested): correctly add ```external/nowide``` to the include path
-* updated ```Demo1A``` CustomZip implementation to fit the modified ```IZipArchive``` concept
-* added to cmake and GNU make: option ```OPENXLSX_ENABLE_LIBPUGIXML``` - set to ```ON``` to use an installed ```libpugixml```
-* added to GNU make: (already existed in cmake) option ```OPENXLSX_ENABLE_LIBZIP``` - set to ```ON``` to use an installed ```libzip```
-* added to cmake: option ```OPENXLSX_SHARED_LIBRARY``` - set to ```ON``` for shared library build, ```OFF``` builds the static library
-* added to GNU make: option stub (unsupported for now) ```OPENXLSX_SHARED_LIBRARY```
-
-### (aral-matrix) 20 July 2025 - enabled compilation against ```libpugixml``` installed on the operating system
-* hid ```XLXmlParser``` from public OpenXLSX API - this should address conflicts with ```pugixml.hpp``` headers available elsewhere
-* enabled compilation against ```libpugixml``` - for cmake, variable is ```OPENXLSX_ENABLE_LIBPUGIXML```, in Makefile.GNU, variable is ```USE_LIBPUGIXML``` - set to yes if system installed library shall be used
-* upped the OpenXLSX version tag to 0.4.2
-
-### (aral-matrix) 14 July 2025 - minor bugfixes & a test of signed commits
-* addressed issue https://github.com/troldal/OpenXLSX/issues/368
-* configured commit signature for a development machine
-
-### (aral-matrix) 04 May 2025 - moved file system access functions (shared by zip implementations and XLDocument) to detail/OpenXLSXFileSystemTools.hpp
-* in preparation for localizing (if not removing) the boost::nowide dependency, the new header file ```detail/OpenXLSXFileSystemTools.hpp``` now comprises all functions where unicode (filename) support might be relevant, to be implemented centrally - currently on the To-Do list
-* ```XLDocument::create```: creating a new document no longer creates a file under that name until an explicit call of ```XLDocument::save``` or ```::saveAs```. This is to remove a dependency of XLDocument on boost::nowide on Windows.
-
-### (aral-matrix) 01 May 2025 - replaced zippy implementation with the underlying miniz library (cmake) and added support for libzip (cmake, GNU make)
-* @troldal replaced the zippy implementation with a smaller zippy-wrapper for the actual dependency, the miniz library, and added the cmake support for automatically pulling in the dependency from the miniz repository
-* ```OpenXLSX/headers/detail/```: new headers ```LipZip.hpp``` (libzip wrapper) and ```Zippy.hpp``` (miniz wrapper)
-* ```CMakeLists.txt```: Option ```OPENXLSX_ENABLE_LIBZIP``` activates libzip use, disabling the option defaults to the miniz / Zippy wrapper
-* ```CMakeLists.txt```: Option ```OPENXLSX_ENABLE_LIBZIP_EXAMPLE``` replaces the prior use of OPENXLSX_ENABLE_LIBZIP for ```Demo1A```
-* API remains unchanged
-* fixes for old pull requests https://github.com/troldal/OpenXLSX/pull/191 (AmigaOS paths) and https://github.com/troldal/OpenXLSX/pull/210 (Windows style paths) have been incorporated into both zip library wrapper classes
-* **CAUTION**: for the libzip implementation, there is still a minor unresolved conflict when modifying archives created with other tools / prior versions of OpenXLSX (or the miniz version): The resulting archive's general purpose flag bits will not be set to UTF-8 when the flag is set for individual files. This works fine with LibreOffice, but ```unzip``` complains about the flag mismatch. *This issue is on my to-to list.*
-
-
-## Change history
-
-Change history is found in the [detailed change log](#detailed-change-log).
-
-## (aral-matrix) 29 September 2024 - Support for styles, merging cells (and more)
-
-Today the features from the development branch finally made it into the main branch :) For details, please refer to the [detailed change log](#detailed-change-log) below.
-
-In summary:
-* ```OpenXLSX/headers/XLStyles.hpp```: XLStyles class (and lots of subclasses) has been added, providing nearly complete access to all Excel formatting capabilities.
-* ```OpenXLSX/headers/XLMergeCells.hpp``` and ```XLSheet.hpp```: XLMergeCells class is made accessible through XLWorksheet in order to create / delete cell merges
-* ```Examples/Demo10.cpp``` demonstrates how styles and merges are used **Note:** The section that is disabled with ```testBasics = false``` *will* break the resulting Excel Spreadsheet if enabled, the only purpose is to demonstrate access to *all* new classes and methods. If you want to use them, make sure to use them correctly
-
-*Note on XLNumberFormat(s)*: Contrary to all other XLStyles elements, these do not use an index within the XML as the referrable ID (XLCellFormat::setNumberFormatId), but instead a user-defined ID that can be set via XLNumberFormat::setNumberFormatId - and for an XLCellFormat, can be set to either a self-defined number format ID, or to a [format predefined by MS](https://learn.microsoft.com/en-us/dotnet/api/documentformat.openxml.spreadsheet.numberingformat?view=openxml-3.0.1). Generally, for custom formats, it is recommended to use IDs > 100.
-
-
-*On the to-do list:*
-* support predefined number formats with constants that have meaningful names
-* support for XML comments
-* (TBD) support for Rich Text elements in cell strings
-
-## (aral-matrix) 04 September 2024 - new development branch
-
-A couple of days ago I finally had the time to learn enough git functionality to be able to work with branches. So I created a development branch with the newest features that I have mentioned in some pull requests / issues. Feel free to [have a look](https://github.com/troldal/OpenXLSX/tree/development-aral). This way you don't have to wait until the main repository is updated.
-
-## (aral-matrix) 19/20 August 2024 updated pull requests
-
-Closed a multitude of pull requests that had been implemented in the May 2024 Update, implemented two more editorials from PR #246 and #253.
-
-## May 2024 Update
-
-After a long period of inactivity, I have decided to resume development of OpenXLSX. The code has been cleaned up and a significant number of bugs have been fixed. The library has been tested on Windows, macOS and Linux, and should work on all platforms. 
-
-I would like to extend my sincere thanks to all the people who have contributed to the project, either by reporting bugs, suggesting features or by submitting pull requests. I would also like to thank all the people who have starred the project, and who have shown interest in the project.
-
-In particular, I would like to thank Lars Uffmann (https://codeberg.org/lars_uffmann/) for his contributions to the project. Lars has spent significant time and effort in cleaning up the code, fixing bugs and implementing new features. Without his help, the project would not have been in the state it is today.
-
-### 20/05/2024
-* Google Benchmark is no longer included in the repository. To run the benchmarks, Google Benchmark have to be installed on the system. If you use vcpkg, it will be downloaded automatically.
-* Minor performance improvements to XLCellReference.
-
-### 06/08/2024
-* Housekeeping updates to the code.
-* Added Makefile.GNU for building on Linux. The project will continue to be based on CMake, and the makefile may not always be kept up-to-date.
-
-## Table of Contents
-
-- [Motivation](#motivation)
-- [Ambition](#ambition)
-- [Compatibility](#compatibility)
-- [Build Instructions](#build-instructions)
-- [Current Status](#current-status)
-- [Performance](#performance)
-- [Caveats](#caveats)
-  - [File Size](#file-size)
-  - [Memory Usage](#memory-usage)
-  - [Unicode](#unicode)
-- [Reference Guide](#reference-guide)
-- [Example Programs](#example-programs)
-- [Changes](#changes)
-
-## Motivation
-
-Many programming languages have the ability to modify Excel files,
-either natively or in the form of open source libraries. This includes
-Python, Java and C#. For C++, however, things are more scattered. While
-there are some libraries, they are generally less mature and have a
-smaller feature set than for other languages.
-
-Because there are no open source library that fully fitted my needs, I
-decided to develop the OpenXLSX library.
-
-## Ambition
-
-The ambition is that OpenXLSX should be able to read, write, create and
-modify Excel files (data as well as formatting), and do so with as few
-dependencies as possible. Currently, OpenXLSX depends on the following
-3rd party libraries:
-
-- PugiXML
-- Zippy (C++ wrapper around miniz)
-- Boost.Nowide (for opening files with non-ASCII names on Windows)
-
-These libraries are all header-only and included in the repository, i.e. it's not necessary to download and build 
-separately.
-
-Also, focus has been put on **speed**, not memory usage (although there are options for reducing the memory usage, 
-at the cost of speed; more on that later).
-
-## Compatibility
-
-OpenXLSX has been tested on the following platforms/compilers. Note that
-a '-' doesn't mean that OpenXLSX doesn't work; it just means that it
-hasn't been tested:
-
-|         | GCC   | Clang | MSVC |
-|:--------|:------|:------|:-----|
-| Windows | MinGW | MinGW | +    |
-| Cygwin  | -     | -     | N/A  |
-| MacOS   | +     | +     | N/A  |
-| Linux   | +     | +     | N/A  |
-
-The following compiler versions should be able to compile OpenXLSX
-without errors:
-
-- GCC: Version 7
-- Clang: Version 8
-- MSVC: Visual Studio 2019
-
-Clang 7 should be able to compile OpenXLSX, but apparently there is a
-bug in the implementation of std::variant, which causes compiler errors.
-
-Visual Studio 2017 should also work, but hasn't been tested.
-
-## Build Instructions
-
-**NOTE: as of 2026-03-21, this section is a work in progress - use with caution**
-
-OpenXLSX uses CMake as the build system (or build system generator, to be exact) and git to pull in dependencies. Therefore, you must install CMake first, in order to build OpenXLSX. You can find (bad) installation instructions on www.cmake.org.
-
-Here is a summary to get a working configuration of cmake + git.
-
-### Install `cmake` & `git` on debian-based Linux distributions
-
-```bash
-sudo apt update
-sudo apt install build-essential cmake git
-```
-
-### Install `cmake` & `git` on Windows 10/11 (for now only tested with `MSYS Makefiles`)
-
-**Install MSYS2:**
-
-* In a Powershell (run as Administrator): run `winget install --id MSYS2.MSYS2 -e`
-
-   → After performing this step, the "MSYS2 MSYS shell" and the "MSYS2 MinGW 64-bit shell" should be accessible from the Start Menu
-
-* In MSYS2 MSYS shell: run `pacman -Syu`
-
-  The previous instruction might require a close & reopen of the MSYS2 MSYS shell
-
-* In MSYS2 MSYS shell: run `pacman -Su`
-
-**Install development toolchain:**
-
-In MSYS2 MinGW 64‑bit shell: run `pacman -S --needed base-devel mingw-w64-x86_64-toolchain`
-
-**Install `cmake` & `git` in MSYS2 environment:**
-
-* In MSYS2 MinGW 64‑bit shell: run `pacman -S --needed mingw-w64-x86_64-cmake mingw-w64-x86_64-git`
-* (optional if you want to use ninja build tool instead of make) In MSYS2 MinGW 64‑bit shell: run `pacman -S --needed mingw-w64-x86_64-ninja`
-
-**Verify installation:**
-
-In MSYS2 MinGW 64‑bit shell: verify versions of `git`, `cmake`, `gcc`, `g++`
-
-```bash
-git --version; cmake --version; gcc --version; g++ --version
-```
-
-### Build the OpenXLSX library
-
-In MSYS2 MinGW 64‑bit shell
-```bash
-git clone https://github.com/troldal/OpenXLSX <destination-folder>
-
-cd <destination-folder>
-mkdir build; cd build
-```
-
-**Then** build with MSYS Gnu make:
-```bash
-cmake .. -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release
-cmake --build . --parallel
-```
-Note: As of 2026-03-21, this configuration complains about miniz (if used) being incompatible with cmake versions >3.5, and requires the following command sequence:
-```bash
-cmake .. -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5
-cmake --build . --parallel
-```
-
-
-**or** build with MinGW Gnu make (should provide a working configuration that can be compiled from cmd/Powershell)
-
-```bash
-cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
-cmake --build . --parallel
-```
-
-**or** build with ninja
-```bash
-cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=Release
-ninja
-```
-
-The OpenXLSX library is located in the OpenXLSX subdirectory to this repo. However, the root folder `CMakeLists.txt` establishes the library configuration and dependencies.
-If you use CMake for your own project, you can add the OpenXLSX root folder as a subdirectory to your own project.
-Alternatively, you can use CMake to generate make files or project files for a toolchain of your choice. Both methods are described in the following.
-
-### Integrating into a CMake project structure
-
-By far the easiest way to use OpenXLSX in your own project, is to use CMake yourself, and then add the OpenXLSX root folder
-as a subdirectory to the source tree of your own project. Several IDE's support CMake projects, most notably Visual Studio 2019,
-JetBrains CLion, and Qt Creator. If using Visual Studio, you have to specifically select 'CMake project' when creating a new project.
-
-The main benefit of including the OpenXLSX library as a source subfolder, is that there is no need to locate the 
-library and header files specifically; CMake will take care of that for you. Also, the library will be build using 
-the same configuration (Debug, Release etc.) as your project. In particular, this a benefit on Windows, where is it 
-not possible to use Release libraries in a Debug project (and vice versa) when STL objects are being passed through 
-the library interface, as they are in OpenXLSX. When including the OpenXLSX source, this will not be a problem.
-
-By using the `add_subdirectory()` command in the CMakeLists.txt file for your project, you can get access to the 
-headers and library files of OpenXLSX. OpenXLSX can generate either a shared library or a static library. By default 
-it will produce a static library, but you can change that by setting `BUILD_SHARED_LIBS` to `ON`. The library is
-located in a namespace called OpenXLSX; hence the full name of the library is `OpenXLSX::OpenXLSX`.
-
-Including OpenXLSX into your project would look like this inside your project's `CMakeLists.txt`:
-
-```cmake
-# ============================================================================
-# Configure OpenXLSX
-# ============================================================================
-set(OPENXLSX_CREATE_DOCS           OFF)
-set(OPENXLSX_BUILD_SAMPLES         OFF)
-set(         BUILD_SHARED_LIBS     OFF)
-
-add_subdirectory( OpenXLSX )
-```
-
-Then you can use `target_link_libraries` and `target_include_directories` like so:
-```cmake
-# Configure linkage for myapp
-target_link_libraries(myapp PRIVATE OpenXLSX::OpenXLSX)
-target_include_directories(myapp PRIVATE ${OpenXLSX_INCLUDES})
-```
-
-For linking against a shared library, you should include the "rpath" into your final applications:
-```cmake
-# Ensure configuration of install RPATH for myapp
-set_target_properties(myapp PROPERTIES
-  INSTALL_RPATH_USE_LINK_PATH TRUE
-)
-```
-
-
-**NOTE: as of 2026-03-22, below here, from here, this section still needs to be reviewed / rewritten**
-The following snippet is a minimum CMakeLists.txt file for your own project, that includes OpenXLSX as a subdirectory. Note that the output location of the binaries are set to a common directory. On Linux and MacOS, this is not really required, but on Windows, this will make your life easier, as you would otherwise have to copy the OpenXLSX shared library file to the location of your executable in order to run.
-
-```cmake
-cmake_minimum_required(VERSION 3.15)
-project(MyProject)
-
-set(CMAKE_CXX_STANDARD 17)
-
-# Set the build output location to a common directory
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/output)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/output)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/output)
-
-add_subdirectory(OpenXLSX)
-
-add_executable(MyProject main.cpp)
-target_link_libraries(MyProject OpenXLSX::OpenXLSX)
-```
-
-Using the above, you should be able to compile and run the following code, which will generate a new Excel file 
-named 'Spreadsheet.xlsx':
-
-```cpp
-#include <OpenXLSX.hpp>
-
-using namespace OpenXLSX;
-
-int main() {
-
-    XLDocument doc;
-    doc.create("Spreadsheet.xlsx");
-    auto wks = doc.workbook().worksheet("Sheet1");
-
-    wks.cell("A1").value() = "Hello, OpenXLSX!";
-
-    doc.save();
-
-    return 0;
-}
-```
-
-### Building as a separate library
-
-**NOTE: as of 2026-03-21, this section needs to be reviewed / rewritten**
-
-If you wish to produce the OpenXLSX binaries and include them in your project yourself, it can be done using CMake and a compiler toolchain of your choice.
-
-From the command line, navigate the OpenXLSX subdirectory of the project root, and execute the following 
-commands:
-
-```
-mkdir build
-cd build
-cmake ..
-```
-
-The last command will configure the project. This will configure the project using the default toolchain. If you 
-want to specify the toolchain, type `cmake -G "<toolchain>" ..` with `<toolchain>` being the toolchain you wish to 
-use, for example "Unix Makefiles", "Ninja", "Xcode", or "Visual Studio 16 2019". See the CMake documentation for 
-details.
-
-Finally, you can build the library using the command:
-
-```
-cmake --build . --target OpenXLSX --config Release
-```
-
-You can change the `--target` and `--config` arguments to whatever you wish to use.
-
-When built, you can install it using the following command:
-
-```
-cmake --install .
-```
-
-This command will install the library and header files to the default location on your platform (usually /usr/local/ 
-on Linux and MacOS, and C:\Program Files on Windows). You can set a different location using the --prefix argument. 
-
-Note that depending on the platform, it may not be possible to install both debug and release libraries. On Linux 
-and MacOS, this is not a big issue, as release libraries can be used for both debug and release executables. Not so 
-for Windows, where the configuration of the library must be the same as for the executable linking to it. For that 
-reason, on Windows, it is much easier to just include the OpenXLSX source folder as a subdirectory to your CMake 
-project; it will save you a lot of headaches.
-
 ## Current Status
 
 OpenXLSX is still work in progress. The following is a list of features
@@ -556,14 +479,19 @@ which have been implemented and should be working properly:
 - Copy worksheets
 - Cell ranges and iterators
 - Row ranges and iterators
+- Cell content and borders formatting (XLStyles)
+- Conditional formatting
+- Merged cells
+- Worksheet protection (read-only cells, lock with password)
+- Cell comments (plain text)
 
-Features related to formatting, plots and figures have not been
-implemented, and are not planned to be in the near future.
+Features related to plots and figures have not been implemented as of yet, and at least plot functionality is not planned to be implemented at all.
 
-It should be noted, that creating const XLDocument objects, is currently
-not working!
+It should be noted that creating const XLDocument objects is currently not working!
 
 ## Performance
+
+**Note:** As of 2026-04-19 this section is severely outdated. It is not sure how well the numbers from ~2024 hold up with recent changes.
 
 The table below is the output from a benchmark (using the Google
 Benchmark library), which shows that read/write access can be done at a
@@ -706,6 +634,9 @@ To see an example of how this is done, take a look at Demo1A in the Examples fol
 
 As mentioned, the Demo1A example program uses libzip. libzip is a very stable library and widely used. However, my experience is that it is quite slow for large zip files, such as large spreadsheets. For that reason, libzip may not be the ideal solution, but it is useful for showing how a different zip library can be used.
 
+<h2 id="reference-guide">Reference Guide (to be written)</h2>
+This section remains to be written
+
 ## Example Programs
 
 In the 'Examples' folder, you will find several example programs, that illustrates how to use OpenXLSX. Studying 
@@ -756,6 +687,92 @@ branch of this repository. However, I strongly recommend that you
 transition to the new version instead.
 
 <h2 id="detailed-change-log">Detailed change log</h2>
+
+### (aral-matrix) 25 December 2025 - Fix for issue #382: XLWorksheet::range() bounds check without exception
+* added a check for an empty worksheet in `XLWorksheet::range()` to prevent an exception raised from `XLCellReference` constructor
+
+### (aral-matrix) 09 October 2025 - Work in progress: CPack configuration for a debian package
+* added `cmake/get-git-HEAD-ID.cmake` and `cmake/libopenxlsxCPackOptions.cmake.in`
+* `CMakeLists.txt`: `CPack` configuration is generated and can be invoked with `cpack -G DEB` - *CAUTION*: the debian package will most likely not function at this stage due to missing dependencies
+* TBD how to invoke package generation directly from CMake
+* TODO: correctly identify the dependencies (pugixml, libzip, nowide) for CPack
+
+### (aral-matrix) 10 September 2025 - implemented support for libzip installation from github repo (to be tested on Windows)
+* `OPENXLSX_ENABLE_LIBZIP=ON` now works with `OPENXLSX_CPM_LOCAL_PACKAGES_ONLY=OFF` - pending confirmation of a test on Windows
+
+### (aral-matrix) 28 August 2025 - implemented reverse iteration over row ranges
+* new class `XLRowReverseIterator` (XLRow.hpp)
+* implemented `XLRowRange::rbegin()` and `XLRowRange::rend()` to reverse-iterate over a row range
+* new templated class `XLReverseRange` (XLIterator.hpp) to reverse a range of class T that exposes ```T::rbegin()``` and ```T::rend()``` and typedef ```T::reverse_iterator```
+* using `XLReverseRange`, range-based reverse iteration is demonstrated in `Examples/Demo6.cpp`, Example usage: `for (auto& row : XLReverseRange(wks.rows(firstRow, lastRow)))`
+* currently, only XLRowRange supports reverse iteration
+
+### (aral-matrix) 27 August 2025 - finalized code review after hiding `pugixml` headers from the library interface
+* finished removing default constructors, destructors and assignment operators from XLStyles header files
+
+### (aral-matrix) 26 August 2025 - added a library pkg-config (.pc) file, also added option for building a static bundled library file
+* CMake build configuration now also creates & installs `pkg-config` files that can be used as demonstrated in the new `Scripts/compile.sh`
+* build option `OPENXLSX_BUNDLED_STATIC_LIB` will now create `libOpenXLSX-bundled.a` library file that is not installed, but can be linked against while including all dependencies (only works with `BUILD_SHARED_LIBS=OFF`, and `OPENXLSX_CPM_LOCAL_PACKAGES_ONLY=OFF` or all dependencies available as static libraries on the build system). This uses the newly added `OpenXLSX/bundle_static_library.cmake` (under MIT License, Copyright (c) 2019 Cristian Adam).
+* re-enabled the `Makefile.GNU`, but until full support for options is back, this Makefile is overriding some options to the only supported configurations
+* removed some obsolete (and commented-out) code from the various CMakeFiles.txt
+
+### (aral-matrix) 16 August 2025 - dropped `external` source code from repository, refined cmake configuration
+* implemented changes from @troldal to drop external source code
+* as a result, `Makefile.GNU` is currently non-functional!
+* cmake build options are now (some renamed, some removed, new `OPENXLSX_CPM_LOCAL_PACKAGES_ONLY`):
+  * option(OPENXLSX_CREATE_DOCS           "Build library documentation (requires Doxygen and Graphviz/Dot to be installed)" ON)
+  * option(OPENXLSX_BUILD_SAMPLES         "Build sample programs" ON)
+  * option(OPENXLSX_BUILD_TESTS           "Build and run library tests" ON) # TBD: are these still functional?
+  * option(OPENXLSX_BUILD_BENCHMARKS      "Build and run library benchmarks" OFF)
+  * option(OPENXLSX_ENABLE_LIBZIP         "Enable using libzip" OFF) # when OFF, default zip library is miniz. NOTE: libzip currently does NOT support CPM_DOWNLOAD_ALL
+  * option(OPENXLSX_FORCE_NOWIDE          "Force use of boost nowide, even on non-Windows systems (testing)" OFF)
+  * option(OPENXLSX_ENABLE_LIBZIP_EXAMPLE "Build Demo1A example using libzip - requires libbz2-dev" OFF)
+  * option(         BUILD_SHARED_LIBS     "Builds the shared library" OFF) # replaced OPENXLSX_SHARED_LIBRARY with cmake option reserved for that purpose
+  * option(OPENXLSX_COMPACT_MODE          "Build library in compact mode (slower, but uses less memory)" OFF)
+  * option(OPENXLSX_CPM_LOCAL_PACKAGES_ONLY "CPM shall only use packages already installed on the host OS, otherwise fail" OFF)
+* minor code refactoring to work with different library interfaces depending on package source (different include paths, different namespaces)
+
+### (aral-matrix) 31 July 2025 - added use of cmake `find_package` for `LibZip` and `PugiXML`
+* `OpenXLSX/CMakeLists.txt`: added `find_package` for `LibZip` and `PugiXML`. Unfortunately, for `LibZip`, this generates an error unless the unneeded components `zipcmp`, `zipmerge` & `ziptool` are also installed on the system. TBD how to ignore those missing.
+
+### (aral-matrix) 30 July 2025 - enabled compilation against ```nowide``` installed on the operating system
+* added to cmake and GNU make: option `OPENXLSX_FORCE_NOWIDE` - set to `ON` to use force the use of `nowide` even on non-Windows systems (this flag is for testing purposes)
+* added to cmake and GNU make: option `OPENXLSX_ENABLE_LIBBOOST_NOWIDE` - set to `ON` to use `nowide` from an installed `libboost`
+* adjustments to accommodate system library `boost nowide` (include path starts with `boost/` and namespace is `boost::nowide` vs. `nowide`)
+* minor bugfixes: missing `#include <memory>` in `XLZipArchive.hpp`, `#include <stdexcept>` in `detail/LibZip.hpp`
+* added `Demo1A` to `Makefile.GNU`
+* added output of `nowide` status to `Demo4`
+
+### (aral-matrix) 21 July 2025 - included nowide support in ```OpenXLSXFileSystemTools```, cleaned up cmake and GNU make options
+* BUGFIX ```Examples/CMakeLists.txt``` for Demo4 (to be tested): correctly add ```external/nowide``` to the include path
+* BUGFIX ```Examples/CMakeLists.txt``` for Demo1A (to be tested): correctly add ```external/nowide``` to the include path
+* updated ```Demo1A``` CustomZip implementation to fit the modified ```IZipArchive``` concept
+* added to cmake and GNU make: option ```OPENXLSX_ENABLE_LIBPUGIXML``` - set to ```ON``` to use an installed ```libpugixml```
+* added to GNU make: (already existed in cmake) option ```OPENXLSX_ENABLE_LIBZIP``` - set to ```ON``` to use an installed ```libzip```
+* added to cmake: option ```OPENXLSX_SHARED_LIBRARY``` - set to ```ON``` for shared library build, ```OFF``` builds the static library
+* added to GNU make: option stub (unsupported for now) ```OPENXLSX_SHARED_LIBRARY```
+
+### (aral-matrix) 20 July 2025 - enabled compilation against ```libpugixml``` installed on the operating system
+* hid ```XLXmlParser``` from public OpenXLSX API - this should address conflicts with ```pugixml.hpp``` headers available elsewhere
+* enabled compilation against ```libpugixml``` - for cmake, variable is ```OPENXLSX_ENABLE_LIBPUGIXML```, in Makefile.GNU, variable is ```USE_LIBPUGIXML``` - set to yes if system installed library shall be used
+* upped the OpenXLSX version tag to 0.4.2
+
+### (aral-matrix) 14 July 2025 - minor bugfixes & a test of signed commits
+* addressed issue https://github.com/troldal/OpenXLSX/issues/368
+* configured commit signature for a development machine
+
+### (aral-matrix) 04 May 2025 - moved file system access functions (shared by zip implementations and XLDocument) to detail/OpenXLSXFileSystemTools.hpp
+* in preparation for localizing (if not removing) the boost::nowide dependency, the new header file ```detail/OpenXLSXFileSystemTools.hpp``` now comprises all functions where unicode (filename) support might be relevant, to be implemented centrally - currently on the To-Do list
+* ```XLDocument::create```: creating a new document no longer creates a file under that name until an explicit call of ```XLDocument::save``` or ```::saveAs```. This is to remove a dependency of XLDocument on boost::nowide on Windows.
+
+### (aral-matrix) 01 May 2025 - replaced zippy implementation with the underlying miniz library (cmake) and added support for libzip (cmake, GNU make)
+* @troldal replaced the zippy implementation with a smaller zippy-wrapper for the actual dependency, the miniz library, and added the cmake support for automatically pulling in the dependency from the miniz repository
+* ```OpenXLSX/headers/detail/```: new headers ```LipZip.hpp``` (libzip wrapper) and ```Zippy.hpp``` (miniz wrapper)
+* ```CMakeLists.txt```: Option ```OPENXLSX_ENABLE_LIBZIP``` activates libzip use, disabling the option defaults to the miniz / Zippy wrapper
+* ```CMakeLists.txt```: Option ```OPENXLSX_ENABLE_LIBZIP_EXAMPLE``` replaces the prior use of OPENXLSX_ENABLE_LIBZIP for ```Demo1A```
+* API remains unchanged
+* fixes for old pull requests https://github.com/troldal/OpenXLSX/pull/191 (AmigaOS paths) and https://github.com/troldal/OpenXLSX/pull/210 (Windows style paths) have been incorporated into both zip library wrapper classes
+* **CAUTION**: for the libzip implementation, there is still a minor unresolved conflict when modifying archives created with other tools / prior versions of OpenXLSX (or the miniz version): The resulting archive's general purpose flag bits will not be set to UTF-8 when the flag is set for individual files. This works fine with LibreOffice, but ```unzip``` complains about the flag mismatch. *This issue is on my to-to list.*
 
 ### (aral-matrix) 20 April 2025 - added validation of worksheet names when creating, renaming or cloning worksheets to address #358
 * added ```bool XLDocument::validateSheetName(std::string sheetName, bool throwOnInvalid = false)``` - can be called by the user to test whether a name would throw
@@ -993,6 +1010,14 @@ These missing defaults could lead to followup errors when any style index of thi
 ### (aral-matrix) 30 September 2024 - Pull request #185 - create workbook relationship in _rels/.rels if missing
 * ```XLDocument::open``` will create a missing workbook relationship in ```_rels/.rels``` if, and only if, a workbook with the default path xl/workbook.xml exists in the archive
 
+## (aral-matrix) 29 September 2024 - Support for styles, merging cells (and more)
+Merged development branch into the main branch. In summary:
+* ```OpenXLSX/headers/XLStyles.hpp```: XLStyles class (and lots of subclasses) has been added, providing nearly complete access to all Excel formatting capabilities.
+* ```OpenXLSX/headers/XLMergeCells.hpp``` and ```XLSheet.hpp```: XLMergeCells class is made accessible through XLWorksheet in order to create / delete cell merges
+* ```Examples/Demo10.cpp``` demonstrates how styles and merges are used **Note:** The section that is disabled with ```testBasics = false``` *will* break the resulting Excel Spreadsheet if enabled, the only purpose is to demonstrate access to *all* new classes and methods. If you want to use them, make sure to use them correctly
+
+*Note on XLNumberFormat(s)*: Contrary to all other XLStyles elements, these do not use an index within the XML as the referrable ID (XLCellFormat::setNumberFormatId), but instead a user-defined ID that can be set via XLNumberFormat::setNumberFormatId - and for an XLCellFormat, can be set to either a self-defined number format ID, or to a [format predefined by MS](https://learn.microsoft.com/en-us/dotnet/api/documentformat.openxml.spreadsheet.numberingformat?view=openxml-3.0.1). Generally, for custom formats, it is recommended to use IDs > 100.
+
 ### (aral-matrix) 29 September 2024 - prepare merge into main repository
 * modified Demo9 to match style / behavior of other Demo programs
 * re-created legacy ```XLDocument::create``` and ```XLDocument::saveAs``` function interfaces, but marked them as ```[[deprecated]]```. The new interfaces require explicit specification of ```XLForceOverwrite``` or ```XLDoNotOverwrite```. Once the deprecated function definitions can be removed, ```XLDoNotOverwrite``` could become the new default behavior
@@ -1095,6 +1120,9 @@ Included a "dumb" fallback solution in ```XLRelationships.cpp GetTypeFromString`
 In anticipation of a potential future need for a similar "dumb" fallback solution, repeating hardcoded strings in ```XLContentTypes.cpp GetTypeFromString``` were also replaced with string constants.
 
 Updated .gitignore to a more generic version that excludes everything and explicitly re-includes all desired files.
+
+### (aral-matrix) 19/20 August 2024 updated pull requests
+Closed a multitude of pull requests that had been implemented in the May 2024 Update, implemented two more editorials from PR #246 and #253.
 
 ### (aral-matrix) 18 August 2024 - minor bugfixes and elimination of warnings
 * BUGFIX XLRelationships.cpp `BinaryAsHexString`: replaced char array with std::string, as ISO C++ standard does not permit variable size arrays
