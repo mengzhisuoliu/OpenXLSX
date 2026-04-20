@@ -17,9 +17,8 @@
 
 // stat shenanigans configured *below* includes to make it absolutely clear that this is module-local
 #ifdef ENABLE_NOWIDE
-    #define STAT nowide::stat               // use nowide version of stat
-    #define STATSTRUCT struct nowide::stat  //  ..
-    constexpr const bool using_nowide_stat = true;
+    #define STAT nowide::stat                       // use nowide version of stat, same name for win and non-win
+    #define STATSTRUCT nowide::posix_stat_t         // platform-specific struct stat and struct _stat get mapped to nowide::posix_stat_t (without the struct keyword)
 #else
     // don't use "stat" directly because windows has compatibility-breaking defines
     #if defined(_WIN32)
@@ -30,7 +29,6 @@
         #define STAT stat
         #define STATSTRUCT struct stat
     #endif
-    constexpr const bool using_nowide_stat = false;
 #endif
 
 
