@@ -1,15 +1,22 @@
 #ifndef LIBZIP_WRAPPER_H
 #define LIBZIP_WRAPPER_H
 
+// ===== External Includes ===== //
+#include <cstddef>      // size_t
 #include <cstdio>       // fprintf
 #include <random>       // std::random_device, std::mt19937, std::uniform_int_distribution
 #include <stdexcept>    // std::runtime_error
 #include <string>       // std::string
 #include <string.h>     // strerror
+#include <type_traits>  // std::make_signed_t
 
 #include <zip.h>        // libzip
 
+// ===== OpenXLSX Includes ===== //
 #include "detail/OpenXLSXFileSystemTools.hpp"   // OpenXLSX::GenerateRandomNameInSamePath, OpenXLSX::fopen, OpenXLSX::remove, OpenXLSX::rename
+
+// ===== portable ssize_t definition ===== //
+using ssize_t = std::make_signed_t< std::size_t >;
 
 namespace LibZip {
     /**

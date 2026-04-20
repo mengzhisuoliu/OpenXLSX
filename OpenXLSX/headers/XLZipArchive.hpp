@@ -54,6 +54,8 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 
 // ===== External Includes ===== //
 #include <memory>    // std::shared_ptr
+#include <cstddef>      // size_t
+#include <type_traits>  // std::make_signed_t
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
@@ -71,9 +73,8 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
     #define XLZipImplementation Zippy::ZipArchive
 #endif
 
-#ifdef _WIN32
-    using ssize_t = long long;
-#endif // _WIN32
+// ===== portable ssize_t definition ===== //
+using ssize_t = std::make_signed_t< std::size_t >;
 
 namespace OpenXLSX
 {
